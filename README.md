@@ -1,15 +1,32 @@
 # F2-DT-Arduino
 
-中二設計與科技：Arduino UNO **SOS 求救燈**模擬實作。
+中二設計與科技：Arduino UNO 單元，共五堂。每堂是一個獨立的 HTML 檔，毋須安裝，用 Chrome 或 Edge 開啟即可。
 
-`index.html` 是一個單一檔案網頁，毋須安裝，用 Chrome 或 Edge 開啟即可：
+| 堂 | 項目 | 學生網址（開啟 GitHub Pages 後） |
+|---|---|---|
+| 1 | 準備中 | — |
+| 2 | SOS 求救燈 | https://edwardyungch.github.io/f2-dt-arduino/lesson2/ |
+| 3 | 準備中 | — |
+| 4 | 準備中 | — |
+| 5 | 準備中 | — |
 
-1. 簡介：摩斯密碼 SOS（··· ––– ···）
-2. 硬件接線模擬器：拖拉接線，有步驟引導及防錯檢查
-3. Arduino IDE 模擬器：程式填空、選 Board 及 Port、編譯及上傳
-4. 實物挑戰：在真的 UNO 上再做一次
-5. 成績報告：下載有驗證碼的 HTML 報告交給老師
+首頁 `index.html` 列出所有項目，供老師使用。上課時只把當堂的網址給學生；項目頁內沒有返回首頁的連結。
 
-教師模式在頁尾（密碼及報告密鑰在檔案開頭的 `CONFIG` 內修改）。
+## 結構
 
-開啟 GitHub Pages（Settings → Pages → Branch: main）後，學生可以直接用網址開啟。
+```
+index.html              首頁（項目清單在檔內 LESSONS 陣列）
+lesson2/index.html      第 2 堂：SOS 求救燈（由 src/lesson2-sos 建置，不要直接修改）
+src/lesson2-sos/        第 2 堂的原始碼及 build.py
+tools/                  Playwright 自動測試
+```
+
+修改第 2 堂後重新建置：`python3 src/lesson2-sos/build.py`
+
+## 每堂的共通功能
+
+- 學生登記（姓名、班別、學號），進度自動儲存
+- 模擬器分階段解鎖，有引導、提示及錯誤檢查
+- 成績報告：下載一個有驗證碼的 HTML 檔，內容被修改會顯示「驗證失敗」
+- 教師模式（頁尾）：成績核對工具（一次拖入全班報告、匯出 CSV）、跳頁示範、清除進度
+- 教師密碼及報告密鑰在各堂檔案開頭的 `CONFIG` 內修改
