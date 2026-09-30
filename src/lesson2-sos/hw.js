@@ -71,7 +71,7 @@ const HW = (() => {
     const ax0 = flipped ? mx + 5 : mx - 5, kx0 = flipped ? mx - 5 : mx + 5;
     const op = opts.ghost ? ' opacity=".7"' : '';
     return `<g class="led"${op}>
-      ${opts.lit !== undefined ? `<circle class="ledglow" cx="${mx}" cy="${cy}" r="30" fill="url(#glow)" opacity="${opts.lit ? 1 : 0}"/>` : ''}
+      ${opts.lit !== undefined ? `<g class="ledglow" opacity="${opts.lit ? 1 : 0}"><circle cx="${mx}" cy="${cy}" r="30" fill="#FF5B45" opacity=".16"/><circle cx="${mx}" cy="${cy}" r="19" fill="#FF5B45" opacity=".32"/></g>` : ''}
       <path d="M${kx0} ${y - 15}L${kx} ${y}" stroke="#B9BEC0" stroke-width="2.4" stroke-linecap="round"/>
       <path d="M${ax0} ${y - 15}V${y - 11}L${ax} ${y - 5}V${y}" stroke="#B9BEC0" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       <path d="M${mx - 10} ${cy + 8}V${cy}A10 10 0 0 1 ${mx + 10} ${cy}V${cy + 8}Z" fill="${opts.lit ? '#FF5B45' : '#D8321F'}" class="ledbody"/>
