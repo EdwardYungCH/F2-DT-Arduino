@@ -116,7 +116,7 @@ function newState(student) {
   const attempt = (recall(akey) || 0) + 1; store(akey, attempt);
   const com = 'COM' + (3 + Math.floor(Math.random() * 6));
   return {
-    v: 2, id: randId(), student, attempt, teacherUsed: false,
+    v: 3, id: randId(), student, attempt, teacherUsed: false,
     startedAt: now(), finishedAt: null,
     stage: 'intro', unlocked: 0,
     t: { intro: now() },
@@ -140,6 +140,12 @@ function newExt() {
 function migrate(st) {
   if (!st.ext) st.ext = newExt();
   if ((st.v || 1) < 2) { if (st.unlocked >= 4) st.unlocked = 5; st.v = 2; }
+  if (st.v < 3) {   // breadboard rows were drawn upside down (a on top); relabel so circuits stay where they were drawn
+    const flip = id => { const m = /^([a-j])(\d+)$/.exec(id || ''); return m ? 'jihgfedcba'['abcdefghij'.indexOf(m[1])] + m[2] : id; };
+    const fix = h => { if (!h) return; ['led', 'res', 'pz'].forEach(k => { if (h[k]) h[k].h1 = flip(h[k].h1); }); (h.wires || []).forEach(w => { w.a = flip(w.a); w.b = flip(w.b); }); };
+    fix(st.hw); fix(st.ext && st.ext.c1 && st.ext.c1.hw);
+    st.v = 3;
+  }
   return st;
 }
 

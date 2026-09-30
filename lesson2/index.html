@@ -809,7 +809,7 @@ function newState(student) {
   const attempt = (recall(akey) || 0) + 1; store(akey, attempt);
   const com = 'COM' + (3 + Math.floor(Math.random() * 6));
   return {
-    v: 2, id: randId(), student, attempt, teacherUsed: false,
+    v: 3, id: randId(), student, attempt, teacherUsed: false,
     startedAt: now(), finishedAt: null,
     stage: 'intro', unlocked: 0,
     t: { intro: now() },
@@ -833,6 +833,12 @@ function newExt() {
 function migrate(st) {
   if (!st.ext) st.ext = newExt();
   if ((st.v || 1) < 2) { if (st.unlocked >= 4) st.unlocked = 5; st.v = 2; }
+  if (st.v < 3) {   // breadboard rows were drawn upside down (a on top); relabel so circuits stay where they were drawn
+    const flip = id => { const m = /^([a-j])(\d+)$/.exec(id || ''); return m ? 'jihgfedcba'['abcdefghij'.indexOf(m[1])] + m[2] : id; };
+    const fix = h => { if (!h) return; ['led', 'res', 'pz'].forEach(k => { if (h[k]) h[k].h1 = flip(h[k].h1); }); (h.wires || []).forEach(w => { w.a = flip(w.a); w.b = flip(w.b); }); };
+    fix(st.hw); fix(st.ext && st.ext.c1 && st.ext.c1.hw);
+    st.v = 3;
+  }
   return st;
 }
 
@@ -1067,7 +1073,7 @@ const HW = (() => {
   BOT1.forEach((n, i) => n !== 'NC' && addPin(n, BOT1X(i), botY));
   BOT2.forEach((n, i) => addPin(n, BOT2X(i), botY));
 
-  const ROWY = { tp: 24, tn: 44, a: 84, b: 104, c: 124, d: 144, e: 164, f: 204, g: 224, h: 244, i: 264, j: 284, bn: 324, bp: 344 };
+  const ROWY = { tp: 24, tn: 44, j: 84, i: 104, h: 124, g: 144, f: 164, e: 204, d: 224, c: 244, b: 264, a: 284, bn: 324, bp: 344 };   // like a real breadboard: j on top, a at the bottom
   const ROWS = Object.keys(ROWY);
   const colX = c => BX + 40 + (c - 1) * PITCH;
   const groupOf = (row, c) => ({ tp: 'TP', tn: 'TN', bp: 'BP', bn: 'BN' })[row] || ('abcde'.includes(row) ? 'T' + c : 'B' + c);
@@ -1408,10 +1414,10 @@ const HW = (() => {
     return cands[0] || null;
   }
   function resTarget(h = S.hw) {
-    if (!h.led) return { h1: 'c9', h2: 'c13' };
+    if (!h.led) return { h1: 'h9', h2: 'h13' };
     const { a } = ledAK(h.led); const pa = parseHole(a); if (!pa || RAIL_NAME[pa.row]) return null;
     const occ = occupancy(h); if (h.res) resHoles(h.res).forEach(x => delete occ[x]);
-    const rows = 'abcde'.includes(pa.row) ? ['c', 'b', 'a', 'd', 'e'] : ['h', 'i', 'j', 'g', 'f'];
+    const rows = 'abcde'.includes(pa.row) ? ['c', 'd', 'e', 'b', 'a'] : ['h', 'i', 'j', 'g', 'f'];
     for (const dir of [-1, 1]) for (const r of rows) {
       if (r === pa.row) continue;
       const c1 = dir < 0 ? pa.col - 4 : pa.col;
@@ -1423,7 +1429,7 @@ const HW = (() => {
   }
   function pzTarget() {
     const occ = occupancy(); if (H().pz) pzHoles(H().pz).forEach(x => delete occ[x]);
-    for (const [r, c] of [['e', 18], ['e', 19], ['j', 18], ['j', 10], ['e', 3]]) { const h1 = holeAt(r, c), h2 = holeAt(r, c + 3); if (!occ[h1] && !occ[h2]) return { h1, h2 }; }
+    for (const [r, c] of [['f', 18], ['f', 19], ['a', 18], ['a', 10], ['f', 3]]) { const h1 = holeAt(r, c), h2 = holeAt(r, c + 3); if (!occ[h1] && !occ[h2]) return { h1, h2 }; }
     return null;
   }
   function freeGndPin(occ) { return ['P:GND2', 'P:GND3', 'P:GND'].find(p => !occ[p]) || 'P:GND2'; }
@@ -1438,7 +1444,7 @@ const HW = (() => {
       if (step === 3) return [freeGndPin(occ)].concat(fR ? [fR] : []);
       return [];
     }
-    if (step === 1) return h.led ? [] : ['e13', 'e14'];
+    if (step === 1) return h.led ? [] : ['f13', 'f14'];
     if (step === 2) { const t = resTarget(); return t && !h.res ? [t.h1, t.h2] : []; }
     const an = analyze(); if (!an.chain) return [];
     const occ = occupancy();
@@ -1457,7 +1463,7 @@ const HW = (() => {
       if (step === 3) return `<p>選<b>黑色</b>導線，由 Arduino <b>下方</b> POWER 那一排的 <b>GND</b> 腳，拉到 Piezo ${R ? `右腳的<b>${R}</b>` : '另一隻腳的直行'}。</p><p class="small">UNO 上方和下方一共有 3 個 GND，它們是相通的，用哪一個都可以。</p>`;
       return `<p>檢查兩條新導線都接好，而且沒有改動原本的 LED 電路，然後按「完成接線檢查」。</p>`;
     }
-    if (step === 1) return `<p>把元件盒中的 LED 拖到麵包板。<b>長腳（+）</b>在左，<b>短腳（−）</b>在右，兩隻腳要在<b>不同號碼</b>的直行。</p><p>建議位置：黃色閃動的 <b>e13</b> 和 <b>e14</b>。</p>`;
+    if (step === 1) return `<p>把元件盒中的 LED 拖到麵包板。<b>長腳（+）</b>在左，<b>短腳（−）</b>在右，兩隻腳要在<b>不同號碼</b>的直行。</p><p>建議位置：黃色閃動的 <b>f13</b> 和 <b>f14</b>。</p>`;
     if (step === 2) { const t = resTarget(); return `<p>把 220Ω 電阻拖到麵包板，令電阻其中一隻腳和 LED <b>長腳（+）</b>在<b>同一號碼</b>的直行，這樣兩者就串聯起來。</p>${t ? `<p>建議位置：<b>${t.h1}</b> 至 <b>${t.h2}</b>。</p>` : ''}`; }
     const an = analyze();
     if (step === 3) { const c = an.chain ? colOfNet(an.chain.X, an.find) : null; return `<p>選一種導線顏色（建議<b>黃色</b>），在 Arduino 上方的 <b>13</b> 號腳按住，拖到${c ? `電阻另一端的<b>${c}</b>` : '電阻另一端的直行'}，放開滑鼠。</p>`; }
@@ -1785,12 +1791,12 @@ const HW = (() => {
   function autoWire(mode = MODE) {
     if (mode === 'c1') {
       const h = S.ext.c1.hw;
-      h.pz = { h1: 'e18' };
-      h.wires = [{ id: 'wd8', a: 'P:D8', b: 'a18', color: '#EE6B1F' }, { id: 'wg2', a: 'P:GND2', b: 'a21', color: '#2A2A2A' }];
+      h.pz = { h1: 'f18' };
+      h.wires = [{ id: 'wd8', a: 'P:D8', b: 'j18', color: '#EE6B1F' }, { id: 'wg2', a: 'P:GND2', b: 'j21', color: '#2A2A2A' }];
       h.step = 3;
     } else {
-      S.hw.led = { h1: 'e13', flipped: false }; S.hw.res = { h1: 'c9' };
-      S.hw.wires = [{ id: 'wd13', a: 'P:D13', b: 'a9', color: '#F2A91E' }, { id: 'wgnd', a: 'P:GND', b: 'a14', color: '#2A2A2A' }];
+      S.hw.led = { h1: 'f13', flipped: false }; S.hw.res = { h1: 'h9' };
+      S.hw.wires = [{ id: 'wd13', a: 'P:D13', b: 'j9', color: '#F2A91E' }, { id: 'wgnd', a: 'P:GND', b: 'j14', color: '#2A2A2A' }];
       S.hw.step = 4;
     }
     S.teacherUsed = true; save();

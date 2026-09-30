@@ -28,14 +28,14 @@ async def main():
             await pg.mouse.move(ax, ay); await pg.mouse.down()
             for i in range(1, 8): await pg.mouse.move(ax + (bx - ax) * i / 7, ay + (by - ay) * i / 7)
             await pg.mouse.up(); await pg.wait_for_timeout(150)
-        P = await pg.evaluate('()=>{const o={};for(const k of ["e18","a18","a21","P:D12","P:D8","P:GND2"]) o[k]=[HW.P[k].x,HW.P[k].y];return o}')
+        P = await pg.evaluate('()=>{const o={};for(const k of ["f18","j18","j21","P:D12","P:D8","P:GND2"]) o[k]=[HW.P[k].x,HW.P[k].y];return o}')
 
         # ---- challenge 1: hardware
         await pg.click('[data-go="c1hw"]'); await pg.wait_for_timeout(300)
-        await drag((105, 572), (P['e18'][0] + 30, P['e18'][1] - 34))
+        await drag((105, 572), (P['f18'][0] + 30, P['f18'][1] - 34))
         await pg.click('[data-check="1"]'); await pg.wait_for_timeout(150)
         print('c1 step1:', await pg.inner_text('#hwIssues'))
-        await drag(tuple(P['P:D12']), tuple(P['a18']))          # wrong pin
+        await drag(tuple(P['P:D12']), tuple(P['j18']))          # wrong pin
         await pg.click('[data-check="2"]'); await pg.wait_for_timeout(150)
         print('c1 wrong pin:', await pg.inner_text('#hwIssues'))
         await pg.screenshot(path=OUT + 'e2-c1-hw-error.png')
@@ -43,7 +43,7 @@ async def main():
         await pg.click('[data-check="2"]'); await pg.wait_for_timeout(150)
         print('c1 step2:', await pg.inner_text('#hwIssues'))
         await pg.click('#swatches .sw:nth-child(4)')
-        await drag(tuple(P['P:GND2']), tuple(P['a21']))
+        await drag(tuple(P['P:GND2']), tuple(P['j21']))
         await pg.click('[data-check="3"]'); await pg.wait_for_timeout(150)
         await pg.click('[data-check="4"]'); await pg.wait_for_timeout(300)
         await pg.screenshot(path=OUT + 'e3-c1-hw-done.png')
