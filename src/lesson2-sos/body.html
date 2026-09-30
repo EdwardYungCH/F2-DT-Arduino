@@ -5,7 +5,8 @@
     <button data-stage="hw" disabled><i>2</i><span>硬件接線</span></button>
     <button data-stage="code" disabled><i>3</i><span>編程及上傳</span></button>
     <button data-stage="real" disabled><i>4</i><span>實物挑戰</span></button>
-    <button data-stage="report" disabled><i>5</i><span>成績報告</span></button>
+    <button data-stage="ext" disabled><i>5</i><span>延伸挑戰</span></button>
+    <button data-stage="report" disabled><i>6</i><span>成績報告</span></button>
   </nav>
   <div class="who" id="who"></div>
 </header>
@@ -90,6 +91,7 @@
     <div class="card span-7">
       <h3>需要的材料（模擬器已替你準備好）</h3>
       <div class="parts" id="partsList"></div>
+      <p class="small muted" style="margin-top:10px">延伸挑戰（選做）另需：Piezo 蜂鳴器 × 1、杜邦線 × 2。</p>
     </div>
 
     <div class="card span-5">
@@ -100,6 +102,7 @@
         <li><b>選板及上傳</b><span>像真的一樣選 Board 和 Port，再上傳</span></li>
         <li><b>成績報告</b><span>下載報告檔，交給老師</span></li>
       </ol>
+      <p class="small muted" style="margin-top:12px">做得快的同學，完成實物後可以做<b>延伸挑戰</b>：聲光 SOS 和閃出你的英文名縮寫。</p>
       <p class="small muted" style="margin-top:14px">接錯線或填錯答案都可以再改，但系統會記錄錯誤次數和使用提示次數。進度會自動儲存。</p>
     </div>
   </div>
@@ -110,17 +113,13 @@
   <div class="hw-layout">
     <aside class="panel" id="hwPanel">
       <div>
-        <div class="eyebrow">第 2 步</div>
-        <h2>硬件接線</h2>
+        <div class="eyebrow" id="hwEyebrow">第 2 步</div>
+        <h2 id="hwTitle">硬件接線</h2>
       </div>
       <ol class="steps" id="hwSteps"></ol>
       <div class="issues" id="hwIssues" aria-live="polite"></div>
       <div class="statline" id="hwStats"></div>
-      <div class="know">
-        <div><b>麵包板：</b>同一個號碼的 a–e 五個孔是相通的（f–j 另一組）。把滑鼠移到孔上，會顯示哪些孔相通。</div>
-        <div><b>LED：</b>長腳是正極（+），短腳是負極（−）。電流只可以由 + 流向 −。</div>
-        <div><b>電阻：</b>限制電流，保護 LED。今次用 220Ω（紅紅啡金）。</div>
-      </div>
+      <div class="know" id="hwKnow"></div>
     </aside>
     <div class="ws">
       <div class="ws-bar">
@@ -189,6 +188,9 @@
 
 <!-- ===================== REAL ===================== -->
 <section class="stage" id="st-real" hidden></section>
+
+<!-- ===================== REPORT ===================== -->
+<section class="stage" id="st-ext" hidden></section>
 
 <!-- ===================== REPORT ===================== -->
 <section class="stage" id="st-report" hidden></section>

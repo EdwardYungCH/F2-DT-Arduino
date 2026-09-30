@@ -348,10 +348,56 @@ details.fold[open] summary{margin-bottom:8px}
 .teacher-bar{position:fixed;left:16px;bottom:16px;z-index:40;background:var(--amber);color:#1a1200;border-radius:999px;padding:6px 8px 6px 14px;font-size:13px;font-weight:700;display:flex;gap:8px;align-items:center;box-shadow:var(--shadow)}
 .teacher-bar button{border:0;background:rgba(0,0,0,.15);border-radius:999px;padding:3px 10px;font-weight:700;color:inherit}
 
+
+/* ---------- free-form editor (challenge 2) ---------- */
+.cl.region{align-items:stretch;background:#FFFBEF}
+.cl.region .ln{line-height:22px;color:#C58A00}
+.cl.region textarea{display:block;width:calc(100% - 20px);margin-left:16px;min-height:22px;border:0;border-left:2px dashed #E08A00;background:transparent;resize:none;overflow:hidden;font:13.5px/22px var(--f-mono);color:#1F2B2C;padding:0 0 0 8px;outline:none;white-space:pre;tab-size:2}
+.cl.region textarea:focus{background:#FFF3D1;border-left-style:solid}
+.cl.region textarea[readonly]{border-left:2px solid #1F8049;background:#EEF8F1}
+.cl.region textarea::placeholder{color:#B9A274}
+.ini-in{width:9ch;font:600 18px var(--f-mono);letter-spacing:.15em;text-transform:uppercase;border:1.5px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--surface-2)}
+.ini-in:focus{border-color:var(--teal);outline:none}
+.mcards{display:flex;gap:8px;flex-wrap:wrap}
+.mcard{display:flex;flex-direction:column;align-items:center;gap:4px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--surface-2);min-width:64px}
+.mcard b{font-family:var(--f-disp);font-size:22px;line-height:1}
+.mcard span{display:flex;gap:4px;align-items:center;height:12px}
+.mcard span i{display:block;height:9px;border-radius:5px;background:var(--accent)}
+.mcard span i.d{width:9px}.mcard span i.h{width:26px}
+.mcard em{font-style:normal;font-family:var(--f-mono);font-size:12px;color:var(--ink-3);letter-spacing:.15em}
+
+/* ---------- extension hub ---------- */
+.ext-wrap{max-width:1180px;margin:0 auto}
+.ext-wrap .intro-head{margin-bottom:18px}
+.ext-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.ext-card{display:flex;flex-direction:column;gap:14px}
+.ext-top{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:start}
+.ext-top h3{margin:0 0 4px}
+.ext-num{font-family:var(--f-disp);font-weight:700;font-size:40px;line-height:1;color:var(--teal);text-align:center;border-right:1px solid var(--line);padding-right:10px}
+.ext-prog{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.ext-prog li{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center;color:var(--ink-2)}
+.ext-prog li i{font-style:normal;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:12px}
+.ext-prog li.ok{color:var(--ink)}
+.ext-prog li.ok i{background:var(--ok);border-color:var(--ok);color:#fff}
+.ext-score{font-size:15px}
+.ext-score b{font-family:var(--f-disp);font-size:28px}
+.ext-real{border-top:1px dashed var(--line);padding-top:12px}
+.ext-real .goals{margin:0 0 10px}
+.ini-track{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;background:#0F1B20;border-radius:8px;padding:8px}
+.ini-track .letter{display:flex;gap:6px;align-items:center;padding:6px 12px;border-radius:8px;background:rgba(255,255,255,.05);color:#fff}
+.ini-track .letter.cur{background:rgba(255,106,80,.18)}
+.ini-track .letter b{font-family:var(--f-disp);font-size:22px;margin-right:6px}
+.ini-track .sym{height:12px;border-radius:6px;background:#3a4c52;transition:background .05s}
+.ini-track .sym.dot{width:12px}.ini-track .sym.dash{width:36px}
+.ini-track .sym.lit{background:#ff6a50;box-shadow:0 0 10px rgba(255,106,80,.7)}
+
+.tp-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+
 /* ---------- responsive ---------- */
 @media (max-width:1100px){
   .hw-layout,.code-layout{grid-template-columns:1fr}
   .real-layout{grid-template-columns:1fr}
+  .ext-grid{grid-template-columns:1fr}
 }
 @media (max-width:860px){
   .login-wrap{grid-template-columns:1fr}

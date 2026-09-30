@@ -5,7 +5,7 @@
 | 堂 | 項目 | 學生網址（開啟 GitHub Pages 後） |
 |---|---|---|
 | 1 | 準備中 | — |
-| 2 | SOS 求救燈 | https://edwardyungch.github.io/f2-dt-arduino/lesson2/ |
+| 2 | SOS 求救燈（含延伸挑戰：聲光 SOS、英文縮寫） | https://edwardyungch.github.io/f2-dt-arduino/lesson2/ |
 | 3 | 準備中 | — |
 | 4 | 準備中 | — |
 | 5 | 準備中 | — |
@@ -18,7 +18,7 @@
 index.html              首頁（項目清單在檔內 LESSONS 陣列）
 lesson2/index.html      第 2 堂：SOS 求救燈（由 src/lesson2-sos 建置，不要直接修改）
 src/lesson2-sos/        第 2 堂的原始碼及 build.py
-tools/                  Playwright 自動測試
+tools/                  Playwright 自動測試（主任務流程、延伸挑戰、接線檢查）
 ```
 
 修改第 2 堂後重新建置：`python3 src/lesson2-sos/build.py`

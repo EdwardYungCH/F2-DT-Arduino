@@ -94,7 +94,11 @@ async function saveFile(filename, text, mime) {
 
 /* ---------------- state ---------------- */
 const STORE_KEY = 'sosLab.v1.state';
-const STAGES = ['intro', 'hw', 'code', 'real', 'report'];
+const STAGES = ['intro', 'hw', 'code', 'real', 'ext', 'report'];
+/* sub-views of the extension stage reuse the hardware / IDE sections */
+const VIEWS = { c1hw: { section: 'hw', stepper: 'ext' }, c1code: { section: 'code', stepper: 'ext' }, c2code: { section: 'code', stepper: 'ext' } };
+const stepperOf = name => (VIEWS[name] ? VIEWS[name].stepper : name);
+const sectionOf = name => (VIEWS[name] ? VIEWS[name].section : name);
 let S = null;
 let teacherOn = false;
 
@@ -112,7 +116,7 @@ function newState(student) {
   const attempt = (recall(akey) || 0) + 1; store(akey, attempt);
   const com = 'COM' + (3 + Math.floor(Math.random() * 6));
   return {
-    v: 1, id: randId(), student, attempt, teacherUsed: false,
+    v: 2, id: randId(), student, attempt, teacherUsed: false,
     startedAt: now(), finishedAt: null,
     stage: 'intro', unlocked: 0,
     t: { intro: now() },
@@ -120,9 +124,30 @@ function newState(student) {
     code: { blanks: {}, checks: 0, done: false, log: [] },
     up: { usb: false, board: null, port: null, com, verified: false, uploaded: false, errors: 0, log: [], lastErrSig: '' },
     real: { checks: {}, confirmed: false },
+    ext: newExt(),
   };
 }
+function newExt() {
+  const flow = () => ({ errors: 0, verified: false, uploaded: false, log: [], lastErrSig: '' });
+  return {
+    c1: { hw: { pz: null, wires: [], step: 0, errors: 0, hints: 0, hinted: {}, log: [], done: false, lastFailSig: '', stepFails: {} },
+          code: { blanks: {}, checks: 0, done: false, log: [] }, flow: flow(), t: {}, done: false, confirmed: false },
+    c2: { code: { initials: '', text: '', checks: 0, fails: 0, lastFailSig: '', done: false, revealed: false, log: [] },
+          flow: flow(), t: {}, done: false, confirmed: false },
+  };
+}
+/* progress saved by an older version of this page */
+function migrate(st) {
+  if (!st.ext) st.ext = newExt();
+  if ((st.v || 1) < 2) { if (st.unlocked >= 4) st.unlocked = 5; st.v = 2; }
+  return st;
+}
 
+function pushLog(obj, msg) {
+  if (!obj.log) obj.log = [];
+  obj.log.push({ t: now(), msg });
+  save();
+}
 function logEv(sec, msg, counted = true) {
   if (!S[sec].log) S[sec].log = [];
   S[sec].log.push({ t: now(), msg, counted });
@@ -139,18 +164,36 @@ function scores(st = S) {
   const grade = total >= 85 ? '優異' : total >= 70 ? '良好' : total >= 50 ? '合格' : '仍需努力';
   return { hw, code, up, total, grade };
 }
+/* extension challenges: 10 points each, reported separately (not part of the 100) */
+function extScores(st = S) {
+  const e = st.ext; const res = { c1: null, c2: null };
+  if (!e) return res;
+  if (e.c1.done) {
+    const h = e.c1.hw;
+    const bl = C1_BLANKS.map(b => e.c1.code.blanks[b.id] || {});
+    const wrong = bl.reduce((a, x) => a + (x.wrong || 0), 0), rev = bl.filter(x => x.revealed).length;
+    const hw = Math.max(1, 4 - h.errors - h.hints), code = Math.max(1, 4 - wrong - 2 * rev), up = Math.max(0, 2 - (e.c1.flow.errors || 0));
+    res.c1 = { hw, code, up, total: hw + code + up, wrong, rev };
+  }
+  if (e.c2.done) {
+    const c = e.c2.code;
+    const code = c.revealed ? 3 : Math.max(3, 8 - (c.fails || 0)), up = Math.max(0, 2 - (e.c2.flow.errors || 0));
+    res.c2 = { code, up, total: code + up };
+  }
+  return res;
+}
 
 /* ---------------- navigation ---------------- */
 const stageInit = {};
 const stageLeave = {};
 function goStage(name) {
   if (!S) return;
-  const idx = STAGES.indexOf(name);
-  if (idx > S.unlocked && !teacherOn) return;
+  const idx = STAGES.indexOf(stepperOf(name));
+  if (idx < 0 || (idx > S.unlocked && !teacherOn)) return;
   Object.values(stageLeave).forEach(f => { try { f(); } catch (e) {} });
   S.stage = name; save();
   $$('.stage').forEach(s => s.hidden = true);
-  $('#st-' + name).hidden = false;
+  $('#st-' + sectionOf(name)).hidden = false;
   renderStepper();
   window.scrollTo({ top: 0 });
   if (stageInit[name]) stageInit[name]();
@@ -164,8 +207,9 @@ function renderStepper() {
   $$('#stepper button').forEach((b, i) => {
     const st = b.dataset.stage;
     b.disabled = !S || (i > S.unlocked && !teacherOn);
-    b.classList.toggle('current', S && S.stage === st);
-    b.classList.toggle('done', S && i < S.unlocked && S.stage !== st);
+    const cur = S && stepperOf(S.stage) === st;
+    b.classList.toggle('current', !!cur);
+    b.classList.toggle('done', !!(S && i < S.unlocked && !cur));
   });
   $('#who').textContent = S ? `${S.student.cls} · ${S.student.no} · ${S.student.name}` : '';
 }
@@ -184,18 +228,18 @@ const SYMBOLS = [['S', ['dot','dot','dot']], ['O', ['dash','dash','dash']], ['S'
 function morseHTML() {
   return SYMBOLS.map(([l, syms]) => `<div class="letter"><b>${l}</b>${syms.map(s => `<i class="sym ${s}"></i>`).join('')}</div>`).join('');
 }
-/* play SOS on any set of callbacks; returns stop() */
-function playSOS(onStep) {
+/* play any [on, ms] sequence on a callback, looping; returns stop() */
+function playSeq(seq, onStep) {
   let i = 0, stopped = false, timer = 0;
   const tick = () => {
     if (stopped) return;
-    const [on, ms] = SOS_SEQ[i];
-    onStep(on, Math.floor(i / 2), i);
-    timer = setTimeout(() => { i = (i + 1) % SOS_SEQ.length; tick(); }, ms);
+    onStep(seq[i][0], i);
+    timer = setTimeout(() => { i = (i + 1) % seq.length; tick(); }, seq[i][1]);
   };
   tick();
-  return () => { stopped = true; clearTimeout(timer); onStep(0, -1, -1); };
+  return () => { stopped = true; clearTimeout(timer); onStep(0, -1); };
 }
+function playSOS(onStep) { return playSeq(SOS_SEQ, (on, i) => onStep(on, i < 0 ? -1 : Math.floor(i / 2), i)); }
 function lampPlayer(lampEl, morseEl) {
   if (morseEl && !morseEl.children.length) morseEl.innerHTML = morseHTML();
   const syms = morseEl ? $$('.sym', morseEl) : [];
@@ -215,7 +259,7 @@ function showLogin() {
   const saved = recall(STORE_KEY);
   const box = $('#resumeBox');
   if (saved && saved.student) {
-    const stName = { intro: '簡介', hw: '硬件接線', code: '編程及上傳', real: '實物挑戰', report: '成績報告' }[STAGES[saved.unlocked]] || '';
+    const stName = { intro: '簡介', hw: '硬件接線', code: '編程及上傳', real: '實物挑戰', ext: '延伸挑戰', report: '成績報告' }[STAGES[migrate(saved).unlocked]] || '';
     box.hidden = false;
     box.innerHTML = alertBox('info', `這部電腦有 <b>${esc(saved.student.cls)} · ${esc(saved.student.no)} · ${esc(saved.student.name)}</b> 未完成的進度（已到：${stName}）。
       <div class="row" style="margin-top:8px"><button type="button" class="btn sm primary" id="resumeBtn">繼續這個進度</button></div>`);
@@ -248,6 +292,7 @@ $('#loginForm').addEventListener('submit', e => {
 });
 
 function startApp() {
+  migrate(S);
   if (heroStop) { heroStop(); heroStop = null; }
   renderStepper();
   goStage(S.stage || 'intro');

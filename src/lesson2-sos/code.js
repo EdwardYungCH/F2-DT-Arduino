@@ -1,5 +1,6 @@
 /* =====================================================================
-   Arduino IDE 模擬器：程式填空、選板、選 Port、編譯、上傳
+   Arduino IDE 模擬器：程式填空 / 自由編程、選板、選 Port、編譯、上傳
+   三個情境：main（主任務）、c1（延伸 1 聲光 SOS）、c2（延伸 2 英文縮寫）
    ===================================================================== */
 const CODE_TEMPLATE = [
   '// SOS 求救燈',
@@ -63,25 +64,153 @@ const BLANKS = [
   { id: 'b4', ans: '200', ctx: 'delay', ask: '短閃亮多久', hint: 'delay() 用<em>毫秒</em>計時：1 秒 = 1000 毫秒，0.2 秒 = ? 毫秒。' },
   { id: 'b5', ans: 'LOW', ctx: 'level', ask: '關燈時輸出的狀態', hint: '關燈 = 腳位輸出 0V 低電位，英文是「低」，要<em>全部大寫</em>。' },
   { id: 'b6', ans: '600', ctx: 'delay', ask: '長閃亮多久', hint: '長閃亮 0.6 秒。1 秒 = 1000 毫秒，0.6 秒 = ? 毫秒。' },
-  { id: 'b7', ans: 'digitalWrite', ctx: 'func', ask: '控制腳位開關的指令', hint: '和上面「開燈」「關燈」那幾行用的是<em>同一個指令</em>。注意大小寫：digital 小寫，W 大寫。' },
+  { id: 'b7', ans: 'digitalWrite', ctx: 'func', argc: 2, ask: '控制腳位開關的指令', hint: '和上面「開燈」「關燈」那幾行用的是<em>同一個指令</em>。注意大小寫：digital 小寫，W 大寫。' },
   { id: 'b8', ans: '2000', ctx: 'delay', ask: '一次 SOS 後停多久', hint: '要停 2 秒。1 秒 = 1000 毫秒，2 秒 = ? 毫秒。' },
 ];
-BLANKS.forEach(b => { b.line = CODE_TEMPLATE.findIndex(l => l.includes('{{' + b.id + '}}')) + 1; });
 const BANK = ['13', '12', 'OUTPUT', 'INPUT', 'HIGH', 'LOW', '2', '200', '600', '2000', 'digitalWrite', 'digitalRead', 'pinMode'];
+
+/* ---------- 延伸挑戰 1：聲光 SOS（Piezo 用 tone / noTone） ---------- */
+const C1_TEMPLATE = (() => {
+  const L = [
+    '// 延伸挑戰 1：聲光 SOS',
+    '// LED 閃的同時，Piezo 蜂鳴器發出「嗶」聲',
+    '',
+    'int ledPin = 13;              // LED 接在 13 號腳',
+    'int buzzerPin = {{e1}};           // Piezo 接在第幾號腳？',
+    'int pitch = {{e2}};             // 聲音頻率（Hz），建議 1000',
+    '',
+    'void setup() {',
+    '  pinMode(ledPin, OUTPUT);',
+    '  pinMode(buzzerPin, {{e3}});   // Piezo 也要設定為「輸出」',
+    '}',
+    '',
+    'void loop() {',
+    '  // ===== S：三下短閃 + 短嗶 =====',
+    '  digitalWrite(ledPin, HIGH);',
+    '  {{e4}}(buzzerPin, pitch);     // 開聲（用哪個指令？）',
+    '  delay(200);',
+    '  digitalWrite(ledPin, LOW);',
+    '  {{e5}}(buzzerPin);            // 停聲（用哪個指令？）',
+    '  delay(200);',
+    '  digitalWrite(ledPin, HIGH);',
+    '  tone(buzzerPin, pitch);',
+    '  delay(200);',
+    '  digitalWrite(ledPin, LOW);',
+    '  noTone({{e6}});               // 停止哪一支腳的聲音？',
+    '  delay(200);',
+  ];
+  const sig = (ms, after, note) => [
+    '  digitalWrite(ledPin, HIGH);', '  tone(buzzerPin, pitch);', `  delay(${ms});`,
+    '  digitalWrite(ledPin, LOW);', '  noTone(buzzerPin);', `  delay(${after});${note ? '                  // ' + note : ''}`];
+  L.push(...sig(200, 600, '字母之間停 0.6 秒'));
+  L.push('', '  // ===== O：三下長閃 + 長嗶 =====');
+  L.push(...sig(600, 200), ...sig(600, 200), ...sig(600, 600, '字母之間停 0.6 秒'));
+  L.push('', '  // ===== S：三下短閃 + 短嗶 =====');
+  L.push(...sig(200, 200), ...sig(200, 200), ...sig(200, 2000, '一次 SOS 完成，停 2 秒'));
+  L.push('}');
+  return L;
+})();
+const pitchOK = v => /^\d+$/.test(v) && +v >= 100 && +v <= 5000;
+const C1_BLANKS = [
+  { id: 'e1', ans: '8', ctx: 'init', ask: 'Piezo 接在哪一號腳', hint: '回想剛才的接線：Piezo 的信號線接在 UNO 的幾號腳？只填數字。' },
+  { id: 'e2', ans: '1000', ctx: 'init', accept: pitchOK, ask: '聲音頻率（Hz）', hint: '頻率 = 每秒震動多少次。填 <em>100 至 5000</em> 之間的整數，建議 1000。' },
+  { id: 'e3', ans: 'OUTPUT', ctx: 'mode', ask: 'Piezo 腳位的模式', hint: 'Arduino 要「送出」信號給 Piezo，所以是「輸出」。英文要<em>全部大寫</em>。' },
+  { id: 'e4', ans: 'tone', ctx: 'func', argc: 2, ask: '令 Piezo 發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
+  { id: 'e5', ans: 'noTone', ctx: 'func', argc: 1, ask: '令 Piezo 停聲的指令', hint: '停聲 = no + Tone，寫成 <em>noTone</em>，注意 T 是大寫。' },
+  { id: 'e6', ans: 'buzzerPin', ctx: 'arg', accept: v => v === 'buzzerPin' || v === '8', ask: '停止哪一支腳的聲音', hint: '要停的是 Piezo 那支腳。程式第 5 行已經用一個變數記住了它的腳位。' },
+];
+const C1_BANK = ['8', '13', '1000', 'OUTPUT', 'INPUT', 'tone', 'noTone', 'digitalWrite', 'buzzerPin', 'ledPin'];
+
+/* ---------- 延伸挑戰 2：閃出英文名縮寫（dot / dash / letterGap） ---------- */
+const C2_TEMPLATE = [
+  '// 延伸挑戰 2：用摩斯密碼閃出你的英文名縮寫',
+  '',
+  'int ledPin = 13;',
+  '',
+  'void dot() {                  // 短閃：亮 0.2 秒，熄 0.2 秒',
+  '  digitalWrite(ledPin, HIGH);',
+  '  delay(200);',
+  '  digitalWrite(ledPin, LOW);',
+  '  delay(200);',
+  '}',
+  '',
+  'void dash() {                 // 長閃：亮 0.6 秒，熄 0.2 秒',
+  '  digitalWrite(ledPin, HIGH);',
+  '  delay(600);',
+  '  digitalWrite(ledPin, LOW);',
+  '  delay(200);',
+  '}',
+  '',
+  'void letterGap() {            // 字母之間多停 0.4 秒',
+  '  delay(400);',
+  '}',
+  '',
+  'void setup() {',
+  '  pinMode(ledPin, OUTPUT);',
+  '}',
+  '',
+  'void loop() {',
+  '  // ===== 在下面寫出你的縮寫（每行一個指令） =====',
+  '{{REGION}}',
+  '  delay(2000);                 // 完成一次，停 2 秒再重複',
+  '}',
+];
+const MORSE = { A: '·–', B: '–···', C: '–·–·', D: '–··', E: '·', F: '··–·', G: '––·', H: '····', I: '··', J: '·–––', K: '–·–', L: '·–··', M: '––', N: '–·', O: '–––', P: '·––·', Q: '––·–', R: '·–·', S: '···', T: '–', U: '··–', V: '···–', W: '·––', X: '–··–', Y: '–·––', Z: '––··' };
+const morseCalls = ch => MORSE[ch].split('').map(s => s === '·' ? 'dot' : 'dash');
+
 const BOARDS = ['Arduino Yún', 'Arduino Uno', 'Arduino Duemilanove or Diecimila', 'Arduino Nano', 'Arduino Mega or Mega 2560', 'Arduino Mega ADK', 'Arduino Leonardo', 'Arduino Micro', 'Arduino Esplora', 'Arduino Mini', 'Arduino Ethernet', 'Arduino Fio', 'Arduino BT', 'LilyPad Arduino USB', 'LilyPad Arduino', 'Arduino Pro or Pro Mini', 'Arduino NG or older', 'Arduino Gemma', 'Arduino Uno WiFi'];
-const INO_PATH = 'C:\\Users\\student\\Documents\\Arduino\\SOS_Light\\SOS_Light.ino';
+const lineOf = (tpl, id) => tpl.findIndex(l => l.includes('{{' + id + '}}')) + 1;
+BLANKS.forEach(b => b.line = lineOf(CODE_TEMPLATE, b.id));
+C1_BLANKS.forEach(b => b.line = lineOf(C1_TEMPLATE, b.id));
+function fnOf(tpl, line) {
+  for (let i = line - 1; i >= 0; i--) { const m = /^void\s+(\w+)\(\)/.exec(tpl[i]); if (m) return `void ${m[1]}()`; if (tpl[i] === '}' && i < line - 1) return null; }
+  return null;
+}
 
 const IDE = (() => {
-  let built = false, lastFocus = null, busy = false, playing = null, explain = null;
-  const B = id => { if (!S.code.blanks[id]) S.code.blanks[id] = { val: '', wrong: 0, lastWrong: null, status: '', revealed: false, fb: '' }; return S.code.blanks[id]; };
+  let built = false, lastFocus = null, busy = false;
+  const explainMap = {};
+  let C = null;              // current context
+
+  const CTX = {
+    main: {
+      name: 'main', file: 'SOS_Light', eyebrow: '第 3 步', title: '編程及上傳', full: true,
+      tpl: CODE_TEMPLATE, blanks: BLANKS, bank: BANK,
+      st: () => S.code, flow: () => S.up,
+      intro: `程式已寫好大部分，你要完成 <b>8 個橙色空格</b>。先讀灰色的註解，它會告訴你那一行做甚麼。可以直接打字，或者點選下面的字詞。`,
+      revealNote: '顯示答案後，這一格只會得 1 分（滿分 5 分）。建議先再試一次。',
+      next: { label: '下一步：實物挑戰', stage: 'real' },
+      dict: [['int ledPin = 13;', '建立變數 ledPin，記住 LED 接在 13 號腳'], ['setup()', '開機時執行一次，用來做設定'], ['loop()', '不停重複執行裏面的程式'], ['pinMode(腳, 模式)', '設定腳位是 OUTPUT（輸出）還是 INPUT（輸入）'], ['digitalWrite(腳, 狀態)', 'HIGH = 輸出 5V（開），LOW = 輸出 0V（關）'], ['delay(毫秒)', '暫停一段時間，1000 毫秒 = 1 秒']],
+    },
+    c1: {
+      name: 'c1', file: 'SOS_Sound', eyebrow: '延伸挑戰 1 · 聲光 SOS', title: '編程及上傳', full: false,
+      tpl: C1_TEMPLATE, blanks: C1_BLANKS, bank: C1_BANK,
+      st: () => S.ext.c1.code, flow: () => S.ext.c1.flow,
+      intro: `LED 部分已寫好。你要完成 <b>6 個橙色空格</b>，令 Piezo 在 LED 亮時發聲、熄時停聲。`,
+      revealNote: '顯示答案會令這個挑戰扣 2 分。建議先再試一次。',
+      next: { label: '返回延伸挑戰', stage: 'ext' },
+      dict: [['tone(腳, 頻率)', '令腳位不停開關，Piezo 發出該頻率的聲音。頻率愈高，聲音愈尖'], ['noTone(腳)', '停止那支腳的聲音'], ['int pitch = 1000;', '用變數記住頻率，改一個數字就可以改全部聲音'], ['digitalWrite(腳, 狀態)', 'LED 用它開關；Piezo 只開一次不會響，所以要用 tone()']],
+    },
+    c2: {
+      name: 'c2', file: 'Morse_Initials', eyebrow: '延伸挑戰 2 · 英文縮寫', title: '自己編寫程式', full: false, free: true,
+      tpl: C2_TEMPLATE, blanks: [], bank: [],
+      st: () => S.ext.c2.code, flow: () => S.ext.c2.flow,
+      next: { label: '返回延伸挑戰', stage: 'ext' },
+      dict: [['void dot() { ... }', '自訂函數：把「短閃」的 4 行包起來，之後寫 dot(); 就會執行那 4 行'], ['dot();', '短閃一下（·）'], ['dash();', '長閃一下（–）'], ['letterGap();', '字母之間多停一會，令人分得出下一個字母']],
+    },
+  };
+  const B = id => { const st = C.st(); if (!st.blanks[id]) st.blanks[id] = { val: '', wrong: 0, lastWrong: null, status: '', revealed: false, fb: '' }; return st.blanks[id]; };
+  const isRight = (b, v) => b.accept ? b.accept(v) : v === b.ans;
+  const INO = () => `C:\\Users\\student\\Documents\\Arduino\\${C.file}\\${C.file}.ino`;
+  const logTo = (obj, msg) => pushLog(obj, msg);
 
   /* ---------- editor ---------- */
+  const TIP = { pinMode: '設定腳位模式：pinMode(腳, OUTPUT/INPUT)', digitalWrite: '令腳位輸出 HIGH（開）或 LOW（關）', delay: '暫停，單位是毫秒（1000 = 1 秒）', HIGH: '高電位 5V（開）', LOW: '低電位 0V（關）', OUTPUT: '輸出模式', setup: '開機時執行一次', loop: '不停重複執行', tone: '發聲：tone(腳, 頻率)', noTone: '停聲：noTone(腳)', dot: '短閃', dash: '長閃', letterGap: '字母之間的停頓' };
   function hl(text) {
     let out = '', i = 0;
     const ci = text.indexOf('//');
     const codePart = ci >= 0 ? text.slice(0, ci) : text, com = ci >= 0 ? text.slice(ci) : '';
-    const re = /\b(void|int)\b|\b(pinMode|digitalWrite|delay)\b|\b(HIGH|LOW|OUTPUT)\b|\b(setup|loop)\b|\b(\d+)\b/g;
-    const TIP = { pinMode: '設定腳位模式：pinMode(腳, OUTPUT/INPUT)', digitalWrite: '令腳位輸出 HIGH（開）或 LOW（關）', delay: '暫停，單位是毫秒（1000 = 1 秒）', HIGH: '高電位 5V（開）', LOW: '低電位 0V（關）', OUTPUT: '輸出模式', setup: '開機時執行一次', loop: '不停重複執行' };
+    const re = /\b(void|int)\b|\b(pinMode|digitalWrite|delay|tone|noTone)\b|\b(HIGH|LOW|OUTPUT)\b|\b(setup|loop)\b|\b(\d+)\b/g;
     let m;
     while ((m = re.exec(codePart))) {
       out += esc(codePart.slice(i, m.index));
@@ -95,12 +224,13 @@ const IDE = (() => {
   }
   function renderEditor() {
     const ed = $('#editor');
-    ed.innerHTML = CODE_TEMPLATE.map((line, idx) => {
-      const parts = line.split(/(\{\{b\d\}\})/);
+    if (C.free) return renderFreeEditor();
+    ed.innerHTML = C.tpl.map((line, idx) => {
+      const parts = line.split(/(\{\{[a-z]\d\}\})/);
       const html = parts.map(p => {
-        const m = /^\{\{(b\d)\}\}$/.exec(p);
+        const m = /^\{\{([a-z]\d)\}\}$/.exec(p);
         if (!m) return hl(p);
-        const b = BLANKS.find(x => x.id === m[1]); const st = B(b.id);
+        const b = C.blanks.find(x => x.id === m[1]); const st = B(b.id);
         const n = b.id.slice(1);
         const cls = st.revealed ? 'rev' : st.status;
         const w = Math.max(b.ans.length, 3) + 1.6;
@@ -113,7 +243,7 @@ const IDE = (() => {
       inp.addEventListener('input', () => {
         const st = B(inp.dataset.b); st.val = inp.value;
         if (st.status === 'bad') { st.status = ''; inp.classList.remove('bad'); inp.previousElementSibling.classList.remove('bad'); }
-        save(); renderPanelLight();
+        save();
       });
       inp.addEventListener('keydown', e => { if (e.key === 'Enter' || (e.key === 'Tab' && !e.shiftKey)) { e.preventDefault(); focusNext(inp.dataset.b); } });
     });
@@ -121,73 +251,231 @@ const IDE = (() => {
   function markLine(inp) {
     $$('.cl.cur').forEach(x => x.classList.remove('cur'));
     const cl = inp.closest('.cl'); cl.classList.add('cur');
-    const ln = +cl.dataset.ln; const col = CODE_TEMPLATE[ln - 1].indexOf('{{') + 1;
+    const ln = +cl.dataset.ln; const col = C.tpl[ln - 1].indexOf('{{') + 1;
     $('#stPos').textContent = `Ln ${ln}, Col ${col}`;
   }
   function focusNext(id) {
-    const i = BLANKS.findIndex(b => b.id === id);
-    for (let k = 1; k <= BLANKS.length; k++) {
-      const b = BLANKS[(i + k) % BLANKS.length]; const st = B(b.id);
+    const bl = C.blanks, i = bl.findIndex(b => b.id === id);
+    for (let k = 1; k <= bl.length; k++) {
+      const b = bl[(i + k) % bl.length]; const st = B(b.id);
       if (st.status !== 'ok' && !st.revealed) { const el = $('#blank-' + b.id); el.focus(); el.select(); el.scrollIntoView({ block: 'nearest' }); return; }
     }
   }
 
-  /* ---------- checking answers ---------- */
+  /* free-form editor for challenge 2 */
+  const REGION_AT = () => C2_TEMPLATE.indexOf('{{REGION}}');
+  const regionLines = () => Math.max(1, (C.st().text || '').split('\n').length);
+  function renderFreeEditor() {
+    const ed = $('#editor'), st = C.st(), r = REGION_AT();
+    const locked = st.done;
+    ed.innerHTML = C2_TEMPLATE.map((line, idx) => {
+      if (idx === r) return `<div class="cl region" data-ln="${idx + 1}"><span class="ln" id="regLn"></span><span class="tx"><textarea id="regionTa" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="在這裏寫出你的縮寫" placeholder="例如：dash();" ${locked ? 'readonly' : ''}>${esc(st.text || '')}</textarea></span></div>`;
+      return `<div class="cl${idx > r ? ' after' : ''}" data-ln="${idx + 1}" data-i="${idx}"><span class="ln">${idx + 1}</span><span class="tx">${hl(line) || ' '}</span></div>`;
+    }).join('');
+    const ta = $('#regionTa');
+    ta.addEventListener('input', () => { st.text = ta.value; save(); syncRegion(); });
+    ta.addEventListener('keyup', syncCaret); ta.addEventListener('click', syncCaret);
+    ta.addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); insertAtCaret('  '); } });
+    syncRegion();
+    const row = ed.querySelector('.cl.region'); if (row) ed.scrollTop = Math.max(0, row.offsetTop - 120);
+  }
+  function syncRegion() {
+    const ta = $('#regionTa'); if (!ta) return;
+    const n = regionLines(), r = REGION_AT();
+    ta.rows = n; ta.style.height = (n * 22) + 'px';
+    $('#regLn').innerHTML = Array.from({ length: n }, (_, i) => r + 1 + i).join('<br>');
+    $$('#editor .cl.after').forEach(el => { const i = +el.dataset.i; el.querySelector('.ln').textContent = i + n; el.dataset.ln = i + n; });
+  }
+  function syncCaret() {
+    const ta = $('#regionTa'); if (!ta) return;
+    const before = ta.value.slice(0, ta.selectionStart).split('\n');
+    $('#stPos').textContent = `Ln ${REGION_AT() + before.length}, Col ${before[before.length - 1].length + 3}`;
+  }
+  function insertAtCaret(text) {
+    const ta = $('#regionTa'); if (!ta || ta.readOnly) return;
+    const s = ta.selectionStart ?? ta.value.length, e = ta.selectionEnd ?? s;
+    let ins = text;
+    if (text.endsWith(';')) { const pre = ta.value.slice(0, s); ins = (pre && !pre.endsWith('\n') ? '\n' : '') + text + '\n'; }
+    ta.value = ta.value.slice(0, s) + ins + ta.value.slice(e);
+    const pos = s + ins.length; ta.focus(); ta.setSelectionRange(pos, pos);
+    C.st().text = ta.value; save(); syncRegion(); syncCaret();
+  }
+  /* line number (in the full sketch) of region line i (0-based) */
+  const regLineNo = i => REGION_AT() + 1 + i;
+
+  /* ---------- checking answers (fill-in contexts) ---------- */
   function feedback(b, v) {
     const lc = v.toLowerCase();
     if (lc === b.ans.toLowerCase()) return '大小寫不對。Arduino 會分辨大小寫，請看清楚。';
     if (/[^\x00-\x7F]/.test(v)) return '不可以用中文或全形字，只可以用英文和數字。';
+    if (b.id === 'e2') {
+      if (/hz/i.test(v)) return '只填數字，不用寫 Hz。';
+      if (/^\d+$/.test(v)) return '頻率太低或太高，人耳聽得不清楚。請填 100 至 5000 之間的數字。';
+    }
     if (b.ctx === 'delay' || b.ctx === 'init') {
       const f = parseFloat(v);
       if (!isNaN(f) && b.ctx === 'delay' && Math.round(f * 1000) === +b.ans) return 'delay() 的單位是<b>毫秒</b>，不是秒。';
-      if (b.id === 'b1' && /^\d+$/.test(v)) return '看清楚接線模擬器中，導線接在哪一號腳。';
+      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return v === '13' && b.id === 'e1' ? '13 號腳是 LED 用的。Piezo 接在另一支腳。' : '看清楚接線模擬器中，導線接在哪一號腳。';
       if (b.ctx === 'delay' && /^\d+$/.test(v)) return '時間不對，再看看那一行的註解（灰色文字）。';
     }
-    if (b.id === 'b2' && lc === 'input') return 'INPUT 是「輸入」（例如讀取按鈕）；LED 要用「輸出」。';
+    if ((b.id === 'b2' || b.id === 'e3') && lc === 'input') return 'INPUT 是「輸入」（例如讀取按鈕）；這裏要用「輸出」。';
     if (b.id === 'b3' && lc === 'low') return 'LOW 是關燈，開燈要用高電位。';
     if (b.id === 'b5' && lc === 'high') return 'HIGH 是開燈，關燈要用低電位。';
     if (b.id === 'b7' && lc === 'digitalread') return 'digitalRead 是「讀取」輸入；控制 LED 要「寫」出信號。';
     if (b.id === 'b7' && lc === 'pinmode') return 'pinMode 只用來設定模式，開燈要用另一個指令。';
+    if (b.id === 'e4' && lc === 'digitalwrite') return 'digitalWrite 只會開一次，Piezo 不會響。要用令腳位不停開關的指令。';
+    if (b.id === 'e4' && lc === 'notone') return 'noTone 是停聲，開聲要用另一個指令。';
+    if (b.id === 'e5' && lc === 'tone') return 'tone 是開聲，停聲要用另一個指令。';
+    if (b.id === 'e5' && lc === 'digitalwrite') return '停聲要用專門停止 tone() 的指令。';
+    if (b.id === 'e6' && v === 'ledPin') return 'ledPin 是 LED 那支腳。要停的是 Piezo 那支腳。';
+    if (b.id === 'e6' && v === '13') return '13 號腳是 LED 那支腳。要停的是 Piezo 那支腳。';
     return '';
   }
   function checkAnswers() {
-    S.code.checks++;
-    let ok = 0, empty = 0, bad = 0, newly = 0;
-    BLANKS.forEach(b => {
-      const st = B(b.id);
-      if (st.status === 'ok' || st.revealed) { ok++; return; }
-      const v = (st.val || '').trim();
-      if (!v) { empty++; st.status = ''; st.fb = ''; return; }
-      if (v === b.ans) { st.status = 'ok'; st.fb = ''; st.val = v; ok++; return; }
-      st.status = 'bad'; bad++;
-      st.fb = feedback(b, v);
-      if (v !== st.lastWrong) { st.wrong++; st.lastWrong = v; newly++; logEv('code', `空格 ${b.id.slice(1)}（${b.ask}）填了「${v}」`); }
+    const st = C.st(), bl = C.blanks;
+    st.checks = (st.checks || 0) + 1;
+    let ok = 0, empty = 0, bad = 0;
+    bl.forEach(b => {
+      const x = B(b.id);
+      if (x.status === 'ok' || x.revealed) { ok++; return; }
+      const v = (x.val || '').trim();
+      if (!v) { empty++; x.status = ''; x.fb = ''; return; }
+      if (isRight(b, v)) { x.status = 'ok'; x.fb = ''; x.val = v; ok++; return; }
+      x.status = 'bad'; bad++;
+      x.fb = feedback(b, v);
+      if (v !== x.lastWrong) { x.wrong++; x.lastWrong = v; logTo(st, `空格 ${b.id.slice(1)}（${b.ask}）填了「${v}」`); }
     });
     save(); renderEditor();
-    if (ok === BLANKS.length) {
-      S.code.done = true; S.t.codeEnd = now(); save();
-      explain = { kind: 'ok', html: '全部 8 格都正確！接下來要把程式上傳到 Arduino。' };
+    if (ok === bl.length) {
+      st.done = true;
+      if (C.name === 'main') S.t.codeEnd = now(); else S.ext[C.name].t.codeEnd = now();
+      save();
+      explainMap[C.name] = { kind: 'ok', html: `全部 ${bl.length} 格都正確！接下來要把程式上傳到 Arduino。` };
       renderPanel();
-      modal({ title: '程式填空全部正確！', html: `<p>接下來像真的一樣把程式上傳到 Arduino：</p><ol style="margin:10px 0 0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px"><li>插上 USB 線</li><li>在 <span class="path">Tools → Board</span> 選開發板</li><li>在 <span class="path">Tools → Port</span> 選連接埠</li><li>按 ✓ 驗證，再按 → 上傳</li></ol>`, actions: [{ label: '開始', kind: 'go' }] });
+      modal(C.full
+        ? { title: '程式填空全部正確！', html: `<p>接下來像真的一樣把程式上傳到 Arduino：</p><ol style="margin:10px 0 0;padding-left:1.3em;display:flex;flex-direction:column;gap:4px"><li>插上 USB 線</li><li>在 <span class="path">Tools → Board</span> 選開發板</li><li>在 <span class="path">Tools → Port</span> 選連接埠</li><li>按 ✓ 驗證，再按 → 上傳</li></ol>`, actions: [{ label: '開始', kind: 'go' }] }
+        : { title: '程式填空全部正確！', html: `<p>USB 線、Board 和 Port 已經在主任務設定好。按 <b>✓ Verify</b> 驗證，再按 <b>→ Upload</b> 上傳。</p>`, actions: [{ label: '好', kind: 'go' }] });
       return;
     }
-    const parts = [`${ok} / 8 格正確`];
+    const parts = [`${ok} / ${bl.length} 格正確`];
     if (bad) parts.push(`${bad} 格有錯（紅色）`);
     if (empty) parts.push(`${empty} 格未填`);
-    explain = { kind: bad ? 'err' : 'warn', html: parts.join('，') + '。' + (bad ? '看看右邊清單的提示，改好後再按「檢查答案」。' : '') };
+    explainMap[C.name] = { kind: bad ? 'err' : 'warn', html: parts.join('，') + '。' + (bad ? '看看右邊清單的提示，改好後再按「檢查答案」。' : '') };
     renderPanel();
-    const firstBad = BLANKS.find(b => B(b.id).status === 'bad') || BLANKS.find(b => B(b.id).status !== 'ok' && !B(b.id).revealed);
+    const firstBad = bl.find(b => B(b.id).status === 'bad') || bl.find(b => B(b.id).status !== 'ok' && !B(b.id).revealed);
     if (firstBad) { const el = $('#blank-' + firstBad.id); el.focus(); el.scrollIntoView({ block: 'center' }); }
   }
   function reveal(id) {
-    const b = BLANKS.find(x => x.id === id);
+    const b = C.blanks.find(x => x.id === id);
     modal({
       title: `顯示空格 ${id.slice(1)} 的答案？`,
-      html: `<p>顯示答案後，這一格只會得 1 分（滿分 5 分）。建議先再試一次。</p>`,
+      html: `<p>${C.revealNote}</p>`,
       actions: [{ label: '再試一次', kind: 'ghost' }, { label: '顯示答案', kind: 'primary', onClick: () => {
         const st = B(id); st.revealed = true; st.val = b.ans; st.status = ''; st.fb = '';
-        logEv('code', `顯示答案：空格 ${id.slice(1)}（${b.ask}）`); save(); renderEditor(); renderPanel();
-        if (BLANKS.every(x => B(x.id).status === 'ok' || B(x.id).revealed)) checkAnswers();
+        logTo(C.st(), `顯示答案：空格 ${id.slice(1)}（${b.ask}）`); save(); renderEditor(); renderPanel();
+        if (C.blanks.every(x => B(x.id).status === 'ok' || B(x.id).revealed)) checkAnswers();
+      } }],
+    });
+  }
+
+  /* ---------- challenge 2: parse & check ---------- */
+  const C2_FUNCS = ['dot', 'dash', 'letterGap'];
+  const ARD_FUNCS = ['digitalWrite', 'digitalRead', 'pinMode', 'delay', 'tone', 'noTone', 'analogWrite'];
+  function parseRegion(text) {
+    const calls = [], errs = [], warns = [];
+    const lines = (text || '').split('\n');
+    lines.forEach((raw, i) => {
+      const ln = regLineNo(i);
+      let code = raw; const ci = code.indexOf('//'); if (ci >= 0) code = code.slice(0, ci);
+      if (!code.trim()) return;
+      const base = { line: ln, lineTxt: '  ' + raw };
+      if (/[^\x00-\x7F]/.test(code)) { const byte = new TextEncoder().encode(code.match(/[^\x00-\x7F]/)[0])[0]; errs.push({ ...base, col: code.search(/[^\x00-\x7F]/) + 3, len: 1, msg: `stray '\\${byte.toString(8)}' in program`, kind: 'stray' }); return; }
+      const segs = code.split(';');
+      const tail = segs.pop();
+      segs.forEach(sg => {
+        const s = sg.trim(); if (!s) return;
+        const col = code.indexOf(s) + 3;
+        let m;
+        if ((m = /^([A-Za-z_]\w*)\s*\(\s*([^()]*)\s*\)$/.exec(s))) {
+          const name = m[1], args = m[2].trim();
+          if (C2_FUNCS.includes(name)) {
+            if (args) errs.push({ ...base, col, len: s.length, msg: `too many arguments to function 'void ${name}()'`, kind: 'args', name });
+            else calls.push({ name, line: ln });
+          } else if (ARD_FUNCS.includes(name)) calls.push({ name, line: ln, other: true });
+          else { const sug = [...C2_FUNCS, ...ARD_FUNCS].find(k => k.toLowerCase() === name.toLowerCase()); errs.push({ ...base, col, len: name.length, msg: `'${name}' was not declared in this scope`, kind: 'undecl', sug }); }
+        } else if ((m = /^([A-Za-z_]\w*)$/.exec(s))) {
+          const name = m[1];
+          if (C2_FUNCS.includes(name)) { warns.push({ ...base, col, len: name.length, msg: `statement is a reference, not call, to function '${name}' [-Waddress]` }); calls.push({ name, line: ln, nocall: true }); }
+          else { const sug = C2_FUNCS.find(k => k.toLowerCase() === name.toLowerCase()); errs.push({ ...base, col, len: name.length, msg: `'${name}' was not declared in this scope`, kind: 'undecl', sug }); }
+        } else errs.push({ ...base, col, len: s.length, msg: `expected primary-expression before '${s.replace(/[^()]/g, '').slice(-1) || s[0]}' token`, kind: 'bad' });
+      });
+      if (tail.trim()) {
+        const s = tail.trim(), col = code.lastIndexOf(s) + 3 + s.length;
+        const nextTok = (() => { for (let k = i + 1; k < lines.length; k++) { const t = lines[k].replace(/\/\/.*/, '').trim(); if (t) return (t.match(/^[A-Za-z_]\w*|./) || ['}'])[0]; } return 'delay'; })();
+        errs.push({ ...base, col, len: 1, msg: `expected ';' before '${nextTok}'`, kind: 'semi', stmt: s });
+        const m = /^([A-Za-z_]\w*)\s*\(\s*\)$/.exec(s); if (m && C2_FUNCS.includes(m[1])) calls.push({ name: m[1], line: ln });
+      }
+    });
+    return { calls, errs, warns };
+  }
+  function checkC2() {
+    const st = C.st();
+    if (!st.initials) { toast('請先輸入你的英文名縮寫。'); $('#c2Init') && $('#c2Init').focus(); return; }
+    const sig = (st.text || '').replace(/\s+/g, '');
+    const fail = (html, log) => {
+      st.checks = (st.checks || 0) + 1;
+      let counted = false;
+      if (sig !== st.lastFailSig) { st.fails = (st.fails || 0) + 1; st.lastFailSig = sig; counted = true; logTo(st, log); }
+      explainMap.c2 = { kind: 'err', html: html + (counted ? '' : '<br><span class="small">程式未有改動，這次不再重複扣分。</span>') };
+      save(); renderPanel();
+    };
+    const { calls, errs } = parseRegion(st.text);
+    if (errs.length) { const e = errs[0]; return fail(`<b>第 ${e.line} 行寫法有問題。</b>${explainFreeErr(e)}`, `第 ${e.line} 行寫法錯誤`); }
+    const nc = calls.find(c => c.nocall);
+    if (nc) return fail(`<b>第 ${nc.line} 行少了括號。</b>要寫成 <code>${nc.name}();</code>，有 <code>()</code> 才會執行那個函數。`, `第 ${nc.line} 行少了 ()`);
+    const oth = calls.find(c => c.other);
+    if (oth) return fail(`第 ${oth.line} 行用了 <code>${oth.name}()</code>。這個挑戰只需要用 <code>dot();</code>、<code>dash();</code> 和 <code>letterGap();</code>。`, `第 ${oth.line} 行用了 ${oth.name}`);
+    if (!calls.length) return fail('你還未寫任何指令。按下面的按鈕，或自己輸入 <code>dot();</code>、<code>dash();</code>。', '未寫任何指令');
+    const letters = st.initials.split('');
+    const groups = [[]];
+    calls.forEach(c => { if (c.name === 'letterGap') groups.push([]); else groups[groups.length - 1].push(c.name); });
+    if (!groups[0].length && groups.length > 1) return fail('第一個指令不需要 <code>letterGap();</code>。letterGap 是放在<b>兩個字母之間</b>的。', '開頭多了 letterGap');
+    if (groups.length > 1 && !groups[groups.length - 1].length) groups.pop();
+    if (groups.some(g => !g.length)) return fail('有兩個 <code>letterGap();</code> 連在一起，中間沒有字母。請刪除多出的一個。', '連續兩個 letterGap');
+    const want = letters.map(morseCalls);
+    const flat = a => a.flat().join(',');
+    const sym = n => n === 'dot' ? '·' : '–';
+    if (groups.length !== want.length && flat(groups) === flat(want)) return fail(`點和劃的次序全部正確，但<b>字母之間要加 <code>letterGap();</code></b>，否則別人分不出哪裏是下一個字母。你的縮寫有 ${letters.length} 個字母，所以需要 ${letters.length - 1} 個 letterGap。`, '漏了 letterGap');
+    for (let i = 0; i < want.length; i++) {
+      const g = groups[i];
+      if (!g) return fail(`你寫完了 ${groups.length} 個字母，但縮寫 <b>${st.initials}</b> 有 ${letters.length} 個字母。下一個是 <b>${letters[i]}</b>（${MORSE[letters[i]]}），記得先加 <code>letterGap();</code>。`, `未寫完：缺少 ${letters.slice(i).join('')}`);
+      if (g.join(',') !== want[i].join(',')) {
+        const got = g.map(sym).join('');
+        return fail(`第 ${i + 1} 個字母 <b>${letters[i]}</b> 是 <b>${MORSE[letters[i]]}</b>，但你寫出來的是 <b>${got}</b>。${g.length !== want[i].length ? `${letters[i]} 要 ${want[i].length} 下閃光，你寫了 ${g.length} 下。` : '次序不對，· 是 dot()，– 是 dash()。'}`, `字母 ${letters[i]} 錯（寫了 ${got}）`);
+      }
+    }
+    if (groups.length > want.length) return fail(`${st.initials} 只有 ${letters.length} 個字母，但你寫了 ${groups.length} 組。請刪除多出的指令。`, '多寫了字母');
+    st.checks = (st.checks || 0) + 1;
+    st.done = true; S.ext.c2.t.codeEnd = now(); save();
+    explainMap.c2 = { kind: 'ok', html: `正確！你的程式會閃出 <b>${st.initials}</b>。下一步：按 ✓ Verify，再按 → Upload。` };
+    renderEditor(); renderPanel();
+    modal({ title: '程式正確！', html: `<p>你的程式會用摩斯密碼閃出 <b>${esc(st.initials)}</b>。USB 線、Board 和 Port 已經設定好，按 <b>✓ Verify</b> 驗證，再按 <b>→ Upload</b> 上傳。</p>`, actions: [{ label: '好', kind: 'go' }] });
+  }
+  function explainFreeErr(e) {
+    if (e.kind === 'stray') return '出現了中文或全形字。程式只可以用英文、數字和半形符號，例如分號要用半形的 <code>;</code>。';
+    if (e.kind === 'semi') return `句尾少了分號 <code>;</code>。每個指令最後都要有分號，例如 <code>${esc(e.stmt)};</code>。`;
+    if (e.kind === 'undecl') return `編譯器不認識「${esc(e.msg.match(/'([^']+)'/)[1])}」。${e.sug ? `你是否想寫 <b>${e.sug}</b>？Arduino 會分辨大小寫。` : '只可以用 dot、dash 和 letterGap。'}`;
+    if (e.kind === 'args') return `<code>${e.name}()</code> 的括號內不用填任何東西。`;
+    return '這一行的寫法不對。每行寫一個指令，例如 <code>dot();</code>。';
+  }
+  function revealC2() {
+    modal({
+      title: '顯示完整答案？',
+      html: '<p>顯示答案後，這個挑戰的程式分只得 3 分（滿分 8 分）。建議先看提示再試一次。</p>',
+      actions: [{ label: '再試一次', kind: 'ghost' }, { label: '顯示答案', kind: 'primary', onClick: () => {
+        const st = C.st();
+        st.text = st.initials.split('').map((ch, i) => `// ${ch}  ${MORSE[ch]}\n` + morseCalls(ch).map(n => n + '();').join('\n') + (i < st.initials.length - 1 ? '\nletterGap();' : '')).join('\n');
+        st.revealed = true; logTo(st, '顯示完整答案'); save(); renderEditor(); checkC2();
       } }],
     });
   }
@@ -247,14 +535,13 @@ const IDE = (() => {
     });
     m.style.left = x + 'px'; m.style.top = y + 'px';
     wrap.appendChild(m); openMenus.push(m);
-    // keep inside the wrap horizontally
     const wr = wrap.getBoundingClientRect(), mr = m.getBoundingClientRect();
     if (mr.right > wr.right + 120 && level > 0) m.style.left = Math.max(0, x - mr.width - (openMenus[level - 1] ? openMenus[level - 1].getBoundingClientRect().width : 0) + 4) + 'px';
     const vh = window.innerHeight; if (mr.bottom > vh - 8) m.style.maxHeight = (vh - mr.top - 12) + 'px', m.style.overflowY = 'auto';
     return m;
   }
 
-  /* ---------- board & port ---------- */
+  /* ---------- board & port (physical, shared by all contexts) ---------- */
   function setBoard(bn) { S.up.board = bn; save(); renderStatus(); renderPanel(); toast(`已選擇開發板：${bn}`); }
   function setPort(p) { S.up.port = p; save(); renderStatus(); renderPanel(); toast(`已選擇連接埠：${p}`); }
   function renderStatus() {
@@ -285,58 +572,74 @@ const IDE = (() => {
   }
 
   /* ---------- compile ---------- */
-  const KNOWN = ['HIGH', 'LOW', 'OUTPUT', 'INPUT', 'INPUT_PULLUP', 'LED_BUILTIN', 'true', 'false', 'ledPin'];
-  const FUNCS = ['digitalWrite', 'digitalRead', 'pinMode', 'delay', 'analogWrite'];
+  const KNOWN = ['HIGH', 'LOW', 'OUTPUT', 'INPUT', 'INPUT_PULLUP', 'LED_BUILTIN', 'true', 'false', 'ledPin', 'buzzerPin', 'pitch'];
+  const FUNCS = ['digitalWrite', 'digitalRead', 'pinMode', 'delay', 'analogWrite', 'tone', 'noTone'];
+  const ARITY = { digitalWrite: [2], digitalRead: [1], pinMode: [2], delay: [1], analogWrite: [2], tone: [2, 3], noTone: [1] };
+  const PROTO = { digitalWrite: 'void digitalWrite(uint8_t, uint8_t)', digitalRead: 'int digitalRead(uint8_t)', pinMode: 'void pinMode(uint8_t, uint8_t)', delay: 'void delay(long unsigned int)', analogWrite: 'void analogWrite(uint8_t, int)', tone: 'void tone(uint8_t, unsigned int, long unsigned int)', noTone: 'void noTone(uint8_t)' };
   function suggest(id) { const all = KNOWN.concat(FUNCS); return all.find(k => k.toLowerCase() === id.toLowerCase() && k !== id) || null; }
-  function compile() {
+  function compileBlanks() {
     const errs = [];
-    const filled = CODE_TEMPLATE.map(l => l.replace(/\{\{(b\d)\}\}/g, (_, id) => (B(id).val || '').trim()));
-    BLANKS.forEach(b => {
+    const filled = C.tpl.map(l => l.replace(/\{\{([a-z]\d)\}\}/g, (_, id) => (B(id).val || '').trim()));
+    C.blanks.forEach(b => {
       const v = (B(b.id).val || '').trim();
       const line = b.line, lineTxt = filled[line - 1];
-      const col = CODE_TEMPLATE[line - 1].indexOf('{{') + 1;
-      const fn = b.id === 'b1' ? null : b.id === 'b2' ? 'void setup()' : 'void loop()';
+      const col = C.tpl[line - 1].indexOf('{{') + 1;
+      const fn = fnOf(C.tpl, line);
       const push = (msg, extra = {}) => errs.push({ b, line, col, fn, msg, lineTxt, len: Math.max(1, v.length), ...extra });
       if (/[^\x00-\x7F]/.test(v)) { const byte = new TextEncoder().encode(v.match(/[^\x00-\x7F]/)[0])[0]; push(`stray '\\${byte.toString(8)}' in program`, { kind: 'stray' }); return; }
       if (!v) {
         if (b.ctx === 'delay') push("too few arguments to function 'void delay(long unsigned int)'", { kind: 'empty' });
         else if (b.ctx === 'init') push("expected primary-expression before ';' token", { kind: 'empty' });
+        else if (b.ctx === 'arg') push("too few arguments to function 'void noTone(uint8_t)'", { kind: 'empty' });
         else if (b.ctx !== 'func') push("expected primary-expression before ')' token", { kind: 'empty' });
+        else push("expected primary-expression before '(' token", { kind: 'empty' });
         return;
       }
       const tok = v.split(/\s+/)[0];
       if (/^-?\d+(\.\d+)?$/.test(v)) { if (b.ctx === 'func') push(`expression cannot be used as a function`, { kind: 'bad' }); return; }
       if (/^[A-Za-z_]\w*$/.test(tok)) {
         if (b.ctx === 'func') {
-          if (tok === 'digitalRead') return push("too many arguments to function 'int digitalRead(uint8_t)'", { kind: 'args' });
-          if (tok === 'delay') return push("too many arguments to function 'void delay(long unsigned int)'", { kind: 'args' });
-          if (FUNCS.includes(tok) && tok === v) return;
-        } else if ((KNOWN.includes(tok) || tok === 'ledPin') && tok === v) return;
+          if (FUNCS.includes(tok) && tok === v) {
+            const n = b.argc || 2;
+            if (!ARITY[tok].includes(n)) return push(`too ${n > Math.max(...ARITY[tok]) ? 'many' : 'few'} arguments to function '${PROTO[tok]}'`, { kind: 'args' });
+            return;
+          }
+        } else if (KNOWN.includes(tok) && tok === v) return;
         return push(`'${tok}' was not declared in this scope`, { kind: 'undecl', sug: suggest(tok) });
       }
       push(`expected primary-expression before '${esc(v[0])}' token`, { kind: 'bad' });
     });
-    return { errs, filled };
+    return errs;
+  }
+  function compileFree() {
+    const { errs, warns } = parseRegion(C.st().text);
+    return { errs: errs.map(e => ({ ...e, fn: 'void loop()' })), warns: warns.map(w => ({ ...w, fn: 'void loop()' })) };
+  }
+  function diagLines(list, sev) {
+    const out = []; let lastFn;
+    list.forEach(e => {
+      if (e.fn && e.fn !== lastFn) { out.push({ c: '', t: `${INO()}: In function '${e.fn}':` }); lastFn = e.fn; }
+      out.push({ c: sev === 'error' ? 'e' : 'w', t: `${INO()}:${e.line}:${e.col}: ${sev}: ${e.msg}` });
+      out.push({ c: '', t: ` ${e.lineTxt}` });
+      out.push({ c: sev === 'error' ? 'e' : 'w', t: ' ' + ' '.repeat(Math.max(0, e.col - 1)) + '^' + '~'.repeat(Math.max(0, e.len - 1)) });
+      if (e.sug) out.push({ c: 'g', t: `${INO()}:${e.line}:${e.col}: note: suggested alternative: '${e.sug}'` });
+    });
+    return out;
   }
   function errText(errs) {
-    const out = []; let lastFn;
-    errs.forEach(e => {
-      if (e.fn && e.fn !== lastFn) { out.push({ c: '', t: `${INO_PATH}: In function '${e.fn}':` }); lastFn = e.fn; }
-      out.push({ c: 'e', t: `${INO_PATH}:${e.line}:${e.col}: error: ${e.msg}` });
-      out.push({ c: '', t: ` ${e.lineTxt}` });
-      out.push({ c: 'e', t: ' ' + ' '.repeat(e.col - 1) + '^' + '~'.repeat(Math.max(0, e.len - 1)) });
-      if (e.sug) out.push({ c: 'g', t: `${INO_PATH}:${e.line}:${e.col}: note: suggested alternative: '${e.sug}'` });
-    });
+    const out = diagLines(errs, 'error');
     out.push({ c: '', t: '' }, { c: 'e', t: 'exit status 1' }, { c: '', t: '' }, { c: 'e', t: `Compilation error: ${errs[0].msg}` });
     return out;
   }
   function explainCompile(errs) {
-    const e = errs[0]; const n = e.b.id.slice(1);
+    const e = errs[0];
+    if (C.free) return `<b>編譯失敗（Compilation error）</b><br>第 ${e.line} 行：${explainFreeErr(e)}${errs.length > 1 ? `<br><span class="small">另外還有 ${errs.length - 1} 個錯誤，都在 Output 視窗中。</span>` : ''}`;
+    const n = e.b.id.slice(1);
     let why = '';
     if (e.kind === 'stray') why = '程式裏出現了中文或全形字。程式碼只可以用英文、數字和半形符號。';
     else if (e.kind === 'empty') why = e.b.ctx === 'delay' ? 'delay() 的括號內要有一個數字（毫秒）。這個空格還未填。' : '這個空格還未填，編譯器不知道那裏應該是甚麼。';
     else if (e.kind === 'undecl') why = `編譯器不認識「${esc(e.msg.match(/'([^']+)'/)[1])}」這個字。${e.sug ? `你是否想寫 <b>${e.sug}</b>？Arduino 會分辨大小寫。` : '檢查一下串字和大小寫。'}`;
-    else if (e.kind === 'args') why = '這個指令不能這樣用：括號內的資料數量不對。想想「開燈」應該用哪個指令。';
+    else if (e.kind === 'args') why = '這個指令不能這樣用：括號內的資料數量不對。想想這一行要做甚麼。';
     else why = '這個位置填的內容不符合程式的寫法。';
     return `<b>編譯失敗（Compilation error）</b><br>第 ${e.line} 行、空格 ${n} 有問題：${why}${errs.length > 1 ? `<br><span class="small">另外還有 ${errs.length - 1} 個錯誤，都在 Output 視窗中。</span>` : ''}`;
   }
@@ -357,19 +660,22 @@ const IDE = (() => {
   function hideNote(delay = 0) { setTimeout(() => { $('#ideNote').hidden = true; }, delay); }
   function setBusy(v) { busy = v; $('#btnVerify').disabled = v; $('#btnUpload').disabled = v; $('#outState').textContent = v ? '處理中…' : ''; }
 
-  const SIZE_LINES = [
-    { c: '', t: 'Sketch uses 1102 bytes (3%) of program storage space. Maximum is 32256 bytes.' },
-    { c: '', t: 'Global variables use 9 bytes (0%) of dynamic memory, leaving 2039 bytes for local variables. Maximum is 2048 bytes.' },
-  ];
+  const SIZE = { main: [1102, 9], c1: [2386, 19], c2: [1210, 9] };
+  const sizeLines = () => { const [f, r] = SIZE[C.name]; return [
+    { c: '', t: `Sketch uses ${f} bytes (${Math.round(f / 322.56)}%) of program storage space. Maximum is 32256 bytes.` },
+    { c: '', t: `Global variables use ${r} bytes (${Math.round(r / 20.48)}%) of dynamic memory, leaving ${2048 - r} bytes for local variables. Maximum is 2048 bytes.` },
+  ]; };
   function flowError(kind, action) {
-    if (!S.code.done) return false;
+    if (!C.st().done) return false;
+    const fl = C.flow();
     const sig = `${kind}|${action}|${S.up.board}|${S.up.port}|${S.up.usb}`;
-    if (sig === S.up.lastErrSig) return false;
-    S.up.lastErrSig = sig; S.up.errors++;
+    if (sig === fl.lastErrSig) return false;
+    fl.lastErrSig = sig; fl.errors = (fl.errors || 0) + 1;
     const msgs = { no_board: '未選擇開發板', no_port: '未選擇連接埠（Port）', wrong_port: `選錯連接埠（${S.up.port}）`, wrong_board: `選錯開發板（${S.up.board}）` };
-    logEv('up', `${action === 'upload' ? '上傳' : '驗證'}失敗：${msgs[kind]}`);
+    logTo(fl, `${action === 'upload' ? '上傳' : '驗證'}失敗：${msgs[kind]}`);
     save(); return true;
   }
+  const recorded = c => c ? '<br><span class="small">已記錄 1 次上傳流程錯誤。</span>' : '';
 
   async function verify(isUpload = false) {
     if (busy) return false;
@@ -380,27 +686,28 @@ const IDE = (() => {
       hideNote();
       out([{ c: 'e', t: 'Compilation error: Missing FQBN (Fully Qualified Board Name)' }]);
       const counted = flowError('no_board', isUpload ? 'upload' : 'verify');
-      explain = { kind: 'err', html: `<b>未選擇開發板。</b>編譯器要知道程式是給哪一款板用的。請到 <span class="path">Tools → Board → Arduino AVR Boards</span> 選 <b>Arduino Uno</b>。${counted ? '<br><span class="small">已記錄 1 次上傳流程錯誤。</span>' : ''}` };
+      explainMap[C.name] = { kind: 'err', html: `<b>未選擇開發板。</b>編譯器要知道程式是給哪一款板用的。請到 <span class="path">Tools → Board → Arduino AVR Boards</span> 選 <b>Arduino Uno</b>。${recorded(counted)}` };
       setBusy(false); renderPanel(); return false;
     }
     await note('Compiling sketch...', 1300);
-    const { errs } = compile();
+    let errs, warns = [];
+    if (C.free) ({ errs, warns } = compileFree()); else errs = compileBlanks();
+    $$('.cl.errline').forEach(x => x.classList.remove('errline'));
     if (errs.length) {
       hideNote();
-      out(errText(errs));
-      $$('.cl.errline').forEach(x => x.classList.remove('errline'));
+      out(diagLines(warns, 'warning').concat(errText(errs)));
       errs.forEach(e => { const cl = $(`.cl[data-ln="${e.line}"]`); cl && cl.classList.add('errline'); });
-      explain = { kind: 'err', html: explainCompile(errs) };
+      explainMap[C.name] = { kind: 'err', html: explainCompile(errs) };
       setBusy(false); renderPanel(); return false;
     }
-    $$('.cl.errline').forEach(x => x.classList.remove('errline'));
-    out(SIZE_LINES);
+    out(diagLines(warns, 'warning').concat(sizeLines()));
+    const done = C.st().done;
     if (!isUpload) {
       await note('Done compiling.', 1600, false); hideNote();
-      if (S.code.done && S.up.board === 'Arduino Uno') { S.up.verified = true; save(); }
-      explain = S.code.done
+      if (done && S.up.board === 'Arduino Uno') { C.flow().verified = true; save(); }
+      explainMap[C.name] = done
         ? (S.up.board === 'Arduino Uno' ? { kind: 'ok', html: '<b>編譯成功（Done compiling）。</b>程式沒有文法錯誤。下一步：按 → Upload 上傳。' } : { kind: 'warn', html: `編譯成功，但你選的開發板是 <b>${esc(S.up.board)}</b>。你手上的是 Arduino Uno，上傳前請更改。` })
-        : { kind: 'warn', html: '<b>編譯成功，但這不代表程式正確！</b>編譯器只檢查文法，不知道數字是否正確。請按「檢查答案」確認每一格。' };
+        : { kind: 'warn', html: `<b>編譯成功，但這不代表程式正確！</b>編譯器只檢查文法，${C.free ? '不知道你閃出的是否你的縮寫。請按「檢查程式」。' : '不知道數字是否正確。請按「檢查答案」確認每一格。'}${warns.length ? '<br>另外 Output 有黃色的 <b>warning</b>，要留意。' : ''}` };
       setBusy(false); renderPanel(); return true;
     }
     return true;
@@ -408,17 +715,18 @@ const IDE = (() => {
 
   async function upload() {
     if (busy) return;
-    if (!S.code.done) {
-      toast('請先完成程式填空，並按「檢查答案」確認全部正確。');
-      explain = { kind: 'warn', html: '上傳之前，要先完成 8 個空格，並按「檢查答案」確認全部正確。' }; renderPanel(); return;
+    if (!C.st().done) {
+      const msg = C.free ? '上傳之前，請先按「檢查程式」確認你的縮寫正確。' : `上傳之前，要先完成 ${C.blanks.length} 個空格，並按「檢查答案」確認全部正確。`;
+      toast(msg); explainMap[C.name] = { kind: 'warn', html: msg }; renderPanel(); return;
     }
+    SOUND.unlock();
     const ok = await verify(true);
     if (!ok) return;
     const up = S.up;
     if (!up.port) {
       hideNote(); out([{ c: 'e', t: 'Failed uploading: no upload port provided' }], true);
       const counted = flowError('no_port', 'upload');
-      explain = { kind: 'err', html: `<b>未選擇連接埠（Port）。</b>${up.usb ? '' : '你還未插上 USB 線。'}電腦要知道 Arduino 接在哪一個 COM。請${up.usb ? '' : '先插上 USB 線，再'}到 <span class="path">Tools → Port</span> 選有 <b>(Arduino Uno)</b> 字樣的那一個。${counted ? '<br><span class="small">已記錄 1 次上傳流程錯誤。</span>' : ''}` };
+      explainMap[C.name] = { kind: 'err', html: `<b>未選擇連接埠（Port）。</b>${up.usb ? '' : '你還未插上 USB 線。'}電腦要知道 Arduino 接在哪一個 COM。請${up.usb ? '' : '先插上 USB 線，再'}到 <span class="path">Tools → Port</span> 選有 <b>(Arduino Uno)</b> 字樣的那一個。${recorded(counted)}` };
       setBusy(false); renderPanel(); return;
     }
     await note('Uploading...', 900);
@@ -428,7 +736,7 @@ const IDE = (() => {
       lines.push({ c: '', t: '' }, { c: 'e', t: 'Failed uploading: uploading error: exit status 1' });
       hideNote(); out(lines, true);
       const counted = flowError('wrong_port', 'upload');
-      explain = { kind: 'err', html: `<b>上傳失敗：選錯連接埠。</b>${esc(up.port)} 不是 Arduino，所以電腦得不到回應（not in sync）。請到 <span class="path">Tools → Port</span> 選有 <b>(Arduino Uno)</b> 字樣的那一個。${counted ? '<br><span class="small">已記錄 1 次上傳流程錯誤。</span>' : ''}` };
+      explainMap[C.name] = { kind: 'err', html: `<b>上傳失敗：選錯連接埠。</b>${esc(up.port)} 不是 Arduino，所以電腦得不到回應（not in sync）。請到 <span class="path">Tools → Port</span> 選有 <b>(Arduino Uno)</b> 字樣的那一個。${recorded(counted)}` };
       setBusy(false); renderPanel(); return;
     }
     if (up.board !== 'Arduino Uno') {
@@ -439,20 +747,22 @@ const IDE = (() => {
       lines.push({ c: '', t: '' }, { c: 'e', t: 'Failed uploading: uploading error: exit status 1' });
       hideNote(); out(lines, true);
       const counted = flowError('wrong_board', 'upload');
-      explain = { kind: 'err', html: `<b>上傳失敗：選錯開發板。</b>你選了 <b>${esc(up.board)}</b>，但接着的是 <b>Arduino Uno</b>，上傳方式不同，所以失敗。請到 <span class="path">Tools → Board → Arduino AVR Boards</span> 改選 Arduino Uno。${counted ? '<br><span class="small">已記錄 1 次上傳流程錯誤。</span>' : ''}` };
+      explainMap[C.name] = { kind: 'err', html: `<b>上傳失敗：選錯開發板。</b>你選了 <b>${esc(up.board)}</b>，但接着的是 <b>Arduino Uno</b>，上傳方式不同，所以失敗。請到 <span class="path">Tools → Board → Arduino AVR Boards</span> 改選 Arduino Uno。${recorded(counted)}` };
       setBusy(false); renderPanel(); return;
     }
-    // success
     let flick = setInterval(() => { $$('.mTX,.mRX').forEach(el => el.setAttribute('fill', Math.random() > .4 ? '#FFB020' : '#6B5A2E')); }, 70);
     await note('Uploading...', 1500);
     clearInterval(flick); $$('.mTX,.mRX').forEach(el => el.setAttribute('fill', '#6B5A2E'));
     await note('Done uploading.', 100, false);
     hideNote(2500);
-    up.uploaded = true; up.verified = true; S.t.upEnd = now(); if (!S.t.real) S.t.real = now();
-    unlock('real'); save();
-    explain = { kind: 'ok', html: '<b>上傳完成（Done uploading）！</b>你的 SOS 求救燈正在運作。' };
-    setBusy(false); renderPanel(); startMiniSOS();
-    showResult();
+    const fl = C.flow(); fl.uploaded = true; fl.verified = true;
+    if (C.name === 'main') { S.t.upEnd = now(); if (!S.t.real) S.t.real = now(); unlock('real'); }
+    else { const x = S.ext[C.name]; x.done = true; x.t.end = now(); }
+    save();
+    explainMap[C.name] = { kind: 'ok', html: C.name === 'main' ? '<b>上傳完成（Done uploading）！</b>你的 SOS 求救燈正在運作。' : '<b>上傳完成（Done uploading）！</b>延伸挑戰完成。' };
+    setBusy(false); renderPanel();
+    if (C.name === 'main') { startMiniSOS(); showResult(); }
+    else EXT.showResult(C.name, true);
   }
 
   function showResult() {
@@ -503,34 +813,64 @@ const IDE = (() => {
 
   /* ---------- side panel ---------- */
   function flowSteps() {
-    const up = S.up, c = S.code.done;
-    return [
-      { t: '完成程式填空', done: c },
+    const up = S.up, fl = C.flow(), c = C.st().done;
+    const first = { t: C.free ? '寫出你的縮寫' : '完成程式填空', done: c };
+    if (!C.full) return [first, { t: '驗證（編譯）程式', done: !!fl.verified }, { t: '上傳程式', done: !!fl.uploaded }];
+    return [first,
       { t: '插上 USB 線', done: up.usb },
       { t: '選擇開發板（Board）', done: up.board === 'Arduino Uno' },
       { t: '選擇連接埠（Port）', done: up.usb && up.port === up.com },
-      { t: '驗證（編譯）程式', done: up.verified },
-      { t: '上傳程式', done: up.uploaded },
-    ];
+      { t: '驗證（編譯）程式', done: !!fl.verified },
+      { t: '上傳程式', done: !!fl.uploaded }];
+  }
+  function blanksBody() {
+    const bl = C.blanks;
+    const nOk = bl.filter(b => B(b.id).status === 'ok' || B(b.id).revealed).length;
+    return `<p>${C.intro}</p>
+      <div class="row"><button class="btn primary sm" id="btnCheck">檢查答案</button><span class="pill ${nOk === bl.length ? 'ok' : ''}">${nOk} / ${bl.length} 格正確</span></div>
+      <div><div class="small muted" style="margin-bottom:4px">字詞庫（先點空格，再點字詞）</div><div class="bank">${C.bank.map(w => `<button class="chip" data-w="${w}">${w}</button>`).join('')}</div></div>
+      <ul class="blist">${bl.map(b => {
+        const st = B(b.id); const cls = st.revealed ? 'rev' : st.status;
+        let extra = '';
+        if (st.status === 'ok') extra = '<span class="pill ok">正確</span>';
+        else if (st.revealed) extra = '<span class="pill warn">已顯示答案</span>';
+        else if (st.wrong >= 3) extra = `<button class="btn sm ghost" data-rev="${b.id}">顯示答案</button>`;
+        let h = '';
+        if (st.status === 'bad' && st.fb) h += `<div class="fb">${st.fb}</div>`;
+        if (st.wrong >= 2 && st.status !== 'ok' && !st.revealed) h += `<div class="h">提示：${b.hint}</div>`;
+        return `<li class="${cls}"><span class="n">${b.id.slice(1)}</span><div><div>${b.ask}<span class="muted small">（第 ${b.line} 行）</span></div>${h}${st.wrong ? `<div class="small muted">答錯 ${st.wrong} 次</div>` : ''}</div>${extra}</li>`;
+      }).join('')}</ul>`;
+  }
+  function freeBody() {
+    const st = C.st();
+    const ini = st.initials || '';
+    const table = ini ? `<div class="mcards">${ini.split('').map(ch => `<div class="mcard"><b>${ch}</b><span>${MORSE[ch].split('').map(s => `<i class="${s === '·' ? 'd' : 'h'}"></i>`).join('')}</span><em>${MORSE[ch]}</em></div>`).join('')}</div>` : '';
+    let hint = '';
+    const fails = st.fails || 0;
+    if (!st.done && fails >= 2 && ini) {
+      const letters = ini.split('');
+      const { calls } = parseRegion(st.text);
+      const groups = [[]]; calls.forEach(c => { if (c.name === 'letterGap') groups.push([]); else groups[groups.length - 1].push(c.name); });
+      let k = letters.findIndex((ch, i) => (groups[i] || []).join(',') !== morseCalls(ch).join(','));
+      if (k < 0) k = 0;
+      hint = `<div class="h small">提示：字母 <b>${letters[k]}</b>（${MORSE[letters[k]]}）要寫成 <code>${morseCalls(letters[k]).map(n => n + '();').join(' ')}</code>${k < letters.length - 1 ? '，之後加 <code>letterGap();</code>' : ''}</div>`;
+    }
+    return `<div class="stack" style="gap:8px">
+      <p>用摩斯密碼閃出你的<b>英文名縮寫</b>。例如 Chan Tai Man → <b>CTM</b>。</p>
+      ${st.done ? `<p>你的縮寫：<b class="mono">${esc(ini)}</b></p>` : `<div class="row"><input id="c2Init" class="ini-in" maxlength="4" value="${esc(ini)}" placeholder="例如 CTM" aria-label="英文名縮寫" autocomplete="off"><button class="btn sm" id="c2Set">設定</button></div>`}
+      ${table}
+      <div class="dict small"><div><code>·</code><span>寫 <code>dot();</code></span></div><div><code>–</code><span>寫 <code>dash();</code></span></div><div><code>字母之間</code><span>寫 <code>letterGap();</code></span></div></div>
+      ${st.done ? '' : `<div class="row"><button class="chip" data-ins="dot();">dot();</button><button class="chip" data-ins="dash();">dash();</button><button class="chip" data-ins="letterGap();">letterGap();</button><button class="btn sm ghost" id="c2Clear">清除全部</button></div>
+      <p class="small muted">按按鈕會在游標位置加入一行，也可以在編輯器直接打字。</p>
+      <div class="row"><button class="btn primary sm" id="btnCheck">檢查程式</button>${fails ? `<span class="pill err">未通過 ${fails} 次</span>` : ''}${fails >= 3 && !st.revealed ? '<button class="btn sm ghost" id="c2Reveal">顯示答案</button>' : ''}</div>`}
+      ${hint}
+    </div>`;
   }
   function stepBody(i) {
-    const up = S.up;
-    if (i === 0) {
-      const nOk = BLANKS.filter(b => B(b.id).status === 'ok' || B(b.id).revealed).length;
-      return `<p>程式已寫好大部分，你要完成 <b>8 個橙色空格</b>。先讀灰色的註解，它會告訴你那一行做甚麼。可以直接打字，或者點選下面的字詞。</p>
-        <div class="row"><button class="btn primary sm" id="btnCheck">檢查答案</button><span class="pill ${nOk === 8 ? 'ok' : ''}">${nOk} / 8 格正確</span></div>
-        <div><div class="small muted" style="margin-bottom:4px">字詞庫（先點空格，再點字詞）</div><div class="bank">${BANK.map(w => `<button class="chip" data-w="${w}">${w}</button>`).join('')}</div></div>
-        <ul class="blist">${BLANKS.map(b => {
-          const st = B(b.id); const cls = st.revealed ? 'rev' : st.status;
-          let extra = '';
-          if (st.status === 'ok') extra = '<span class="pill ok">正確</span>';
-          else if (st.revealed) extra = '<span class="pill warn">已顯示答案</span>';
-          else if (st.wrong >= 3) extra = `<button class="btn sm ghost" data-rev="${b.id}">顯示答案</button>`;
-          let h = '';
-          if (st.status === 'bad' && st.fb) h += `<div class="fb">${st.fb}</div>`;
-          if (st.wrong >= 2 && st.status !== 'ok' && !st.revealed) h += `<div class="h">提示：${b.hint}</div>`;
-          return `<li class="${cls}"><span class="n">${b.id.slice(1)}</span><div><div>${b.ask}<span class="muted small">（第 ${b.line} 行）</span></div>${h}${st.wrong ? `<div class="small muted">答錯 ${st.wrong} 次</div>` : ''}</div>${extra}</li>`;
-        }).join('')}</ul>`;
+    if (i === 0) return C.free ? freeBody() : blanksBody();
+    if (!C.full) {
+      if (i === 1) return `<p>按工具列左邊的 <b>✓ Verify</b>（或 <kbd>Ctrl</kbd>+<kbd>R</kbd>）。Board 和 Port 沿用主任務的設定。</p>`;
+      return `<p>按 <b>→ Upload</b>（或 <kbd>Ctrl</kbd>+<kbd>U</kbd>），把程式傳到 Arduino。</p>`;
     }
     if (i === 1) return `<div class="minib"><div id="miniBoard">${miniSVG()}</div><div class="stack"><p>用 USB 線把 Arduino UNO 接到電腦。接上後板上綠色的 <b>ON</b> 燈會亮，電腦會多了一個 COM 連接埠。</p><button class="btn teal sm" id="btnUsb">插上 USB 線</button></div></div>`;
     if (i === 2) return `<p>在 IDE 最上方的選單按 <span class="path">Tools → Board → Arduino AVR Boards → Arduino Uno</span>。</p><p class="small muted">也可以用工具列上的開發板下拉選單。小心：選單內有很多款相似的板。</p>`;
@@ -539,45 +879,52 @@ const IDE = (() => {
     if (i === 5) return `<p>按 <b>→ Upload</b>（或 <kbd>Ctrl</kbd>+<kbd>U</kbd>），把程式傳到 Arduino。上傳時板上的 TX / RX 燈會快速閃動。</p>`;
     return '';
   }
+  function statsHTML() {
+    const fl = C.flow(), st = C.st();
+    if (C.free) return `<span class="pill ${st.fails ? 'err' : ''}">檢查未通過 ${st.fails || 0} 次</span><span class="pill ${fl.errors ? 'err' : ''}">上傳流程錯誤 ${fl.errors || 0} 次</span>`;
+    const nWrong = C.blanks.reduce((a, b) => a + (B(b.id).wrong || 0), 0), nRev = C.blanks.filter(b => B(b.id).revealed).length;
+    return `<span class="pill ${nWrong ? 'err' : ''}">填錯 ${nWrong} 次</span><span class="pill ${nRev ? 'warn' : ''}">顯示答案 ${nRev} 格</span><span class="pill ${fl.errors ? 'err' : ''}">上傳流程錯誤 ${fl.errors || 0} 次</span>`;
+  }
   function renderPanel() {
     const steps = flowSteps();
     const cur = steps.findIndex(s => !s.done);
-    const nWrong = BLANKS.reduce((a, b) => a + (B(b.id).wrong || 0), 0), nRev = BLANKS.filter(b => B(b.id).revealed).length;
+    const done = C.st().done;
     const panel = $('#codePanel');
-    panel.innerHTML = `<div><div class="eyebrow">第 3 步</div><h2>編程及上傳</h2></div>
+    const ex = explainMap[C.name];
+    panel.innerHTML = `<div><div class="eyebrow">${C.eyebrow}</div><h2>${C.title}</h2></div>
       <ol class="steps">${steps.map((s, i) => {
-        const locked = i > 0 && !S.code.done;
+        const locked = i > 0 && !done;
         const cls = s.done ? 'done' : (i === cur && !locked ? 'cur' : (i === 0 ? 'cur' : 'locked'));
-        const open = (i === cur && !locked) || (i === 0 && !s.done) || (i === 1 && !S.up.usb && S.code.done);
+        const open = (i === cur && !locked) || (i === 0 && !s.done) || (C.full && i === 1 && !S.up.usb && done);
         return `<li class="${cls}"><div class="sh"><i>${s.done ? '✓' : i + 1}</i>${s.t}</div>${open ? `<div class="sb">${stepBody(i)}</div>` : ''}</li>`;
       }).join('')}</ol>
-      <div id="codeExplain">${explain ? alertBox(explain.kind, explain.html) : ''}</div>
-      ${S.up.uploaded ? '<button class="btn go" id="codeNext">下一步：實物挑戰</button>' : ''}
-      <div class="statline"><span class="pill ${nWrong ? 'err' : ''}">填錯 ${nWrong} 次</span><span class="pill ${nRev ? 'warn' : ''}">顯示答案 ${nRev} 格</span><span class="pill ${S.up.errors ? 'err' : ''}">上傳流程錯誤 ${S.up.errors} 次</span></div>
-      <details class="fold know"><summary>指令小字典</summary><div class="dict">
-        <div><code>int ledPin = 13;</code><span>建立變數 ledPin，記住 LED 接在 13 號腳</span></div>
-        <div><code>setup()</code><span>開機時執行一次，用來做設定</span></div>
-        <div><code>loop()</code><span>不停重複執行裏面的程式</span></div>
-        <div><code>pinMode(腳, 模式)</code><span>設定腳位是 OUTPUT（輸出）還是 INPUT（輸入）</span></div>
-        <div><code>digitalWrite(腳, 狀態)</code><span>HIGH = 輸出 5V（開），LOW = 輸出 0V（關）</span></div>
-        <div><code>delay(毫秒)</code><span>暫停一段時間，1000 毫秒 = 1 秒</span></div>
-      </div></details>`;
-    const bc = $('#btnCheck'); if (bc) bc.onclick = checkAnswers;
+      <div id="codeExplain">${ex ? alertBox(ex.kind, ex.html) : ''}</div>
+      ${C.flow().uploaded ? `<button class="btn go" id="codeNext">${C.next.label}</button>` : (C.name !== 'main' ? `<button class="btn sm ghost" id="codeBack">返回延伸挑戰</button>` : '')}
+      <div class="statline">${statsHTML()}</div>
+      <details class="fold know"><summary>指令小字典</summary><div class="dict">${C.dict.map(([c, t]) => `<div><code>${esc(c)}</code><span>${t}</span></div>`).join('')}</div></details>`;
+    const bc = $('#btnCheck'); if (bc) bc.onclick = C.free ? checkC2 : checkAnswers;
     const bu = $('#btnUsb'); if (bu) bu.onclick = plugUsb;
-    const cn = $('#codeNext'); if (cn) cn.onclick = () => goStage('real');
+    const cn = $('#codeNext'); if (cn) cn.onclick = () => goStage(C.next.stage);
+    const cb = $('#codeBack'); if (cb) cb.onclick = () => goStage('ext');
     $$('[data-rev]', panel).forEach(b => b.onclick = () => reveal(b.dataset.rev));
-    $$('.chip', panel).forEach(c => c.onclick = () => {
+    $$('.chip[data-w]', panel).forEach(c => c.onclick = () => {
       let id = lastFocus;
-      const st = id && B(id);
-      if (!id || st.status === 'ok' || st.revealed) { const nb = BLANKS.find(b => B(b.id).status !== 'ok' && !B(b.id).revealed); if (!nb) return; id = nb.id; }
+      const st = id && C.blanks.some(b => b.id === id) && B(id);
+      if (!st || st.status === 'ok' || st.revealed) { const nb = C.blanks.find(b => B(b.id).status !== 'ok' && !B(b.id).revealed); if (!nb) return; id = nb.id; }
       const el = $('#blank-' + id); el.value = c.dataset.w; el.dispatchEvent(new Event('input')); el.focus();
       focusNext(id);
     });
-    if (S.up.uploaded) { const m = $('#miniBoard'); if (m && !miniStop) startMiniSOS(); }
-  }
-  function renderPanelLight() {
-    const pill = $('#codePanel .steps li:first-child .pill'); // counts only change on check; nothing else to refresh
-    return pill;
+    $$('.chip[data-ins]', panel).forEach(c => c.onclick = () => insertAtCaret(c.dataset.ins));
+    const setIni = () => {
+      const v = ($('#c2Init').value || '').toUpperCase().replace(/[^A-Z]/g, '');
+      if (v.length < 2 || v.length > 4) { toast('縮寫要有 2 至 4 個英文字母。', 'err'); return; }
+      C.st().initials = v; save(); toast(`縮寫已設定為 ${v}`, 'ok'); renderPanel();
+    };
+    const si = $('#c2Set'); if (si) si.onclick = setIni;
+    const ii = $('#c2Init'); if (ii) ii.onkeydown = e => { if (e.key === 'Enter') setIni(); };
+    const cl = $('#c2Clear'); if (cl) cl.onclick = () => { const ta = $('#regionTa'); if (ta) { ta.value = ''; C.st().text = ''; save(); syncRegion(); ta.focus(); } };
+    const rv = $('#c2Reveal'); if (rv) rv.onclick = revealC2;
+    if (C.name === 'main' && S.up.uploaded) { const m = $('#miniBoard'); if (m && !miniStop) startMiniSOS(); }
   }
 
   function build() {
@@ -595,23 +942,32 @@ const IDE = (() => {
     $('#btnUpload').addEventListener('click', upload);
     $$('[data-deco]').forEach(b => b.addEventListener('click', deco));
     document.addEventListener('keydown', e => {
-      if (!S || S.stage !== 'code' || !(e.ctrlKey || e.metaKey) || $('.modal-back')) return;
+      if (!S || !['code', 'c1code', 'c2code'].includes(S.stage) || !(e.ctrlKey || e.metaKey) || $('.modal-back')) return;
       if (e.key === 'r' || e.key === 'R') { e.preventDefault(); verify(false); }
       if (e.key === 'u' || e.key === 'U') { e.preventDefault(); upload(); }
     });
     built = true;
   }
-  function enter() {
+  function enter(name = 'main') {
     if (!built) build();
-    BLANKS.forEach(b => B(b.id));
+    const switched = !C || C.name !== name;
+    C = CTX[name];
+    $('#ideMenubar .title').textContent = `${C.file} | Arduino IDE`;
+    $('.ide-tab').textContent = `${C.file}.ino`;
+    C.blanks.forEach(b => B(b.id));
     renderEditor(); renderStatus(); renderPanel();
-    if (!$('#ideOut').textContent) out([{ c: 'g', t: '（Output 視窗：編譯和上傳的訊息會顯示在這裏）' }]);
+    if (switched || !$('#ideOut').textContent) out([{ c: 'g', t: '（Output 視窗：編譯和上傳的訊息會顯示在這裏）' }]);
   }
-  function fillAnswers() {
-    BLANKS.forEach(b => { const st = B(b.id); st.val = b.ans; });
-    S.teacherUsed = true; save(); if (built) { renderEditor(); renderPanel(); }
+  function fillAnswers(name = C ? C.name : 'main') {
+    const prev = C; C = CTX[name];
+    if (C.free) { if (!C.st().initials) C.st().initials = 'SOS'; C.st().text = C.st().initials.split('').map((ch, i) => morseCalls(ch).map(n => n + '();').join('\n') + (i < C.st().initials.length - 1 ? '\nletterGap();' : '')).join('\n'); }
+    else C.blanks.forEach(b => { B(b.id).val = b.ans; });
+    S.teacherUsed = true; save();
+    if (built && prev && prev.name === name) { renderEditor(); renderPanel(); } else C = prev;
   }
   function leave() { if (miniStop) { miniStop(); miniStop = null; } closeMenus(); }
-  return { enter, leave, fillAnswers, compile, checkAnswers };
+  return { enter, leave, fillAnswers, compile: compileBlanks, checkAnswers, parseRegion, current: () => C && C.name };
 })();
-stageInit.code = () => IDE.enter();
+stageInit.code = () => IDE.enter('main');
+stageInit.c1code = () => IDE.enter('c1');
+stageInit.c2code = () => IDE.enter('c2');
