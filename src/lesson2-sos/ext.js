@@ -70,14 +70,15 @@ const EXT = (() => {
       </div>
       <div class="ext-grid">
         <article class="card ext-card">
-          <div class="ext-top"><div class="ext-num">1</div><div><h3>聲光 SOS</h3><p class="muted small">加一個 Piezo 蜂鳴器：LED 閃的同時「嗶」一聲。學習用 <code>tone()</code> 和 <code>noTone()</code> 發聲。</p></div>${status(e.c1, true)}</div>
-          <ul class="ext-prog">${tick(e.c1.hw.done, '硬件：加入 Piezo（D8 → Piezo → GND）')}${tick(e.c1.code.done, '程式：完成 6 個空格')}${tick(e.c1.flow.uploaded, '驗證及上傳')}${tick(e.c1.confirmed, '老師確認實物成功')}</ul>
+          <div class="ext-top"><div class="ext-num">1</div><div><h3>聲光 SOS</h3><p class="muted small">加一個蜂鳴器：LED 閃的同時「嗶」一聲。學習用 <code>tone()</code> 和 <code>noTone()</code> 發聲。</p></div>${status(e.c1, true)}</div>
+          <details class="fold ext-mat"><summary>需要的材料（實物）</summary>${KIT.table(MATERIALS.c1)}</details>
+          <ul class="ext-prog">${tick(e.c1.hw.done, '硬件：加入蜂鳴器（D8 → 蜂鳴器 → GND）')}${tick(e.c1.code.done, '程式：完成 6 個空格')}${tick(e.c1.flow.uploaded, '驗證及上傳')}${tick(e.c1.confirmed, '老師確認實物成功')}</ul>
           ${sc.c1 ? `<p class="ext-score"><b>${sc.c1.total}</b> / 10　<span class="small muted">接線 ${sc.c1.hw}/4 · 程式 ${sc.c1.code}/4 · 上傳 ${sc.c1.up}/2</span></p>` : '<p class="small muted">評分：接線 4 分、程式 4 分、上傳 2 分。</p>'}
           <div class="row">
             ${e.c1.done ? '<button class="btn" data-replay="c1">再看一次（有聲）</button>' : `<button class="btn go" data-go="${c1Next}">${status(e.c1, true).includes('未開始') ? '開始挑戰 1' : '繼續挑戰 1'}</button>`}
           </div>
           ${e.c1.done ? `<details class="fold ext-real" ${e.c1.confirmed ? '' : 'open'}><summary>在真的 UNO 上做一次</summary>
-            <ol class="goals small"><li>保留原本的 LED 電路，<b>先拔走 USB 線</b>。</li><li>把 Piezo 插到麵包板，兩隻腳在不同號碼的直行。</li><li>橙色線：D8 → Piezo 一隻腳；黑色線：GND → Piezo 另一隻腳。</li><li>插回 USB 線，把程式貼到 Arduino IDE，然後上傳。</li><li>LED 閃時應該聽到「嗶」聲。沒有聲？檢查是否用了 <code>tone()</code>，以及 Piezo 兩隻腳是否插在不同直行。</li></ol>
+            <ol class="goals small"><li>保留原本的 LED 電路，<b>先拔走 USB 線</b>。</li><li>把蜂鳴器插到麵包板，兩隻腳在不同號碼的直行。</li><li>藍色線：D8 → 蜂鳴器一隻腳；黑色線：GND → 蜂鳴器另一隻腳。</li><li>插回 USB 線，把程式貼到 Arduino IDE，然後上傳。</li><li>LED 閃時應該聽到「嗶」聲。沒有聲？檢查是否用了 <code>tone()</code>，以及蜂鳴器兩隻腳是否插在不同直行。</li></ol>
             <div class="row"><button class="btn sm primary" data-copy="c1">複製完整程式</button><span class="small muted" data-copymsg="c1"></span></div>
             ${e.c1.confirmed ? alertBox('ok', '老師已確認實物成功。') : '<button class="btn sm teal" data-confirm="c1">老師確認實物成功</button>'}
           </details>` : ''}
@@ -130,7 +131,7 @@ const EXT = (() => {
             <div class="morse" id="c1Morse" style="background:#0F1B20;border-radius:8px;padding:6px"></div>
             <div class="row">${muteBtnHTML()}<span class="small muted">頻率 ${pitch} Hz</span></div>
           </div>
-          <p class="small muted" style="margin-top:8px">LED 亮時 Piezo 同時發聲。靜音時可以看 Piezo 旁邊的黃色聲波。想聽不同的聲音？在真的 Arduino 上把 <code>pitch</code> 改成 500 或 2000 試試。</p>`,
+          <p class="small muted" style="margin-top:8px">LED 亮時蜂鳴器同時發聲。靜音時可以看蜂鳴器旁邊的黃色聲波。想聽不同的聲音？在真的 Arduino 上把 <code>pitch</code> 改成 500 或 2000 試試。</p>`,
         actions: [toExt],
         onOpen: back => {
           bindMute(back);

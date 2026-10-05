@@ -43,10 +43,10 @@ async def main():
         await drag((BIN(3), 574), H('h13', 40))
         await check(2)
         # 3 signals
-        await wire('P:D12', 'j1', 3); await wire('P:D11', 'j7', 1); await wire('P:D10', 'j13', 5)
+        await wire('P:D12', 'j1', 3); await wire('P:D11', 'j7', 2); await wire('P:D10', 'j13', 5)
         await check(3)
         # 4 GND via rail, forget green
-        await wire('P:GND', 'tn1', 4); await wire('j6', 'tn6'); await wire('j12', 'tn12')
+        await wire('P:GND', 'tn1', 1); await wire('j6', 'tn6'); await wire('j12', 'tn12')
         await check(4, 'forgot green')
         await wire('j18', 'tn18')
         await check(4)
@@ -58,12 +58,12 @@ async def main():
         await pg.click('#stRot'); await pg.wait_for_timeout(100)
         await check(5)
         # 6
-        await wire('P:5V', 'j19', 3); await wire('P:D2', 'j21', 6)
+        await wire('P:5V', 'j19', 3); await wire('P:D2', 'j21', 4)
         await check(6)
         # 7 pull-down
         await drag((BIN(4), 574), H('h21', 40))
         await check(7, 'no gnd yet')
-        await wire('j25', 'tn25', 4)
+        await wire('j25', 'tn25', 1)
         await check(7); await check(8)
         await pg.screenshot(path=OUT + '05-hw-done.png')
         print('hw', await pg.evaluate('()=>({e:S.hw.errors,h:S.hw.hints,done:S.hw.done})'))

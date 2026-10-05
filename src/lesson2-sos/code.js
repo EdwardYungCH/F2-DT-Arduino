@@ -69,19 +69,19 @@ const BLANKS = [
 ];
 const BANK = ['13', '12', 'OUTPUT', 'INPUT', 'HIGH', 'LOW', '2', '200', '600', '2000', 'digitalWrite', 'digitalRead', 'pinMode'];
 
-/* ---------- 延伸挑戰 1：聲光 SOS（Piezo 用 tone / noTone） ---------- */
+/* ---------- 延伸挑戰 1：聲光 SOS（蜂鳴器用 tone / noTone） ---------- */
 const C1_TEMPLATE = (() => {
   const L = [
     '// 延伸挑戰 1：聲光 SOS',
-    '// LED 閃的同時，Piezo 蜂鳴器發出「嗶」聲',
+    '// LED 閃的同時，蜂鳴器發出「嗶」聲',
     '',
     'int ledPin = 13;              // LED 接在 13 號腳',
-    'int buzzerPin = {{e1}};           // Piezo 接在第幾號腳？',
+    'int buzzerPin = {{e1}};           // 蜂鳴器接在第幾號腳？',
     'int pitch = {{e2}};             // 聲音頻率（Hz），建議 1000',
     '',
     'void setup() {',
     '  pinMode(ledPin, OUTPUT);',
-    '  pinMode(buzzerPin, {{e3}});   // Piezo 也要設定為「輸出」',
+    '  pinMode(buzzerPin, {{e3}});   // 蜂鳴器也要設定為「輸出」',
     '}',
     '',
     'void loop() {',
@@ -112,12 +112,12 @@ const C1_TEMPLATE = (() => {
 })();
 const pitchOK = v => /^\d+$/.test(v) && +v >= 100 && +v <= 5000;
 const C1_BLANKS = [
-  { id: 'e1', ans: '8', ctx: 'init', ask: 'Piezo 接在哪一號腳', hint: '回想剛才的接線：Piezo 的信號線接在 UNO 的幾號腳？只填數字。' },
+  { id: 'e1', ans: '8', ctx: 'init', ask: '蜂鳴器接在哪一號腳', hint: '回想剛才的接線：蜂鳴器的信號線接在 UNO 的幾號腳？只填數字。' },
   { id: 'e2', ans: '1000', ctx: 'init', accept: pitchOK, ask: '聲音頻率（Hz）', hint: '頻率 = 每秒震動多少次。填 <em>100 至 5000</em> 之間的整數，建議 1000。' },
-  { id: 'e3', ans: 'OUTPUT', ctx: 'mode', ask: 'Piezo 腳位的模式', hint: 'Arduino 要「送出」信號給 Piezo，所以是「輸出」。英文要<em>全部大寫</em>。' },
-  { id: 'e4', ans: 'tone', ctx: 'func', argc: 2, ask: '令 Piezo 發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
-  { id: 'e5', ans: 'noTone', ctx: 'func', argc: 1, ask: '令 Piezo 停聲的指令', hint: '停聲 = no + Tone，寫成 <em>noTone</em>，注意 T 是大寫。' },
-  { id: 'e6', ans: 'buzzerPin', ctx: 'arg', accept: v => v === 'buzzerPin' || v === '8', ask: '停止哪一支腳的聲音', hint: '要停的是 Piezo 那支腳。程式第 5 行已經用一個變數記住了它的腳位。' },
+  { id: 'e3', ans: 'OUTPUT', ctx: 'mode', ask: '蜂鳴器腳位的模式', hint: 'Arduino 要「送出」信號給蜂鳴器，所以是「輸出」。英文要<em>全部大寫</em>。' },
+  { id: 'e4', ans: 'tone', ctx: 'func', argc: 2, ask: '令蜂鳴器發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
+  { id: 'e5', ans: 'noTone', ctx: 'func', argc: 1, ask: '令蜂鳴器停聲的指令', hint: '停聲 = no + Tone，寫成 <em>noTone</em>，注意 T 是大寫。' },
+  { id: 'e6', ans: 'buzzerPin', ctx: 'arg', accept: v => v === 'buzzerPin' || v === '8', ask: '停止哪一支腳的聲音', hint: '要停的是蜂鳴器那支腳。程式第 5 行已經用一個變數記住了它的腳位。' },
 ];
 const C1_BANK = ['8', '13', '1000', 'OUTPUT', 'INPUT', 'tone', 'noTone', 'digitalWrite', 'buzzerPin', 'ledPin'];
 
@@ -186,10 +186,10 @@ const IDE = (() => {
       name: 'c1', file: 'SOS_Sound', eyebrow: '延伸挑戰 1 · 聲光 SOS', title: '編程及上傳', full: false,
       tpl: C1_TEMPLATE, blanks: C1_BLANKS, bank: C1_BANK,
       st: () => S.ext.c1.code, flow: () => S.ext.c1.flow,
-      intro: `LED 部分已寫好。你要完成 <b>6 個橙色空格</b>，令 Piezo 在 LED 亮時發聲、熄時停聲。`,
+      intro: `LED 部分已寫好。你要完成 <b>6 個橙色空格</b>，令蜂鳴器在 LED 亮時發聲、熄時停聲。`,
       revealNote: '顯示答案會令這個挑戰扣 2 分。建議先再試一次。',
       next: { label: '返回延伸挑戰', stage: 'ext' },
-      dict: [['tone(腳, 頻率)', '令腳位不停開關，Piezo 發出該頻率的聲音。頻率愈高，聲音愈尖'], ['noTone(腳)', '停止那支腳的聲音'], ['int pitch = 1000;', '用變數記住頻率，改一個數字就可以改全部聲音'], ['digitalWrite(腳, 狀態)', 'LED 用它開關；Piezo 只開一次不會響，所以要用 tone()']],
+      dict: [['tone(腳, 頻率)', '令腳位不停開關，蜂鳴器發出該頻率的聲音。頻率愈高，聲音愈尖'], ['noTone(腳)', '停止那支腳的聲音'], ['int pitch = 1000;', '用變數記住頻率，改一個數字就可以改全部聲音'], ['digitalWrite(腳, 狀態)', 'LED 用它開關；蜂鳴器只開一次不會響，所以要用 tone()']],
     },
     c2: {
       name: 'c2', file: 'Morse_Initials', eyebrow: '延伸挑戰 2 · 英文縮寫', title: '自己編寫程式', full: false, free: true,
@@ -315,7 +315,7 @@ const IDE = (() => {
     if (b.ctx === 'delay' || b.ctx === 'init') {
       const f = parseFloat(v);
       if (!isNaN(f) && b.ctx === 'delay' && Math.round(f * 1000) === +b.ans) return 'delay() 的單位是<b>毫秒</b>，不是秒。';
-      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return v === '13' && b.id === 'e1' ? '13 號腳是 LED 用的。Piezo 接在另一支腳。' : '看清楚接線模擬器中，導線接在哪一號腳。';
+      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return v === '13' && b.id === 'e1' ? '13 號腳是 LED 用的。蜂鳴器接在另一支腳。' : '看清楚接線模擬器中，導線接在哪一號腳。';
       if (b.ctx === 'delay' && /^\d+$/.test(v)) return '時間不對，再看看那一行的註解（灰色文字）。';
     }
     if ((b.id === 'b2' || b.id === 'e3') && lc === 'input') return 'INPUT 是「輸入」（例如讀取按鈕）；這裏要用「輸出」。';
@@ -323,12 +323,12 @@ const IDE = (() => {
     if (b.id === 'b5' && lc === 'high') return 'HIGH 是開燈，關燈要用低電位。';
     if (b.id === 'b7' && lc === 'digitalread') return 'digitalRead 是「讀取」輸入；控制 LED 要「寫」出信號。';
     if (b.id === 'b7' && lc === 'pinmode') return 'pinMode 只用來設定模式，開燈要用另一個指令。';
-    if (b.id === 'e4' && lc === 'digitalwrite') return 'digitalWrite 只會開一次，Piezo 不會響。要用令腳位不停開關的指令。';
+    if (b.id === 'e4' && lc === 'digitalwrite') return 'digitalWrite 只會開一次，蜂鳴器不會響。要用令腳位不停開關的指令。';
     if (b.id === 'e4' && lc === 'notone') return 'noTone 是停聲，開聲要用另一個指令。';
     if (b.id === 'e5' && lc === 'tone') return 'tone 是開聲，停聲要用另一個指令。';
     if (b.id === 'e5' && lc === 'digitalwrite') return '停聲要用專門停止 tone() 的指令。';
-    if (b.id === 'e6' && v === 'ledPin') return 'ledPin 是 LED 那支腳。要停的是 Piezo 那支腳。';
-    if (b.id === 'e6' && v === '13') return '13 號腳是 LED 那支腳。要停的是 Piezo 那支腳。';
+    if (b.id === 'e6' && v === 'ledPin') return 'ledPin 是 LED 那支腳。要停的是蜂鳴器那支腳。';
+    if (b.id === 'e6' && v === '13') return '13 號腳是 LED 那支腳。要停的是蜂鳴器那支腳。';
     return '';
   }
   function checkAnswers() {

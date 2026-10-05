@@ -58,13 +58,13 @@ const BANK = ['10', '2', '12', 'INPUT', 'OUTPUT', 'HIGH', 'LOW', 'digitalRead', 
 /* ---------- 延伸挑戰 1：行人過路「嘀嘀」聲（for 迴圈 + tone） ---------- */
 const C1_TEMPLATE = [
   '// 延伸挑戰 1：行人過路「嘀嘀」聲',
-  '// 紅燈（行人過路）時，Piezo 急速「嘀嘀」響，提示視障人士可以過路',
+  '// 紅燈（行人過路）時，蜂鳴器急速「嘀嘀」響，提示視障人士可以過路',
   '',
   'int redPin = 12;',
   'int yellowPin = 11;',
   'int greenPin = 10;',
   'int buttonPin = 2;',
-  'int buzzerPin = {{e1}};            // Piezo 接在第幾號腳？',
+  'int buzzerPin = {{e1}};            // 蜂鳴器接在第幾號腳？',
   '',
   'void setup() {',
   '  pinMode(redPin, OUTPUT);',
@@ -101,10 +101,10 @@ const C1_TEMPLATE = [
   '}',
 ];
 const C1_BLANKS = [
-  { id: 'e1', ans: '8', ctx: 'init', ask: 'Piezo 接在哪一號腳', hint: 'Piezo 的信號線（橙色）接在 UNO 的幾號腳？只填數字。' },
+  { id: 'e1', ans: '8', ctx: 'init', ask: '蜂鳴器接在哪一號腳', hint: '蜂鳴器的信號線（白色）接在 UNO 的幾號腳？只填數字。' },
   { id: 'e2', ans: '10', ctx: 'init', ask: '迴圈重複幾多次', hint: '紅燈要響 5 秒，每次「嘀」連停頓共 0.5 秒。5 ÷ 0.5 = ?' },
-  { id: 'e3', ans: 'tone', ctx: 'func', argc: 2, ask: '令 Piezo 發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
-  { id: 'e4', ans: 'noTone', ctx: 'func', argc: 1, ask: '令 Piezo 停聲的指令', hint: '停聲 = no + Tone，寫成 <em>noTone</em>，注意 T 大寫。' },
+  { id: 'e3', ans: 'tone', ctx: 'func', argc: 2, ask: '令蜂鳴器發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
+  { id: 'e4', ans: 'noTone', ctx: 'func', argc: 1, ask: '令蜂鳴器停聲的指令', hint: '停聲 = no + Tone，寫成 <em>noTone</em>，注意 T 大寫。' },
   { id: 'e5', ans: '400', ctx: 'delay', ask: '每次停頓多久', hint: '每次共 500 毫秒，「嘀」已經用了 100 毫秒，500 − 100 = ?' },
 ];
 const C1_BANK = ['8', '10', '5', '400', '500', 'tone', 'noTone', 'digitalWrite'];
@@ -313,7 +313,7 @@ const IDE = (() => {
     if (b.id === 'b5' && lc === 'high') return 'HIGH 是開燈，關燈要用低電位。';
     if (b.id === 'b7' && lc === 'digitalread') return 'digitalRead 是「讀取」輸入；控制 LED 要「寫」出信號。';
     if (b.id === 'b7' && lc === 'pinmode') return 'pinMode 只用來設定模式，開燈要用另一個指令。';
-    if (b.id === 'e4' && lc === 'digitalwrite') return 'digitalWrite 只會開一次，Piezo 不會響。要用令腳位不停開關的指令。';
+    if (b.id === 'e4' && lc === 'digitalwrite') return 'digitalWrite 只會開一次，蜂鳴器不會響。要用令腳位不停開關的指令。';
     if (b.id === 'e4' && lc === 'notone') return 'noTone 是停聲，開聲要用另一個指令。';
     if (b.id === 'e5' && lc === 'tone') return 'tone 是開聲，停聲要用另一個指令。';
     if (b.id === 'e5' && lc === 'digitalwrite') return '停聲要用專門停止 tone() 的指令。';
@@ -326,7 +326,7 @@ const IDE = (() => {
     if (b.id === 'b3' && lc === 'output') return 'OUTPUT 是「輸出」（例如 LED）。按鈕是給 Arduino 讀取的，所以是「輸入」。';
     if (b.id === 'e2' && v === '5') return '5 是秒數。每次「嘀」連停頓只有 0.5 秒，5 秒內可以重複幾多次？';
     if (b.id === 'e4' && lc === 'high') return '直立時才是 HIGH。單車被移動時開關斷開，下拉電阻令它變成 LOW。';
-    if (b.id === 'e1' && ctxName() === 'c1' && v === '13') return '13 號腳沒有用。Piezo 的橙色線接在哪一號腳？';
+    if (b.id === 'e1' && ctxName() === 'c1' && v === '13') return '13 號腳沒有用。蜂鳴器的白色線接在哪一號腳？';
     return '';
   }
   function checkAnswers() {

@@ -42,7 +42,7 @@ async def main():
         await drag(tuple(P['P:D12']), tuple(P['P:D8']))        # move the wire end to D8
         await pg.click('[data-check="2"]'); await pg.wait_for_timeout(150)
         print('c1 step2:', await pg.inner_text('#hwIssues'))
-        await pg.click('#swatches .sw:nth-child(4)')
+        await pg.click('#swatches .sw:nth-child(1)')
         await drag(tuple(P['P:GND2']), tuple(P['j21']))
         await pg.click('[data-check="3"]'); await pg.wait_for_timeout(150)
         await pg.click('[data-check="4"]'); await pg.wait_for_timeout(300)

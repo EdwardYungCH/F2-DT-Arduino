@@ -76,6 +76,9 @@ code,.mono{font-family:var(--f-mono)}
 .stepper button:disabled{cursor:not-allowed;opacity:.55}
 .who{font-size:13px;color:var(--ink-2);white-space:nowrap;padding:4px 10px;border:1px solid var(--line);border-radius:999px}
 .who:empty{display:none}
+.early-btn{white-space:nowrap;border-color:var(--amber);color:var(--ink)}
+.early-btn:hover{background:var(--amber-soft)}
+.early-btn[hidden]{display:none}
 
 main{padding-inline:20px;padding-block:22px 40px;max-width:1500px;margin-inline:auto}
 .stage{display:block}
@@ -423,6 +426,35 @@ details.fold[open] summary{margin-bottom:8px}
   .bar-row{grid-template-columns:80px 1fr 56px}
   .who{display:none}
 }
+/* ---------- 套件材料（共用） ---------- */
+.kit-tbl td{vertical-align:middle}
+.kit-tbl .kit-ic{width:64px;text-align:center}
+.kit-tbl .kit-ic svg{height:36px;width:auto;max-width:60px;display:inline-block}
+.kit-tbl .kit-qty{font-family:var(--f-mono);font-weight:700;font-size:15px;text-align:center;white-space:nowrap}
+.kit-tbl b{white-space:nowrap}
+.kit-wires{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px}
+.kit-wire{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;white-space:nowrap}
+.kit-wire i{display:inline-block;width:14px;height:6px;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.kit-resrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.kit-res{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface-2)}
+.kit-res-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.kit-res-h b{font-size:18px;font-family:var(--f-mono)}
+.kit-res-h span{font-size:12.5px;color:var(--ink-2)}
+.kit-bigres{display:block;width:100%;max-width:260px;height:auto;margin:6px auto 2px;color:var(--ink)}
+.kit-q{margin:0 0 8px}
+.kit-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kit-choice{border:2px solid var(--line);border-radius:10px;background:var(--surface-2);padding:8px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:inherit;font:inherit}
+.kit-choice:hover{border-color:var(--teal)}
+.kit-choice.bad{border-color:var(--err);background:var(--err-soft)}
+.kit-ch-l{font-weight:700;font-size:13px;color:var(--ink-3)}
+.kit-msg{margin:8px 0 0;min-height:1.5em}
+@media (max-width:640px){.kit-choices{grid-template-columns:1fr}.kit-tbl .kit-ic{display:none}}
+details.fold-card>summary{cursor:pointer}
+details.fold-card>summary h3{vertical-align:middle}
+.ext-mat{margin:4px 0 10px}
+/* ---------- 未完成報告（共用） ---------- */
+.partial-top{max-width:1180px;margin:0 auto 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.partial-top .alert{flex:1;min-width:260px}
 </style>
 
 </head>
@@ -437,6 +469,7 @@ details.fold[open] summary{margin-bottom:8px}
     <button data-stage="ext" disabled><i>5</i><span>延伸挑戰</span></button>
     <button data-stage="report" disabled><i>6</i><span>成績報告</span></button>
   </nav>
+  <button class="btn sm early-btn" id="earlyBtn" hidden title="下課前未能完成？按這裏先交一份報告">未完成？先交報告</button>
   <div class="who" id="who"></div>
 </header>
 
@@ -518,9 +551,9 @@ details.fold[open] summary{margin-bottom:8px}
     </div>
 
     <div class="card span-7">
-      <h3>需要的材料（模擬器已替你準備好）</h3>
-      <div class="parts" id="partsList"></div>
-      <p class="small muted" style="margin-top:10px">延伸挑戰（選做）另需：Piezo 蜂鳴器 × 1、杜邦線 × 2。</p>
+      <h3>認識電阻</h3>
+      <p class="small muted" style="margin:-6px 0 10px">套件有好幾種電阻，樣子很相似。今堂只用 220Ω。</p>
+      <div id="resCard"></div>
     </div>
 
     <div class="card span-5">
@@ -533,6 +566,14 @@ details.fold[open] summary{margin-bottom:8px}
       </ol>
       <p class="small muted" style="margin-top:12px">做得快的同學，完成實物後可以做<b>延伸挑戰</b>：聲光 SOS 和閃出你的英文名縮寫。</p>
       <p class="small muted" style="margin-top:14px">接錯線或填錯答案都可以再改，但系統會記錄錯誤次數和使用提示次數。進度會自動儲存。</p>
+      <p class="small muted" style="margin-top:10px">下課前未能完成？按右上角的「<b>未完成？先交報告</b>」，報告只計已完成的部分。之後可以繼續做，完成後再交一份完整報告。</p>
+    </div>
+
+    <div class="card span-12">
+      <h3>材料清單</h3>
+      <p class="small muted" style="margin:-6px 0 8px">模擬器已替你準備好；做實物時，按這張表拿材料。</p>
+      <div id="partsList"></div>
+      <p class="small muted" style="margin-top:10px">延伸挑戰（選做）另需：蜂鳴器 × 1（挑戰 1）及杜邦線 2 條（藍 1、黑 1）。挑戰 2 不用加材料。</p>
     </div>
   </div>
 </section>
@@ -556,7 +597,7 @@ details.fold[open] summary{margin-bottom:8px}
         <div class="swatches" id="swatches"></div>
         <div class="sel-tools" id="selTools"><span class="lbl">點選元件或導線可以反轉或移除</span></div>
       </div>
-      <svg id="hwSvg" viewBox="0 0 1090 640" aria-label="接線模擬器"></svg>
+      <svg id="hwSvg" viewBox="0 0 1150 640" aria-label="接線模擬器"></svg>
       <div class="ws-foot">
         <span>拉導線：在 Arduino 腳位或麵包板孔上按住，拖到另一個孔</span>
         <span>移動元件：按住元件拖動</span>
@@ -692,6 +733,104 @@ const SHA = (() => {
 <script>
 "use strict";
 /* =====================================================================
+   套件材料：圖示、材料清單表、電阻辨認卡、電阻小測
+   （各堂共用；材料內容由各堂的 MATERIALS 提供）
+   ===================================================================== */
+const KIT = (() => {
+  const BAND = { red: ['#D12B2B', '紅'], black: ['#1E1E1E', '黑'], brown: ['#7A4A1E', '棕'] };
+  /* the kit's resistors: blue metal-film body, 5 bands (4th = multiplier, 5th = tolerance) */
+  const RES = {
+    220: { label: '220Ω', bag: '220R', bands: ['red', 'red', 'black', 'black', 'brown'], reds: 2 },
+    1000: { label: '1kΩ', bag: '1K', bands: ['brown', 'black', 'black', 'brown', 'brown'], reds: 0 },
+    10000: { label: '10kΩ', bag: '10K', bands: ['brown', 'black', 'black', 'red', 'brown'], reds: 1 },
+  };
+  const bandWords = ohm => RES[ohm].bands.map(b => BAND[b][1]).join('');
+  const WIRE = { black: ['#2A2A2A', '黑'], white: ['#F4F4F0', '白'], red: ['#D63A2F', '紅'], blue: ['#2F6FD6', '藍'], green: ['#2E9B4F', '綠'] };
+
+  /* ---------- small icons for the materials table ---------- */
+  function resIcon(ohm) {
+    const xs = [27, 33, 39, 45, 54];
+    return `<svg viewBox="0 0 80 30" aria-hidden="true"><path d="M2 15h76" stroke="#9AA3A7" stroke-width="2"/><rect x="20" y="7" width="40" height="16" rx="7" fill="#4A8BD6" stroke="#2C5E9A"/>${RES[ohm].bands.map((b, i) => `<rect x="${xs[i]}" y="7" width="3.6" height="16" fill="${BAND[b][0]}"/>`).join('')}</svg>`;
+  }
+  const ICON = {
+    uno: '<svg viewBox="0 0 70 52" aria-hidden="true"><rect x="1" y="1" width="68" height="50" rx="4" fill="#0E7C9B"/><rect x="-2" y="8" width="14" height="12" fill="#B9C2C6"/><rect x="18" y="4" width="44" height="5" fill="#222"/><rect x="26" y="43" width="36" height="5" fill="#222"/><rect x="30" y="26" width="30" height="8" fill="#222"/></svg>',
+    usb: '<svg viewBox="0 0 70 40" aria-hidden="true"><rect x="2" y="12" width="16" height="16" rx="2" fill="#8A969B"/><path d="M18 20c20 0 20 14 34 14h8" stroke="#333" stroke-width="4" fill="none"/><rect x="58" y="29" width="10" height="9" fill="#8A969B"/></svg>',
+    board: '<svg viewBox="0 0 70 52" aria-hidden="true"><rect x="1" y="1" width="68" height="50" rx="3" fill="#F2F1EA" stroke="#CFCCC0"/><path d="M5 5h60" stroke="#2F6FD6" stroke-width="1.2"/><path d="M5 11h60" stroke="#D63A2F" stroke-width="1.2"/><path d="M5 41h60" stroke="#2F6FD6" stroke-width="1.2"/><path d="M5 47h60" stroke="#D63A2F" stroke-width="1.2"/>' + Array.from({ length: 40 }, (_, i) => `<rect x="${7 + (i % 10) * 6}" y="${i < 20 ? 15 + Math.floor(i / 10) * 5 : 29 + Math.floor((i - 20) / 10) * 5}" width="2.6" height="2.6" fill="#555"/>`).join('') + '<rect x="3" y="25" width="64" height="2" fill="#E2E0D5"/></svg>',
+    led: c => `<svg viewBox="0 0 40 60" aria-hidden="true"><path d="M10 26a10 10 0 0120 0v8H10z" fill="${c}"/><rect x="8" y="33" width="24" height="4" fill="#555"/><path d="M15 37v19" stroke="#999" stroke-width="2"/><path d="M25 37v6l3 3v12" stroke="#999" stroke-width="2" fill="none"/></svg>`,
+    leds: cs => `<svg viewBox="0 0 ${cs.length * 28 + 6} 60" aria-hidden="true">${cs.map((c, i) => `<g transform="translate(${i * 28} 0)"><path d="M10 26a10 10 0 0120 0v8H10z" fill="${c}"/><path d="M15 37v19" stroke="#999" stroke-width="2"/><path d="M25 37v6l3 3v12" stroke="#999" stroke-width="2" fill="none"/></g>`).join('')}</svg>`,
+    res: resIcon,
+    btn: '<svg viewBox="0 0 60 60" aria-hidden="true"><rect x="8" y="2" width="4" height="10" fill="#aaa"/><rect x="48" y="2" width="4" height="10" fill="#aaa"/><rect x="8" y="48" width="4" height="10" fill="#aaa"/><rect x="48" y="48" width="4" height="10" fill="#aaa"/><rect x="6" y="10" width="48" height="40" rx="4" fill="#2B2F33"/><circle cx="30" cy="30" r="12" fill="#C9352A"/></svg>',
+    buzzer: '<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M22 44v14M38 44v14" stroke="#999" stroke-width="2"/><circle cx="30" cy="26" r="21" fill="#1F1F1F"/><circle cx="30" cy="26" r="15" fill="none" stroke="#3A3A3A" stroke-width="1.5"/><circle cx="30" cy="26" r="3.5" fill="#555"/></svg>',
+    tilt: '<svg viewBox="0 0 80 30" aria-hidden="true"><path d="M2 15h22" stroke="#C9A53A" stroke-width="2"/><path d="M56 15h22" stroke="#9AA3A7" stroke-width="2"/><rect x="22" y="6" width="36" height="18" rx="6" fill="#2E9E55" stroke="#1D6E3A"/><rect x="25" y="9" width="30" height="4" rx="2" fill="#7FD79C" opacity=".55"/></svg>',
+    wires: cols => `<svg viewBox="0 0 70 ${12 + cols.length * 6}" aria-hidden="true">${cols.map((c, i) => { const d = `M6 ${8 + i * 6}C24 ${i * 6 - 2} 46 ${i * 6 + 18} 64 ${8 + i * 6}`; return `<path d="${d}" stroke="rgba(0,0,0,.45)" stroke-width="5" fill="none" stroke-linecap="round"/><path d="${d}" stroke="${WIRE[c][0]}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`; }).join('')}</svg>`,
+  };
+  /* wire summary: {black: 5, red: 2} -> "黑 5、紅 2" with colour dots */
+  const wireText = w => Object.entries(w).map(([c, n]) => `<span class="kit-wire"><i style="background:${WIRE[c][0]}"></i>${WIRE[c][1]} ${n}</span>`).join('');
+
+  /* ---------- materials table ---------- */
+  /* rows: [{icon, name, look, qty, use}] */
+  function table(rows) {
+    return `<div class="tbl-wrap"><table class="tbl kit-tbl"><thead><tr><th></th><th>材料</th><th>怎樣認出它</th><th>數量</th><th>用途</th></tr></thead><tbody>${rows.map(r =>
+      `<tr><td class="kit-ic">${r.icon || ''}</td><td><b>${r.name}</b></td><td>${r.look}</td><td class="kit-qty">${r.qty}</td><td>${r.use}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+  /* common rows */
+  const ROW = {
+    uno: (use = '執行你的程式，控制電路') => ({ icon: ICON.uno, name: 'Arduino UNO', look: '藍色電路板（DFRduino UNO R3），有一個方形 USB 插口', qty: '1', use }),
+    usb: () => ({ icon: ICON.usb, name: 'USB 線', look: '一頭方形（插 UNO），一頭扁形（插電腦）', qty: '1', use: '上傳程式，同時供電給 UNO' }),
+    board: () => ({ icon: ICON.board, name: '麵包板', look: '白色，中間有 a–j 行、1–30 號；兩邊有紅（+）藍（−）線的電源軌', qty: '1', use: '不用焊接就可以把零件接在一起' }),
+    res: (ohm, qty, use) => ({ icon: ICON.res(ohm), name: `電阻 ${RES[ohm].label}`, look: `藍色身，五條色環：<b>${bandWords(ohm)}</b>（有 <b>${RES[ohm].reds}</b> 條紅色）<br><span class="muted small">包裝袋寫「${RES[ohm].bag}」</span>`, qty: String(qty), use }),
+    wires: (w, use = '連接 UNO 和麵包板') => ({ icon: ICON.wires(Object.keys(w)), name: '杜邦線（公對公）', look: '兩頭都是針，可以直接插入麵包板和 UNO<div class="kit-wires">' + wireText(w) + '</div>', qty: String(Object.values(w).reduce((a, b) => a + b, 0)), use }),
+    buzzer: (use) => ({ icon: ICON.buzzer, name: '蜂鳴器', look: '黑色圓形，兩隻腳；<b>沒有正負極</b>，兩隻腳可以對調', qty: '1', use }),
+    tilt: (use) => ({ icon: ICON.tilt, name: '傾斜開關', look: '綠色小圓柱，兩隻腳；搖動時入面有「沙沙」聲（小鋼珠）', qty: '1', use }),
+    btn: (use) => ({ icon: ICON.btn, name: '按鈕', look: '黑色方形，<b>4 隻腳</b>，中間有一粒圓掣', qty: '1', use }),
+  };
+
+  /* ---------- resistor identification card ---------- */
+  function bigRes(ohm, opts = {}) {
+    const r = RES[ohm], xs = [52, 70, 88, 106, 136];
+    return `<svg viewBox="0 0 200 ${opts.noWords ? 40 : 62}" class="kit-bigres" aria-label="${opts.noWords ? '電阻' : r.label + ' 電阻，色環' + bandWords(ohm)}">
+      <path d="M4 20H196" stroke="#9AA3A7" stroke-width="3"/>
+      <rect x="38" y="6" width="124" height="28" rx="12" fill="#4A8BD6" stroke="#2C5E9A" stroke-width="1.5"/>
+      <rect x="44" y="10" width="112" height="5" rx="2.5" fill="#fff" opacity=".18"/>
+      ${r.bands.map((b, i) => `<rect x="${xs[i]}" y="6" width="9" height="28" fill="${BAND[b][0]}"/>`).join('')}
+      ${opts.noWords ? '' : r.bands.map((b, i) => `<text x="${xs[i] + 4.5}" y="52" font-size="12" font-weight="700" text-anchor="middle" fill="currentColor">${BAND[b][1]}</text>`).join('')}
+    </svg>`;
+  }
+  /* use: [[ohm, '用途'], ...]; warn: other resistor values in the kit that look similar */
+  function resCard(use, warn = []) {
+    return `<div class="kit-rescard">
+      <div class="kit-resrow">${use.map(([ohm, u]) => `<div class="kit-res"><div class="kit-res-h"><b>${RES[ohm].label}</b><span>${u}</span></div>${bigRes(ohm)}<p class="small">有 <b>${RES[ohm].reds}</b> 條紅色 · 包裝袋寫「${RES[ohm].bag}」</p></div>`).join('')}</div>
+      <div class="alert info" style="margin-top:10px"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-.8 5.5h1.6V12H7.2zM8 3.6a1 1 0 110 2 1 1 0 010-2z"/></svg><div><b>最易的方法：數紅色環。</b>${use.map(([ohm]) => `${RES[ohm].label} 有 ${RES[ohm].reds} 條紅色`).join('；')}。
+        ${warn.length ? `<br>小心：套件還有 ${warn.map(o => `${RES[o].label}（${bandWords(o)}，${RES[o].reds ? RES[o].reds + ' 條紅色' : '<b>沒有</b>紅色'}）`).join('、')}，樣子很相似，不要用錯。` : ''}
+        <br>色環看不清楚？先把電阻留在<b>包裝袋</b>內，用的時候才拿出來。</div></div>
+    </div>`;
+  }
+
+  /* ---------- quick resistor quiz (not scored) ---------- */
+  /* qs: [{ask, ans}], opts: ohm values shown as choices; st: object to remember result */
+  function quiz(el, qs, choices, st, onDone) {
+    let qi = st.done ? qs.length : (st.qi || 0);
+    const draw = msg => {
+      if (qi >= qs.length) {
+        el.innerHTML = `<div class="alert ok"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm-1 10.2L3.8 8l1.2-1.2 2 2 4-4L12.2 6z"/></svg><div><b>你已經懂得分辨電阻！</b>接真的電路時，也用同一個方法：數紅色環。</div></div>`;
+        return;
+      }
+      const q = qs[qi];
+      el.innerHTML = `<p class="kit-q"><b>第 ${qi + 1} / ${qs.length} 題：</b>${q.ask}</p>
+        <div class="kit-choices">${choices.map((o, i) => `<button class="kit-choice" data-o="${o}" aria-label="選項 ${'ABC'[i]}"><span class="kit-ch-l">${'ABC'[i]}</span>${bigRes(o, { noWords: true })}</button>`).join('')}</div>
+        <p class="small kit-msg" role="status">${msg || '點選正確的電阻。'}</p>`;
+      $$('.kit-choice', el).forEach(b => b.onclick = () => {
+        if (+b.dataset.o === q.ans) { qi++; st.qi = qi; if (qi >= qs.length) { st.done = true; onDone && onDone(); } save(); draw(); }
+        else { b.classList.add('bad'); $('.kit-msg', el).innerHTML = `<span style="color:var(--err)">不對。</span>${q.tip}`; }
+      });
+    };
+    draw();
+  }
+
+  return { RES, ICON, ROW, WIRE, table, resCard, bigRes, quiz, bandWords, wireText };
+})();
+
+/* =====================================================================
    SOS 求救燈實驗室 — 設定（老師可修改這裏）
    ===================================================================== */
 const CONFIG = {
@@ -809,11 +948,11 @@ function newState(student) {
   const attempt = (recall(akey) || 0) + 1; store(akey, attempt);
   const com = 'COM' + (3 + Math.floor(Math.random() * 6));
   return {
-    v: 3, id: randId(), student, attempt, teacherUsed: false,
+    v: 4, id: randId(), student, attempt, teacherUsed: false,
     startedAt: now(), finishedAt: null,
     stage: 'intro', unlocked: 0,
     t: { intro: now() },
-    hw: { led: null, res: null, wires: [], step: 0, errors: 0, hints: 0, hinted: {}, log: [], done: false, lastFailSig: '', stepFails: {}, color: '#F2A91E' },
+    hw: { led: null, res: null, wires: [], step: 0, errors: 0, hints: 0, hinted: {}, log: [], done: false, lastFailSig: '', stepFails: {}, color: '#F4F4F0' },
     code: { blanks: {}, checks: 0, done: false, log: [] },
     up: { usb: false, board: null, port: null, com, verified: false, uploaded: false, errors: 0, log: [], lastErrSig: '' },
     real: { checks: {}, confirmed: false },
@@ -839,6 +978,12 @@ function migrate(st) {
     fix(st.hw); fix(st.ext && st.ext.c1 && st.ext.c1.hw);
     st.v = 3;
   }
+  if (st.v < 4) {   // wire colours now match the kit (black, white, red, blue, green)
+    const map = { '#F2A91E': '#F4F4F0', '#EE6B1F': '#2F6FD6' };
+    [st.hw, st.ext && st.ext.c1 && st.ext.c1.hw, st.ext && st.ext.c2 && st.ext.c2.hw].forEach(h => { if (h) (h.wires || []).forEach(w => { if (map[w.color]) w.color = map[w.color]; }); });
+    if (map[st.hw.color]) st.hw.color = map[st.hw.color];
+    st.v = 4;
+  }
   return st;
 }
 
@@ -854,15 +999,35 @@ function logEv(sec, msg, counted = true) {
 }
 
 /* ---------------- scoring ---------------- */
+/* only finished parts score: an early (unfinished) report gets 0 for the parts not yet done */
 function scores(st = S) {
-  const hw = Math.max(16, 40 - 4 * st.hw.errors - 2 * st.hw.hints);
+  const done = { hw: !!st.hw.done, code: !!st.code.done, up: !!st.up.uploaded };
+  const hw = done.hw ? Math.max(16, 40 - 4 * st.hw.errors - 2 * st.hw.hints) : 0;
   let code = 0;
-  BLANKS.forEach(b => { const x = st.code.blanks[b.id] || {}; code += x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)); });
-  const up = Math.max(8, 20 - 3 * st.up.errors);
+  if (done.code) BLANKS.forEach(b => { const x = st.code.blanks[b.id] || {}; code += x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)); });
+  const up = done.up ? Math.max(8, 20 - 3 * st.up.errors) : 0;
   const total = hw + code + up;
   const grade = total >= 85 ? '優異' : total >= 70 ? '良好' : total >= 50 ? '合格' : '仍需努力';
-  return { hw, code, up, total, grade };
+  return { hw, code, up, total, grade, complete: done.hw && done.code && done.up };
 }
+const mainDone = (st = S) => !!(st && st.hw.done && st.code.done && st.up.uploaded);
+/* "未完成？先交報告": a partial report; the student can carry on and hand in a full one later */
+function earlySubmit() {
+  if (!S || mainDone()) return;
+  const okBlanks = BLANKS.filter(b => (S.code.blanks[b.id] || {}).status === 'ok').length;
+  const li = (label, done, extra) => `<li>${label}：${done ? '<b style="color:var(--ok)">已完成 ✔</b>' : `<b style="color:var(--err)">未完成</b>（0 分${extra ? '，' + extra : ''}）`}</li>`;
+  modal({
+    title: '未完成，先交報告？',
+    html: `<p>你還未完成全部任務。報告只會計<b>已完成</b>的部分：</p>
+      <ul class="tight" style="margin:8px 0 12px">${li('硬件接線', S.hw.done)}${li('程式填空', S.code.done, `已答對 ${okBlanks} / ${BLANKS.length} 格`)}${li('上傳流程', S.up.uploaded)}</ul>
+      <p>報告會寫明「<b>未完成（提早提交）</b>」。交了之後，你仍然可以<b>繼續做</b>；完成後再下載一份完整報告交給老師，老師會用<b>最新</b>的一份。</p>`,
+    actions: [{ label: '取消', kind: 'ghost' }, { label: '產生未完成報告', kind: 'go', onClick: () => {
+      if (S.stage !== 'report') S.resume = S.stage;
+      S.early = true; save(); goStage('report');
+    } }],
+  });
+}
+$('#earlyBtn').onclick = earlySubmit;
 /* extension challenges: 10 points each, reported separately (not part of the 100) */
 function extScores(st = S) {
   const e = st.ext; const res = { c1: null, c2: null };
@@ -888,7 +1053,7 @@ const stageLeave = {};
 function goStage(name) {
   if (!S) return;
   const idx = STAGES.indexOf(stepperOf(name));
-  if (idx < 0 || (idx > S.unlocked && !teacherOn)) return;
+  if (idx < 0 || (idx > S.unlocked && !teacherOn && !(name === 'report' && S.early))) return;
   Object.values(stageLeave).forEach(f => { try { f(); } catch (e) {} });
   S.stage = name; save();
   $$('.stage').forEach(s => s.hidden = true);
@@ -905,12 +1070,13 @@ function unlock(name) {
 function renderStepper() {
   $$('#stepper button').forEach((b, i) => {
     const st = b.dataset.stage;
-    b.disabled = !S || (i > S.unlocked && !teacherOn);
+    b.disabled = !S || (i > S.unlocked && !teacherOn && !(st === 'report' && S.early && !mainDone()));
     const cur = S && stepperOf(S.stage) === st;
     b.classList.toggle('current', !!cur);
     b.classList.toggle('done', !!(S && i < S.unlocked && !cur));
   });
   $('#who').textContent = S ? `${S.student.cls} · ${S.student.no} · ${S.student.name}` : '';
+  $('#earlyBtn').hidden = !S || mainDone() || S.stage === 'report';
 }
 $$('#stepper button').forEach(b => b.addEventListener('click', () => goStage(b.dataset.stage)));
 
@@ -997,18 +1163,26 @@ function startApp() {
   goStage(S.stage || 'intro');
 }
 
+/* ---------------- materials (real kit) ---------------- */
+const MATERIALS = {
+  main: [
+    KIT.ROW.uno('控制 LED 閃出 SOS'), KIT.ROW.usb(), KIT.ROW.board(),
+    { icon: KIT.ICON.led('#E8412B'), name: 'LED（紅色）', look: '<b>長腳是 +</b>，短腳是 −；短腳那邊的邊緣是平的', qty: '1', use: 'SOS 求救燈' },
+    KIT.ROW.res(220, 1, '限制電流，保護 LED'),
+    KIT.ROW.wires({ white: 1, black: 1 }, '白 = D13、黑 = GND'),
+  ],
+  c1: [
+    KIT.ROW.buzzer('LED 閃的同時「嗶」一聲'),
+    KIT.ROW.wires({ blue: 1, black: 1 }, '藍 = D8、黑 = GND'),
+  ],
+};
+
 /* ---------------- intro ---------------- */
 let introStop = null;
 stageInit.intro = () => {
   if (!$('#partsList').children.length) {
-    $('#partsList').innerHTML = [
-      ['Arduino UNO', '開發板 × 1', '<svg viewBox="0 0 70 52"><rect x="1" y="1" width="68" height="50" rx="4" fill="#0E7C9B"/><rect x="-2" y="8" width="14" height="12" fill="#B9C2C6"/><rect x="18" y="4" width="44" height="5" fill="#222"/><rect x="26" y="43" width="36" height="5" fill="#222"/><rect x="30" y="26" width="30" height="8" fill="#222"/></svg>'],
-      ['麵包板', '免焊接駁 × 1', '<svg viewBox="0 0 70 52"><rect x="1" y="1" width="68" height="50" rx="3" fill="#F2F1EA" stroke="#CFCCC0"/>' + Array.from({length: 40}, (_, i) => `<rect x="${7 + (i % 10) * 6}" y="${i < 20 ? 10 + Math.floor(i / 10) * 7 : 30 + Math.floor((i - 20) / 10) * 7}" width="3" height="3" fill="#555"/>`).join('') + '<rect x="3" y="24" width="64" height="3" fill="#E2E0D5"/></svg>'],
-      ['LED（紅色）', '長腳 + ，短腳 −', '<svg viewBox="0 0 40 60"><path d="M10 26a10 10 0 0120 0v8H10z" fill="#E8412B"/><rect x="8" y="33" width="24" height="4" fill="#C23320"/><path d="M15 37v19" stroke="#999" stroke-width="2"/><path d="M25 37v6l3 3v12" stroke="#999" stroke-width="2" fill="none"/></svg>'],
-      ['電阻 220Ω', '紅紅啡金 × 1', '<svg viewBox="0 0 80 30"><path d="M2 15h76" stroke="#999" stroke-width="2"/><rect x="22" y="7" width="36" height="16" rx="6" fill="#E4CFA6"/><rect x="28" y="7" width="4" height="16" fill="#D12B2B"/><rect x="35" y="7" width="4" height="16" fill="#D12B2B"/><rect x="42" y="7" width="4" height="16" fill="#7A4A1E"/><rect x="50" y="7" width="3" height="16" fill="#C9A227"/></svg>'],
-      ['杜邦線', '公對公 × 2', '<svg viewBox="0 0 70 40"><path d="M8 32C20 0 50 0 62 32" stroke="#F2A91E" stroke-width="4" fill="none"/><path d="M8 38C22 14 48 14 62 38" stroke="#222" stroke-width="4" fill="none"/></svg>'],
-      ['USB 線', '連接電腦 × 1', '<svg viewBox="0 0 70 40"><rect x="2" y="12" width="16" height="16" rx="2" fill="#8A969B"/><path d="M18 20c20 0 20 14 34 14h8" stroke="#333" stroke-width="4" fill="none"/><rect x="58" y="28" width="10" height="12" fill="#8A969B"/></svg>'],
-    ].map(([b, s, svg]) => `<div class="part">${svg}<b>${b}</b><span>${s}</span></div>`).join('');
+    $('#partsList').innerHTML = KIT.table(MATERIALS.main);
+    $('#resCard').innerHTML = KIT.resCard([[220, 'LED 用']], [1000, 10000]);
     // timeline
     const total = SOS_SEQ.reduce((a, [, ms]) => a + ms, 0);
     let t = 0, html = '';
@@ -1040,14 +1214,14 @@ $('#introNext').addEventListener('click', () => {
    ===================================================================== */
 const HW = (() => {
   const UX = 24, UY = 150, UW = 420, UH = 320;       // Arduino UNO
-  const BX = 500, BY = 96, BW = 560, BH = 368;       // breadboard
-  const PITCH = 20, COLS = 25;
-  const TRAY = { x: 24, y: 490, w: 1042, h: 138 };
-  const TRASH = { x: 930, y: 506, w: 122, h: 108 };
+  const BX = 470, BY = 96, BW = 660, BH = 368;       // breadboard
+  const PITCH = 20, COLS = 30;
+  const TRAY = { x: 24, y: 490, w: 1102, h: 138 };
+  const TRASH = { x: 990, y: 506, w: 122, h: 108 };
   const LED_TRAY = [{ x: 95, y: 596 }, { x: 115, y: 596 }];
   const RES_TRAY = [{ x: 206, y: 578 }, { x: 286, y: 578 }];
   const PZ_TRAY = [{ x: 75, y: 606 }, { x: 135, y: 606 }];
-  const COLORS = [['#F2A91E', '黃'], ['#EE6B1F', '橙'], ['#D63A2F', '紅'], ['#2A2A2A', '黑'], ['#2E9B4F', '綠'], ['#2F6FD6', '藍']];
+  const COLORS = [['#2A2A2A', '黑'], ['#F4F4F0', '白'], ['#D63A2F', '紅'], ['#2F6FD6', '藍'], ['#2E9B4F', '綠']];   // the kit's jumper wire colours
 
   /* ---------- points (pins + holes) ---------- */
   const P = {};            // id -> {x,y,kind,label,group,name}
@@ -1073,7 +1247,7 @@ const HW = (() => {
   BOT1.forEach((n, i) => n !== 'NC' && addPin(n, BOT1X(i), botY));
   BOT2.forEach((n, i) => addPin(n, BOT2X(i), botY));
 
-  const ROWY = { tp: 24, tn: 44, j: 84, i: 104, h: 124, g: 144, f: 164, e: 204, d: 224, c: 244, b: 264, a: 284, bn: 324, bp: 344 };   // like a real breadboard: j on top, a at the bottom
+  const ROWY = { tn: 24, tp: 44, j: 84, i: 104, h: 124, g: 144, f: 164, e: 204, d: 224, c: 244, b: 264, a: 284, bn: 324, bp: 344 };   // like a real breadboard: j on top, a at the bottom
   const ROWS = Object.keys(ROWY);
   const colX = c => BX + 40 + (c - 1) * PITCH;
   const groupOf = (row, c) => ({ tp: 'TP', tn: 'TN', bp: 'BP', bn: 'BN' })[row] || ('abcde'.includes(row) ? 'T' + c : 'B' + c);
@@ -1118,16 +1292,16 @@ const HW = (() => {
       <text x="${kx + (flipped ? -9 : 9)}" y="${y - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="#9FD3FF">−</text>`}
     </g>`;
   }
+  const BANDS220 = ['#D12B2B', '#D12B2B', '#1E1E1E', '#1E1E1E', '#7A4A1E'];   // 紅紅黑黑棕, blue metal-film body as in the kit
   function resSVG(p1, p2, opts = {}) {
-    const mx = (p1.x + p2.x) / 2, y = p1.y;
+    const mx = (p1.x + p2.x) / 2, y = p1.y, bd = BANDS220;
     const op = opts.ghost ? ' opacity=".7"' : '';
+    const xs = [-16, -10, -4, 2, 13];
     return `<g class="res"${op}>
       <path d="M${p1.x} ${y}H${p2.x}" stroke="#B9BEC0" stroke-width="2.4" stroke-linecap="round"/>
-      <rect x="${mx - 23}" y="${y - 8}" width="46" height="16" rx="7" fill="#E4CFA6" stroke="#B89C6C"/>
-      <rect x="${mx - 15}" y="${y - 8}" width="4.5" height="16" fill="#D12B2B"/>
-      <rect x="${mx - 7}" y="${y - 8}" width="4.5" height="16" fill="#D12B2B"/>
-      <rect x="${mx + 1}" y="${y - 8}" width="4.5" height="16" fill="#7A4A1E"/>
-      <rect x="${mx + 11}" y="${y - 8}" width="3.5" height="16" fill="#C9A227"/>
+      <rect x="${mx - 23}" y="${y - 8}" width="46" height="16" rx="7" fill="#4A8BD6" stroke="#2C5E9A"/>
+      ${bd.map((c, i) => `<rect x="${mx + xs[i]}" y="${y - 8}" width="3.6" height="16" fill="${c}"/>`).join('')}
+      ${opts.noTag ? '' : `<g pointer-events="none"><rect x="${mx - 19}" y="${y - 25}" width="38" height="14" rx="4" fill="#FFFDF4" stroke="#2C5E9A" stroke-width="1"/><text x="${mx}" y="${y - 14.5}" font-size="10.5" font-weight="700" fill="#1D3F66" text-anchor="middle">220Ω</text></g>`}
     </g>`;
   }
   function pzSVG(p1, p2, opts = {}) {
@@ -1208,8 +1382,8 @@ const HW = (() => {
   function boardSVG() {
     let s = `<g id="bb"><rect x="${BX}" y="${BY}" width="${BW}" height="${BH}" rx="8" fill="#F3F2EC" stroke="#CFCBBE" stroke-width="2"/>
       <rect x="${BX + 10}" y="${BY + 176}" width="${BW - 20}" height="16" rx="3" fill="#E1DED2"/>
-      <path d="M${BX + 30} ${BY + 11}H${BX + BW - 30}" stroke="#D63A2F" stroke-width="2"/>
-      <path d="M${BX + 30} ${BY + 57}H${BX + BW - 30}" stroke="#2F6FD6" stroke-width="2"/>
+      <path d="M${BX + 30} ${BY + 11}H${BX + BW - 30}" stroke="#2F6FD6" stroke-width="2"/>
+      <path d="M${BX + 30} ${BY + 57}H${BX + BW - 30}" stroke="#D63A2F" stroke-width="2"/>
       <path d="M${BX + 30} ${BY + 311}H${BX + BW - 30}" stroke="#2F6FD6" stroke-width="2"/>
       <path d="M${BX + 30} ${BY + 357}H${BX + BW - 30}" stroke="#D63A2F" stroke-width="2"/>`;
     [['tp', '+', '#D63A2F'], ['tn', '−', '#2F6FD6'], ['bn', '−', '#2F6FD6'], ['bp', '+', '#D63A2F']].forEach(([r, t, c]) => {
@@ -1242,7 +1416,7 @@ const HW = (() => {
   function circuitSVG(st, extra) {
     const h = st || S.hw;
     const parts = partsSVG(h) + (extra ? partsSVG(extra) : '');
-    return `<svg viewBox="0 80 1090 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="電路接線圖" style="background:#1E5A4B">${DEFS}<rect x="0" y="80" width="1090" height="400" fill="url(#matgrid)"/>${unoSVG()}${boardSVG()}${parts}</svg>`;
+    return `<svg viewBox="0 80 1150 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="電路接線圖" style="background:#1E5A4B">${DEFS}<rect x="0" y="80" width="1150" height="400" fill="url(#matgrid)"/>${unoSVG()}${boardSVG()}${parts}</svg>`;
   }
 
   /* ---------- modes: main lesson / extension 1 (piezo on top of the fixed LED circuit) ---------- */
@@ -1368,33 +1542,33 @@ const HW = (() => {
     // the original LED circuit
     const baseIss = analyze({ led: base.led, res: base.res, wires }).iss.filter(i => i.step <= 4 && i.counts);
     baseIss.forEach(i => add(0, 'base_' + i.code, '<b>原本的 LED 電路被改變了：</b>' + i.msg));
-    if (d8 === gnd) add(0, 'short_d8', '<b>短路！</b>D8 和 GND 被直接連在一起，中間沒有 Piezo。');
-    else if (d8 === d13) add(0, 'd8_d13', 'D8 和 D13 被連在一起了。LED 和 Piezo 要用<b>各自的腳位</b>。');
+    if (d8 === gnd) add(0, 'short_d8', '<b>短路！</b>D8 和 GND 被直接連在一起，中間沒有蜂鳴器。');
+    else if (d8 === d13) add(0, 'd8_d13', 'D8 和 D13 被連在一起了。LED 和蜂鳴器要用<b>各自的腳位</b>。');
     ['5V', '3V3', 'VIN'].forEach(n => { if (find('P:' + n) === d8) add(0, 'short_d8_' + n, `<b>短路！</b>D8 和 ${PIN_LABEL[n]} 被直接連在一起。`); });
     const out = { iss, find, legs: null };
-    if (!h.pz) { add(1, 'pz_missing', '請把元件盒中的 Piezo 蜂鳴器拖到麵包板上。', false); }
+    if (!h.pz) { add(1, 'pz_missing', '請把元件盒中的蜂鳴器拖到麵包板上。', false); }
     else {
       const [l1, l2] = pzHoles(h.pz); const N1 = find(l1), N2 = find(l2);
       out.legs = { N1, N2 };
-      if (N1 === N2) add(1, 'pz_short', 'Piezo 兩隻腳插在<b>相通</b>的孔，被短路了，不會響。請把兩隻腳放在不同號碼的直行。');
+      if (N1 === N2) add(1, 'pz_short', '蜂鳴器兩隻腳插在<b>相通</b>的孔，被短路了，不會響。請把兩隻腳放在不同號碼的直行。');
       else {
         const legPins = [...new Set(pinsIn(N1).concat(pinsIn(N2)))].filter(n => n !== 'GND');
         const extTouches = net => h.wires.some(w => find(w.a) === net);
         // step 2: D8
         if (N1 !== d8 && N2 !== d8) {
-          if (legPins.includes('D13')) add(2, 'pz_on_d13', 'Piezo 接到了 <b>D13</b>，那是 LED 用的腳。程式用 <b>D8</b> 控制 Piezo，請改接到 8 號腳。');
-          else if (legPins.some(n => ['5V', '3V3', 'VIN'].includes(n))) add(2, 'pz_power', `Piezo 接到了 <b>${PIN_LABEL[legPins.find(n => ['5V', '3V3', 'VIN'].includes(n))]}</b>。Piezo 要不停開關的信號才會發聲，接電源腳不會響。請改接到 <b>8</b> 號腳。`);
-          else if (legPins.some(n => /^[DA]\d+$/.test(n))) add(2, 'pz_wrong_pin', `Piezo 接到了 <b>${pinPretty(legPins.find(n => /^[DA]\d+$/.test(n)))}</b>，但程式用的是 <b>D8</b>。請改接到 8 號腳。`);
-          else if (!extTouches(d8) && !h.wires.some(w => w.a === 'P:D8' || w.b === 'P:D8')) add(2, 'd8_missing', '還未連接 D8。請由 Arduino 上方的 <b>8</b> 號腳拉一條導線到 Piezo 其中一隻腳的直行。', false);
-          else add(2, 'd8_nowhere', 'D8 的導線接到了<b>沒有元件</b>的位置。導線要插在和 Piezo 其中一隻腳<b>同一號碼</b>的直行。');
+          if (legPins.includes('D13')) add(2, 'pz_on_d13', '蜂鳴器接到了 <b>D13</b>，那是 LED 用的腳。程式用 <b>D8</b> 控制蜂鳴器，請改接到 8 號腳。');
+          else if (legPins.some(n => ['5V', '3V3', 'VIN'].includes(n))) add(2, 'pz_power', `蜂鳴器接到了 <b>${PIN_LABEL[legPins.find(n => ['5V', '3V3', 'VIN'].includes(n))]}</b>。蜂鳴器要不停開關的信號才會發聲，接電源腳不會響。請改接到 <b>8</b> 號腳。`);
+          else if (legPins.some(n => /^[DA]\d+$/.test(n))) add(2, 'pz_wrong_pin', `蜂鳴器接到了 <b>${pinPretty(legPins.find(n => /^[DA]\d+$/.test(n)))}</b>，但程式用的是 <b>D8</b>。請改接到 8 號腳。`);
+          else if (!extTouches(d8) && !h.wires.some(w => w.a === 'P:D8' || w.b === 'P:D8')) add(2, 'd8_missing', '還未連接 D8。請由 Arduino 上方的 <b>8</b> 號腳拉一條導線到蜂鳴器其中一隻腳的直行。', false);
+          else add(2, 'd8_nowhere', 'D8 的導線接到了<b>沒有元件</b>的位置。導線要插在和蜂鳴器其中一隻腳<b>同一號碼</b>的直行。');
         }
         // step 3: GND
         if (N1 !== gnd && N2 !== gnd) {
           const sigLeg = N1 === d8 ? N2 : N2 === d8 ? N1 : null;
           const otherPins = sigLeg ? pinsIn(sigLeg).filter(n => n !== 'GND') : [];
-          if (otherPins.length) add(3, 'pz_gnd_wrong', `Piezo 另一隻腳應該接 <b>GND</b>，你接了 <b>${pinPretty(otherPins[0])}</b>。`);
-          else if (!extTouches(gnd)) add(3, 'gnd_missing', '還未連接 GND。請由 Arduino 下方 POWER 那一排的 <b>GND</b> 腳，拉一條導線到 Piezo 另一隻腳的直行。', false);
-          else add(3, 'gnd_nowhere', 'GND 的導線接到了<b>沒有元件</b>的位置。導線要插在和 Piezo 另一隻腳<b>同一號碼</b>的直行。');
+          if (otherPins.length) add(3, 'pz_gnd_wrong', `蜂鳴器另一隻腳應該接 <b>GND</b>，你接了 <b>${pinPretty(otherPins[0])}</b>。`);
+          else if (!extTouches(gnd)) add(3, 'gnd_missing', '還未連接 GND。請由 Arduino 下方 POWER 那一排的 <b>GND</b> 腳，拉一條導線到蜂鳴器另一隻腳的直行。', false);
+          else add(3, 'gnd_nowhere', 'GND 的導線接到了<b>沒有元件</b>的位置。導線要插在和蜂鳴器另一隻腳<b>同一號碼</b>的直行。');
         }
       }
     }
@@ -1404,7 +1578,7 @@ const HW = (() => {
 
   /* ---------- steps ---------- */
   const STEPS_MAIN = [{ t: '插上 LED' }, { t: '插上 220Ω 電阻' }, { t: '連接 D13（信號）' }, { t: '連接 GND（接地）' }, { t: '最後檢查' }];
-  const STEPS_C1 = [{ t: '插上 Piezo 蜂鳴器' }, { t: '連接 D8（信號）' }, { t: '連接 GND（接地）' }, { t: '最後檢查' }];
+  const STEPS_C1 = [{ t: '插上蜂鳴器' }, { t: '連接 D8（信號）' }, { t: '連接 GND（接地）' }, { t: '最後檢查' }];
   const STEPS = () => MODE === 'c1' ? STEPS_C1 : STEPS_MAIN;
   const WIRE_STEPS = () => MODE === 'c1' ? [2, 3] : [3, 4];
   const doAnalyze = () => MODE === 'c1' ? analyzeC1() : analyze();
@@ -1456,17 +1630,17 @@ const HW = (() => {
   function stepBody(step) {
     if (MODE === 'c1') {
       const h = H();
-      if (step === 1) { const t = pzTarget(); return `<p>LED 電路已經接好（今次不用改動）。把元件盒中的 <b>Piezo 蜂鳴器</b>拖到麵包板，兩隻腳要在<b>不同號碼</b>的直行。</p><p>你的 Piezo <b>沒有正負極</b>，兩隻腳可以對調。</p>${t ? `<p>建議位置：黃色閃動的 <b>${t.h1}</b> 和 <b>${t.h2}</b>。</p>` : ''}`; }
+      if (step === 1) { const t = pzTarget(); return `<p>LED 電路已經接好（今次不用改動）。把元件盒中的 <b>蜂鳴器</b>拖到麵包板，兩隻腳要在<b>不同號碼</b>的直行。</p><p>你的蜂鳴器 <b>沒有正負極</b>，兩隻腳可以對調。</p>${t ? `<p>建議位置：黃色閃動的 <b>${t.h1}</b> 和 <b>${t.h2}</b>。</p>` : ''}`; }
       const an = analyzeC1();
       const L = an.legs ? colOfNet(an.find(pzHoles(h.pz)[0]), an.find) : null, R = an.legs ? colOfNet(an.find(pzHoles(h.pz)[1]), an.find) : null;
-      if (step === 2) return `<p>選一種導線顏色（建議<b>橙色</b>），由 Arduino 上方的 <b>8</b> 號腳拉到 Piezo ${L ? `左腳的<b>${L}</b>` : '其中一隻腳的直行'}。</p>`;
-      if (step === 3) return `<p>選<b>黑色</b>導線，由 Arduino <b>下方</b> POWER 那一排的 <b>GND</b> 腳，拉到 Piezo ${R ? `右腳的<b>${R}</b>` : '另一隻腳的直行'}。</p><p class="small">UNO 上方和下方一共有 3 個 GND，它們是相通的，用哪一個都可以。</p>`;
+      if (step === 2) return `<p>選一種導線顏色（建議<b>藍色</b>），由 Arduino 上方的 <b>8</b> 號腳拉到蜂鳴器 ${L ? `左腳的<b>${L}</b>` : '其中一隻腳的直行'}。</p>`;
+      if (step === 3) return `<p>選<b>黑色</b>導線，由 Arduino <b>下方</b> POWER 那一排的 <b>GND</b> 腳，拉到蜂鳴器 ${R ? `右腳的<b>${R}</b>` : '另一隻腳的直行'}。</p><p class="small">UNO 上方和下方一共有 3 個 GND，它們是相通的，用哪一個都可以。</p>`;
       return `<p>檢查兩條新導線都接好，而且沒有改動原本的 LED 電路，然後按「完成接線檢查」。</p>`;
     }
     if (step === 1) return `<p>把元件盒中的 LED 拖到麵包板。<b>長腳（+）</b>在左，<b>短腳（−）</b>在右，兩隻腳要在<b>不同號碼</b>的直行。</p><p>建議位置：黃色閃動的 <b>f13</b> 和 <b>f14</b>。</p>`;
     if (step === 2) { const t = resTarget(); return `<p>把 220Ω 電阻拖到麵包板，令電阻其中一隻腳和 LED <b>長腳（+）</b>在<b>同一號碼</b>的直行，這樣兩者就串聯起來。</p>${t ? `<p>建議位置：<b>${t.h1}</b> 至 <b>${t.h2}</b>。</p>` : ''}`; }
     const an = analyze();
-    if (step === 3) { const c = an.chain ? colOfNet(an.chain.X, an.find) : null; return `<p>選一種導線顏色（建議<b>黃色</b>），在 Arduino 上方的 <b>13</b> 號腳按住，拖到${c ? `電阻另一端的<b>${c}</b>` : '電阻另一端的直行'}，放開滑鼠。</p>`; }
+    if (step === 3) { const c = an.chain ? colOfNet(an.chain.X, an.find) : null; return `<p>選一種導線顏色（建議<b>白色</b>），在 Arduino 上方的 <b>13</b> 號腳按住，拖到${c ? `電阻另一端的<b>${c}</b>` : '電阻另一端的直行'}，放開滑鼠。</p>`; }
     if (step === 4) { const c = an.chain ? colOfNet(an.chain.Y, an.find) : null; return `<p>選<b>黑色</b>導線，由 Arduino 的 <b>GND</b> 腳（在 13 號腳左邊）拉到 LED <b>短腳（−）</b>的${c ? `<b>${c}</b>` : '直行'}。</p><p class="small">黑色代表負極 / 接地，是電子接線的習慣。</p>`; }
     return `<p>檢查所有導線都接好，沒有多餘的線，然後按「完成接線檢查」。</p>`;
   }
@@ -1502,7 +1676,7 @@ const HW = (() => {
     if (type === 'pz') return { x: mx - 26, y: a.y - 60, w: 52, h: 54 };
     return { x: a.x + 12, y: a.y - 10, w: b.x - a.x - 24, h: 20 };
   }
-  const partName = { led: 'LED', res: '電阻', pz: 'Piezo' };
+  const partName = { led: 'LED', res: '電阻', pz: '蜂鳴器' };
   function drawPart(type, a, b, opts = {}) {
     if (type === 'led') return ledSVG(a, b, H().led ? H().led.flipped : false, opts);
     if (type === 'pz') return pzSVG(a, b, opts);
@@ -1511,7 +1685,7 @@ const HW = (() => {
 
   function build() {
     svg = $('#hwSvg');
-    svg.innerHTML = DEFS + `<rect x="0" y="0" width="1090" height="640" fill="url(#matgrid)"/>` + unoSVG() + boardSVG() +
+    svg.innerHTML = DEFS + `<rect x="0" y="0" width="1150" height="640" fill="url(#matgrid)"/>` + unoSVG() + boardSVG() +
       `<g id="tray"><rect x="${TRAY.x}" y="${TRAY.y}" width="${TRAY.w}" height="${TRAY.h}" rx="12" fill="rgba(0,0,0,.25)" stroke="rgba(255,255,255,.15)"/>
         <text x="${TRAY.x + 16}" y="${TRAY.y + 22}" font-size="13" fill="#CFE3DD" font-weight="700">元件盒</text>
         <rect x="44" y="${TRAY.y + 32}" width="122" height="96" rx="8" fill="none" stroke="rgba(255,255,255,.25)" stroke-dasharray="4 4"/>
@@ -1560,7 +1734,7 @@ const HW = (() => {
     });
     gDyn.innerHTML = s;
     const parts = PARTS();
-    $('#traySlot1').textContent = h[parts[0]] ? `${partName[parts[0]]}（已使用）` : (parts[0] === 'led' ? 'LED（紅）' : 'Piezo 蜂鳴器');
+    $('#traySlot1').textContent = h[parts[0]] ? `${partName[parts[0]]}（已使用）` : (parts[0] === 'led' ? 'LED（紅）' : '蜂鳴器');
     $('#traySlot2g').style.display = parts[1] ? '' : 'none';
     if (parts[1]) $('#traySlot2').textContent = h.res ? '電阻（已使用）' : '電阻 220Ω';
     const cur = h.step + 1;
@@ -1573,7 +1747,7 @@ const HW = (() => {
   function renderSelTools() {
     const el = $('#selTools'), h = H();
     if (h.done) { el.innerHTML = '<span class="pill ok">接線已完成</span>'; return; }
-    if (!sel) { el.innerHTML = `<span class="lbl">${MODE === 'c1' ? '點選 Piezo 或新導線可以移除' : '點選元件或導線可以反轉或移除'}</span>`; return; }
+    if (!sel) { el.innerHTML = `<span class="lbl">${MODE === 'c1' ? '點選蜂鳴器或新導線可以移除' : '點選元件或導線可以反轉或移除'}</span>`; return; }
     if (sel.type === 'led') el.innerHTML = `<span class="lbl">已選取：LED</span>${h.led ? '<button class="btn sm" id="stFlip">反轉 LED</button><button class="btn sm" id="stDel">放回元件盒</button>' : ''}`;
     else if (sel.type === 'res' || sel.type === 'pz') el.innerHTML = `<span class="lbl">已選取：${partName[sel.type]}</span>${h[sel.type] ? '<button class="btn sm" id="stDel">放回元件盒</button>' : ''}`;
     else { const w = h.wires.find(x => x.id === sel.id); el.innerHTML = w ? `<span class="lbl">已選取：導線 ${endName(w.a)} → ${endName(w.b)}</span><button class="btn sm" id="stDel">刪除導線</button>` : ''; }
@@ -1735,7 +1909,7 @@ const HW = (() => {
     modal({
       title: '接線完成！',
       html: MODE === 'c1'
-        ? `<p>做得好！新加的電路是：<b>D8 → Piezo → GND</b>。原本的 LED 電路（D13）保持不變。</p><p class="muted" style="margin-top:8px">LED 和 Piezo 各自用一支腳，程式就可以分開控制它們。</p><div class="row" style="margin-top:12px"><span class="pill ${h.errors ? 'warn' : 'ok'}">接線錯誤 ${h.errors} 次</span><span class="pill ${h.hints ? 'warn' : 'ok'}">使用提示 ${h.hints} 次</span></div>`
+        ? `<p>做得好！新加的電路是：<b>D8 → 蜂鳴器 → GND</b>。原本的 LED 電路（D13）保持不變。</p><p class="muted" style="margin-top:8px">LED 和蜂鳴器各自用一支腳，程式就可以分開控制它們。</p><div class="row" style="margin-top:12px"><span class="pill ${h.errors ? 'warn' : 'ok'}">接線錯誤 ${h.errors} 次</span><span class="pill ${h.hints ? 'warn' : 'ok'}">使用提示 ${h.hints} 次</span></div>`
         : `<p>做得好！你的電路是：<b>D13 → 220Ω 電阻 → LED 長腳（+）→ LED 短腳（−）→ GND</b>。</p><p class="muted" style="margin-top:8px">模擬器上黃色虛線顯示電流的路線。當 D13 輸出 HIGH（5V），電流就會流過電阻和 LED，LED 便會亮起。</p><div class="row" style="margin-top:12px"><span class="pill ${h.errors ? 'warn' : 'ok'}">接線錯誤 ${h.errors} 次</span><span class="pill ${h.hints ? 'warn' : 'ok'}">使用提示 ${h.hints} 次</span></div>`,
       actions: [{ label: '留在這頁', kind: 'ghost' }, { label: '下一步：編寫程式', kind: 'go', onClick: () => goStage(next) }],
     });
@@ -1745,10 +1919,10 @@ const HW = (() => {
     const h = H(), cur = h.step + 1, steps = STEPS(), last = steps.length, ws = WIRE_STEPS();
     const hintCost = MODE === 'c1' ? 1 : 2;
     $('#hwEyebrow').textContent = MODE === 'c1' ? '延伸挑戰 1 · 聲光 SOS' : '第 2 步';
-    $('#hwTitle').textContent = MODE === 'c1' ? '加入 Piezo 蜂鳴器' : '硬件接線';
+    $('#hwTitle').textContent = MODE === 'c1' ? '加入蜂鳴器' : '硬件接線';
     $('#hwKnow').innerHTML = MODE === 'c1'
-      ? `<div><b>Piezo 蜂鳴器：</b>裏面有一塊會震動的薄片。Arduino 用 <code>tone()</code> 令腳位每秒開關幾百至幾千次，薄片跟着震動，就發出聲音。</div><div><b>沒有正負極：</b>你用的 Piezo 兩隻腳可以對調。</div><div><b>為甚麼用 D8：</b>D13 已經控制 LED，Piezo 要用另一支腳，程式才可以分開控制。</div>`
-      : `<div><b>麵包板：</b>同一個號碼的 a–e 五個孔是相通的（f–j 另一組）。把滑鼠移到孔上，會顯示哪些孔相通。</div><div><b>LED：</b>長腳是正極（+），短腳是負極（−）。電流只可以由 + 流向 −。</div><div><b>電阻：</b>限制電流，保護 LED。今次用 220Ω（紅紅啡金）。</div>`;
+      ? `<div><b>蜂鳴器：</b>裏面有一塊會震動的薄片。Arduino 用 <code>tone()</code> 令腳位每秒開關幾百至幾千次，薄片跟着震動，就發出聲音。</div><div><b>沒有正負極：</b>你用的蜂鳴器兩隻腳可以對調。</div><div><b>為甚麼用 D8：</b>D13 已經控制 LED，蜂鳴器要用另一支腳，程式才可以分開控制。</div>`
+      : `<div><b>麵包板：</b>同一個號碼的 a–e 五個孔是相通的（f–j 另一組）。把滑鼠移到孔上，會顯示哪些孔相通。</div><div><b>LED：</b>長腳是正極（+），短腳是負極（−）。電流只可以由 + 流向 −。</div><div><b>電阻：</b>限制電流，保護 LED。今次用 220Ω（紅紅黑黑棕）。</div>`;
     $('#hwSteps').innerHTML = steps.map((st, i) => {
       const n = i + 1, cls = n <= h.step ? 'done' : n === cur && !h.done ? 'cur' : 'locked';
       let body = '';
@@ -1766,7 +1940,7 @@ const HW = (() => {
     $$('#hwSteps [data-hint]').forEach(b => b.onclick = () => {
       const n = +b.dataset.hint;
       const ready = MODE === 'c1' ? !!analyzeC1().legs : !!analyze().chain;
-      if (!ready) { toast(MODE === 'c1' ? '先把 Piezo 插到麵包板，才可以顯示提示位置。' : '先完成 LED 和電阻的步驟，才可以顯示提示位置。'); return; }
+      if (!ready) { toast(MODE === 'c1' ? '先把蜂鳴器插到麵包板，才可以顯示提示位置。' : '先完成 LED 和電阻的步驟，才可以顯示提示位置。'); return; }
       h.hinted[n] = true; h.hints++; pushLog(h, `使用提示：第 ${n} 步（${steps[n - 1].t}）`);
       save(); render(); renderPanel();
     });
@@ -1792,11 +1966,11 @@ const HW = (() => {
     if (mode === 'c1') {
       const h = S.ext.c1.hw;
       h.pz = { h1: 'f18' };
-      h.wires = [{ id: 'wd8', a: 'P:D8', b: 'j18', color: '#EE6B1F' }, { id: 'wg2', a: 'P:GND2', b: 'j21', color: '#2A2A2A' }];
+      h.wires = [{ id: 'wd8', a: 'P:D8', b: 'j18', color: '#2F6FD6' }, { id: 'wg2', a: 'P:GND2', b: 'j21', color: '#2A2A2A' }];
       h.step = 3;
     } else {
       S.hw.led = { h1: 'f13', flipped: false }; S.hw.res = { h1: 'h9' };
-      S.hw.wires = [{ id: 'wd13', a: 'P:D13', b: 'j9', color: '#F2A91E' }, { id: 'wgnd', a: 'P:GND', b: 'j14', color: '#2A2A2A' }];
+      S.hw.wires = [{ id: 'wd13', a: 'P:D13', b: 'j9', color: '#F4F4F0' }, { id: 'wgnd', a: 'P:GND', b: 'j14', color: '#2A2A2A' }];
       S.hw.step = 4;
     }
     S.teacherUsed = true; save();
@@ -1879,19 +2053,19 @@ const BLANKS = [
 ];
 const BANK = ['13', '12', 'OUTPUT', 'INPUT', 'HIGH', 'LOW', '2', '200', '600', '2000', 'digitalWrite', 'digitalRead', 'pinMode'];
 
-/* ---------- 延伸挑戰 1：聲光 SOS（Piezo 用 tone / noTone） ---------- */
+/* ---------- 延伸挑戰 1：聲光 SOS（蜂鳴器用 tone / noTone） ---------- */
 const C1_TEMPLATE = (() => {
   const L = [
     '// 延伸挑戰 1：聲光 SOS',
-    '// LED 閃的同時，Piezo 蜂鳴器發出「嗶」聲',
+    '// LED 閃的同時，蜂鳴器發出「嗶」聲',
     '',
     'int ledPin = 13;              // LED 接在 13 號腳',
-    'int buzzerPin = {{e1}};           // Piezo 接在第幾號腳？',
+    'int buzzerPin = {{e1}};           // 蜂鳴器接在第幾號腳？',
     'int pitch = {{e2}};             // 聲音頻率（Hz），建議 1000',
     '',
     'void setup() {',
     '  pinMode(ledPin, OUTPUT);',
-    '  pinMode(buzzerPin, {{e3}});   // Piezo 也要設定為「輸出」',
+    '  pinMode(buzzerPin, {{e3}});   // 蜂鳴器也要設定為「輸出」',
     '}',
     '',
     'void loop() {',
@@ -1922,12 +2096,12 @@ const C1_TEMPLATE = (() => {
 })();
 const pitchOK = v => /^\d+$/.test(v) && +v >= 100 && +v <= 5000;
 const C1_BLANKS = [
-  { id: 'e1', ans: '8', ctx: 'init', ask: 'Piezo 接在哪一號腳', hint: '回想剛才的接線：Piezo 的信號線接在 UNO 的幾號腳？只填數字。' },
+  { id: 'e1', ans: '8', ctx: 'init', ask: '蜂鳴器接在哪一號腳', hint: '回想剛才的接線：蜂鳴器的信號線接在 UNO 的幾號腳？只填數字。' },
   { id: 'e2', ans: '1000', ctx: 'init', accept: pitchOK, ask: '聲音頻率（Hz）', hint: '頻率 = 每秒震動多少次。填 <em>100 至 5000</em> 之間的整數，建議 1000。' },
-  { id: 'e3', ans: 'OUTPUT', ctx: 'mode', ask: 'Piezo 腳位的模式', hint: 'Arduino 要「送出」信號給 Piezo，所以是「輸出」。英文要<em>全部大寫</em>。' },
-  { id: 'e4', ans: 'tone', ctx: 'func', argc: 2, ask: '令 Piezo 發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
-  { id: 'e5', ans: 'noTone', ctx: 'func', argc: 1, ask: '令 Piezo 停聲的指令', hint: '停聲 = no + Tone，寫成 <em>noTone</em>，注意 T 是大寫。' },
-  { id: 'e6', ans: 'buzzerPin', ctx: 'arg', accept: v => v === 'buzzerPin' || v === '8', ask: '停止哪一支腳的聲音', hint: '要停的是 Piezo 那支腳。程式第 5 行已經用一個變數記住了它的腳位。' },
+  { id: 'e3', ans: 'OUTPUT', ctx: 'mode', ask: '蜂鳴器腳位的模式', hint: 'Arduino 要「送出」信號給蜂鳴器，所以是「輸出」。英文要<em>全部大寫</em>。' },
+  { id: 'e4', ans: 'tone', ctx: 'func', argc: 2, ask: '令蜂鳴器發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
+  { id: 'e5', ans: 'noTone', ctx: 'func', argc: 1, ask: '令蜂鳴器停聲的指令', hint: '停聲 = no + Tone，寫成 <em>noTone</em>，注意 T 是大寫。' },
+  { id: 'e6', ans: 'buzzerPin', ctx: 'arg', accept: v => v === 'buzzerPin' || v === '8', ask: '停止哪一支腳的聲音', hint: '要停的是蜂鳴器那支腳。程式第 5 行已經用一個變數記住了它的腳位。' },
 ];
 const C1_BANK = ['8', '13', '1000', 'OUTPUT', 'INPUT', 'tone', 'noTone', 'digitalWrite', 'buzzerPin', 'ledPin'];
 
@@ -1996,10 +2170,10 @@ const IDE = (() => {
       name: 'c1', file: 'SOS_Sound', eyebrow: '延伸挑戰 1 · 聲光 SOS', title: '編程及上傳', full: false,
       tpl: C1_TEMPLATE, blanks: C1_BLANKS, bank: C1_BANK,
       st: () => S.ext.c1.code, flow: () => S.ext.c1.flow,
-      intro: `LED 部分已寫好。你要完成 <b>6 個橙色空格</b>，令 Piezo 在 LED 亮時發聲、熄時停聲。`,
+      intro: `LED 部分已寫好。你要完成 <b>6 個橙色空格</b>，令蜂鳴器在 LED 亮時發聲、熄時停聲。`,
       revealNote: '顯示答案會令這個挑戰扣 2 分。建議先再試一次。',
       next: { label: '返回延伸挑戰', stage: 'ext' },
-      dict: [['tone(腳, 頻率)', '令腳位不停開關，Piezo 發出該頻率的聲音。頻率愈高，聲音愈尖'], ['noTone(腳)', '停止那支腳的聲音'], ['int pitch = 1000;', '用變數記住頻率，改一個數字就可以改全部聲音'], ['digitalWrite(腳, 狀態)', 'LED 用它開關；Piezo 只開一次不會響，所以要用 tone()']],
+      dict: [['tone(腳, 頻率)', '令腳位不停開關，蜂鳴器發出該頻率的聲音。頻率愈高，聲音愈尖'], ['noTone(腳)', '停止那支腳的聲音'], ['int pitch = 1000;', '用變數記住頻率，改一個數字就可以改全部聲音'], ['digitalWrite(腳, 狀態)', 'LED 用它開關；蜂鳴器只開一次不會響，所以要用 tone()']],
     },
     c2: {
       name: 'c2', file: 'Morse_Initials', eyebrow: '延伸挑戰 2 · 英文縮寫', title: '自己編寫程式', full: false, free: true,
@@ -2125,7 +2299,7 @@ const IDE = (() => {
     if (b.ctx === 'delay' || b.ctx === 'init') {
       const f = parseFloat(v);
       if (!isNaN(f) && b.ctx === 'delay' && Math.round(f * 1000) === +b.ans) return 'delay() 的單位是<b>毫秒</b>，不是秒。';
-      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return v === '13' && b.id === 'e1' ? '13 號腳是 LED 用的。Piezo 接在另一支腳。' : '看清楚接線模擬器中，導線接在哪一號腳。';
+      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return v === '13' && b.id === 'e1' ? '13 號腳是 LED 用的。蜂鳴器接在另一支腳。' : '看清楚接線模擬器中，導線接在哪一號腳。';
       if (b.ctx === 'delay' && /^\d+$/.test(v)) return '時間不對，再看看那一行的註解（灰色文字）。';
     }
     if ((b.id === 'b2' || b.id === 'e3') && lc === 'input') return 'INPUT 是「輸入」（例如讀取按鈕）；這裏要用「輸出」。';
@@ -2133,12 +2307,12 @@ const IDE = (() => {
     if (b.id === 'b5' && lc === 'high') return 'HIGH 是開燈，關燈要用低電位。';
     if (b.id === 'b7' && lc === 'digitalread') return 'digitalRead 是「讀取」輸入；控制 LED 要「寫」出信號。';
     if (b.id === 'b7' && lc === 'pinmode') return 'pinMode 只用來設定模式，開燈要用另一個指令。';
-    if (b.id === 'e4' && lc === 'digitalwrite') return 'digitalWrite 只會開一次，Piezo 不會響。要用令腳位不停開關的指令。';
+    if (b.id === 'e4' && lc === 'digitalwrite') return 'digitalWrite 只會開一次，蜂鳴器不會響。要用令腳位不停開關的指令。';
     if (b.id === 'e4' && lc === 'notone') return 'noTone 是停聲，開聲要用另一個指令。';
     if (b.id === 'e5' && lc === 'tone') return 'tone 是開聲，停聲要用另一個指令。';
     if (b.id === 'e5' && lc === 'digitalwrite') return '停聲要用專門停止 tone() 的指令。';
-    if (b.id === 'e6' && v === 'ledPin') return 'ledPin 是 LED 那支腳。要停的是 Piezo 那支腳。';
-    if (b.id === 'e6' && v === '13') return '13 號腳是 LED 那支腳。要停的是 Piezo 那支腳。';
+    if (b.id === 'e6' && v === 'ledPin') return 'ledPin 是 LED 那支腳。要停的是蜂鳴器那支腳。';
+    if (b.id === 'e6' && v === '13') return '13 號腳是 LED 那支腳。要停的是蜂鳴器那支腳。';
     return '';
   }
   function checkAnswers() {
@@ -2854,14 +3028,15 @@ const EXT = (() => {
       </div>
       <div class="ext-grid">
         <article class="card ext-card">
-          <div class="ext-top"><div class="ext-num">1</div><div><h3>聲光 SOS</h3><p class="muted small">加一個 Piezo 蜂鳴器：LED 閃的同時「嗶」一聲。學習用 <code>tone()</code> 和 <code>noTone()</code> 發聲。</p></div>${status(e.c1, true)}</div>
-          <ul class="ext-prog">${tick(e.c1.hw.done, '硬件：加入 Piezo（D8 → Piezo → GND）')}${tick(e.c1.code.done, '程式：完成 6 個空格')}${tick(e.c1.flow.uploaded, '驗證及上傳')}${tick(e.c1.confirmed, '老師確認實物成功')}</ul>
+          <div class="ext-top"><div class="ext-num">1</div><div><h3>聲光 SOS</h3><p class="muted small">加一個蜂鳴器：LED 閃的同時「嗶」一聲。學習用 <code>tone()</code> 和 <code>noTone()</code> 發聲。</p></div>${status(e.c1, true)}</div>
+          <details class="fold ext-mat"><summary>需要的材料（實物）</summary>${KIT.table(MATERIALS.c1)}</details>
+          <ul class="ext-prog">${tick(e.c1.hw.done, '硬件：加入蜂鳴器（D8 → 蜂鳴器 → GND）')}${tick(e.c1.code.done, '程式：完成 6 個空格')}${tick(e.c1.flow.uploaded, '驗證及上傳')}${tick(e.c1.confirmed, '老師確認實物成功')}</ul>
           ${sc.c1 ? `<p class="ext-score"><b>${sc.c1.total}</b> / 10　<span class="small muted">接線 ${sc.c1.hw}/4 · 程式 ${sc.c1.code}/4 · 上傳 ${sc.c1.up}/2</span></p>` : '<p class="small muted">評分：接線 4 分、程式 4 分、上傳 2 分。</p>'}
           <div class="row">
             ${e.c1.done ? '<button class="btn" data-replay="c1">再看一次（有聲）</button>' : `<button class="btn go" data-go="${c1Next}">${status(e.c1, true).includes('未開始') ? '開始挑戰 1' : '繼續挑戰 1'}</button>`}
           </div>
           ${e.c1.done ? `<details class="fold ext-real" ${e.c1.confirmed ? '' : 'open'}><summary>在真的 UNO 上做一次</summary>
-            <ol class="goals small"><li>保留原本的 LED 電路，<b>先拔走 USB 線</b>。</li><li>把 Piezo 插到麵包板，兩隻腳在不同號碼的直行。</li><li>橙色線：D8 → Piezo 一隻腳；黑色線：GND → Piezo 另一隻腳。</li><li>插回 USB 線，把程式貼到 Arduino IDE，然後上傳。</li><li>LED 閃時應該聽到「嗶」聲。沒有聲？檢查是否用了 <code>tone()</code>，以及 Piezo 兩隻腳是否插在不同直行。</li></ol>
+            <ol class="goals small"><li>保留原本的 LED 電路，<b>先拔走 USB 線</b>。</li><li>把蜂鳴器插到麵包板，兩隻腳在不同號碼的直行。</li><li>藍色線：D8 → 蜂鳴器一隻腳；黑色線：GND → 蜂鳴器另一隻腳。</li><li>插回 USB 線，把程式貼到 Arduino IDE，然後上傳。</li><li>LED 閃時應該聽到「嗶」聲。沒有聲？檢查是否用了 <code>tone()</code>，以及蜂鳴器兩隻腳是否插在不同直行。</li></ol>
             <div class="row"><button class="btn sm primary" data-copy="c1">複製完整程式</button><span class="small muted" data-copymsg="c1"></span></div>
             ${e.c1.confirmed ? alertBox('ok', '老師已確認實物成功。') : '<button class="btn sm teal" data-confirm="c1">老師確認實物成功</button>'}
           </details>` : ''}
@@ -2914,7 +3089,7 @@ const EXT = (() => {
             <div class="morse" id="c1Morse" style="background:#0F1B20;border-radius:8px;padding:6px"></div>
             <div class="row">${muteBtnHTML()}<span class="small muted">頻率 ${pitch} Hz</span></div>
           </div>
-          <p class="small muted" style="margin-top:8px">LED 亮時 Piezo 同時發聲。靜音時可以看 Piezo 旁邊的黃色聲波。想聽不同的聲音？在真的 Arduino 上把 <code>pitch</code> 改成 500 或 2000 試試。</p>`,
+          <p class="small muted" style="margin-top:8px">LED 亮時蜂鳴器同時發聲。靜音時可以看蜂鳴器旁邊的黃色聲波。想聽不同的聲音？在真的 Arduino 上把 <code>pitch</code> 改成 500 或 2000 試試。</p>`,
         actions: [toExt],
         onOpen: back => {
           bindMute(back);
@@ -2968,7 +3143,7 @@ const FULL_CODE = CODE_TEMPLATE.map(l => l.replace(/\{\{(b\d)\}\}/g, (_, id) => 
 
 /* ---------------- 實物挑戰 ---------------- */
 const REAL_ITEMS = [
-  ['準備材料', 'Arduino UNO、麵包板、紅色 LED、220Ω 電阻（紅紅啡金）、2 條杜邦線、USB 線。'],
+  ['準備材料', '按上面的材料清單拿齊材料。電阻要用 220Ω（有 2 條紅色）。'],
   ['先接線，後通電', '接線時<b>不要</b>插 USB 線，避免接錯時短路。'],
   ['照你的接線圖接駁', '按下面的圖插好 LED、電阻和兩條導線。'],
   ['通電前再檢查一次', 'LED 長腳（+）向 D13 那邊；黑線接 GND；電阻和 LED 有一隻腳在同一號碼的直行。'],
@@ -2984,6 +3159,8 @@ stageInit.real = () => {
   sec.innerHTML = `<div class="real-layout">
     <div class="stack" style="gap:18px">
       <div class="intro-head" style="margin-bottom:4px"><div><div class="eyebrow">第 4 步</div><h2 style="font-size:28px;font-weight:900">實物挑戰：在真的 UNO 上做一次</h2><p class="muted" style="margin-top:6px">模擬器已經完成。現在用真的材料再做一次，每完成一項就剔一剔。</p></div></div>
+      <div class="card"><h3>先認電阻 <span class="small muted" style="font-weight:400">（不計分）</span></h3><div id="resQuiz"></div></div>
+      <details class="card fold-card" ${S.real.checks[0] ? '' : 'open'}><summary><h3 style="display:inline-flex;margin:0">材料清單</h3></summary><div style="margin-top:10px">${KIT.table(MATERIALS.main)}</div></details>
       <div class="card"><h3>清單 <span class="pill ${done === REAL_ITEMS.length ? 'ok' : ''}" id="realCount">${done} / ${REAL_ITEMS.length}</span></h3>
         <ul class="checklist">${REAL_ITEMS.map(([b, s], i) => `<li><label><input type="checkbox" id="rc${i}" data-i="${i}" ${S.real.checks[i] ? 'checked' : ''}><div><b>${i + 1}. ${b}</b><span>${s}</span></div></label></li>`).join('')}</ul>
       </div>
@@ -3001,6 +3178,7 @@ stageInit.real = () => {
       <div class="card"><h3>遇到問題？</h3>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>情況</th><th>可能原因及解決方法</th></tr></thead><tbody>
           <tr><td>LED 完全不亮</td><td>LED 接反了（長腳要向 D13）；導線未插緊；電阻或 LED 的腳沒有和導線在同一號碼的直行。</td></tr>
+          <tr><td>LED 非常暗</td><td>用錯了電阻（例如 1kΩ 或 10kΩ）。LED 要用 220Ω：紅紅黑黑棕，有 2 條紅色。</td></tr>
           <tr><td>板上 L 燈在閃，但 LED 不亮</td><td>程式已經成功上傳，問題在外接電路。逐條檢查導線和 LED 方向。</td></tr>
           <tr><td>LED 一直亮，不會閃</td><td>導線接到了 5V 而不是 D13。</td></tr>
           <tr><td>Tools → Port 找不到 Arduino</td><td>USB 線未插好，或者那條 USB 線只可以充電、不能傳資料。換一條線試試。</td></tr>
@@ -3014,6 +3192,10 @@ stageInit.real = () => {
       </div>
     </div>
   </div>`;
+  if (!S.real.resQuiz) S.real.resQuiz = {};
+  KIT.quiz($('#resQuiz'), [
+    { ask: '套件有幾種電阻。哪一粒是 LED 要用的 <b>220Ω</b>？', ans: 220, tip: '數一數紅色環：220Ω 有 <b>2 條</b>紅色。' },
+  ], [1000, 10000, 220], S.real.resQuiz);
   $$('.checklist input', sec).forEach(cb => cb.onchange = () => {
     S.real.checks[cb.dataset.i] = cb.checked; save();
     $('#realCount').textContent = `${REAL_ITEMS.filter((_, i) => S.real.checks[i]).length} / ${REAL_ITEMS.length}`;
@@ -3042,15 +3224,18 @@ stageInit.real = () => {
 /* ---------------- report data ---------------- */
 function buildRecord() {
   const sc = scores();
+  const fin = sc.complete && S.finishedAt ? S.finishedAt : now();
   const secs = (a, b) => (a && b) ? Math.round((b - a) / 1000) : null;
   return {
     app: CONFIG.APP, v: CONFIG.VERSION, id: S.id,
     name: S.student.name, cls: S.student.cls, no: S.student.no, attempt: S.attempt,
-    started: new Date(S.startedAt).toISOString(), finished: new Date(S.finishedAt).toISOString(),
-    dur: { hw: secs(S.t.hw, S.t.hwEnd), code: secs(S.t.code, S.t.codeEnd), up: secs(S.t.codeEnd, S.t.upEnd), total: secs(S.startedAt, S.finishedAt) },
+    started: new Date(S.startedAt).toISOString(), finished: new Date(fin).toISOString(),
+    dur: { hw: secs(S.t.hw, S.t.hwEnd), code: secs(S.t.code, S.t.codeEnd), up: secs(S.t.codeEnd, S.t.upEnd), total: secs(S.startedAt, fin) },
     score: sc,
+    status: sc.complete ? 'complete' : 'partial',
+    progress: { hw: !!S.hw.done, code: !!S.code.done, blanksOk: BLANKS.filter(b => (S.code.blanks[b.id] || {}).status === 'ok').length, blanksOf: BLANKS.length, up: !!S.up.uploaded },
     hw: { errors: S.hw.errors, hints: S.hw.hints, log: S.hw.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
-    code: { checks: S.code.checks, blanks: BLANKS.map(b => { const x = S.code.blanks[b.id] || {}; return { n: +b.id.slice(1), ask: b.ask, ans: b.ans, wrong: x.wrong || 0, revealed: !!x.revealed, pts: x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)) }; }), log: S.code.log ? S.code.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) : [] },
+    code: { checks: S.code.checks, blanks: !S.code.done ? [] : BLANKS.map(b => { const x = S.code.blanks[b.id] || {}; return { n: +b.id.slice(1), ask: b.ask, ans: b.ans, wrong: x.wrong || 0, revealed: !!x.revealed, pts: x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)) }; }), log: S.code.log ? S.code.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) : [] },
     up: { errors: S.up.errors, log: S.up.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
     real: { confirmed: !!S.real.confirmed, checked: REAL_ITEMS.filter((_, i) => S.real.checks[i]).length, of: REAL_ITEMS.length },
     ext: extRecord(),
@@ -3080,27 +3265,37 @@ function renderReportBody(d, ok, sig, svg) {
   var bar = function (label, v, max) { return '<div class="rb"><span>' + label + '</span><div class="rt"><i style="width:' + Math.round(v / max * 100) + '%"></i></div><b>' + v + ' / ' + max + '</b></div>'; };
   var list = function (arr, empty) { return arr && arr.length ? '<ul class="rlog">' + arr.map(function (x) { return '<li>' + E(x) + '</li>'; }).join('') + '</ul>' : '<p class="rmuted">' + empty + '</p>'; };
   var s = d.score;
+  var part = d.status === 'partial', pg = d.progress || {};
   var h = '';
   h += '<div class="rhead"><div><div class="reye">設計與科技 · Arduino UNO 實作</div><h1>SOS 求救燈 · 成績報告</h1></div>';
   h += ok ? '<div class="rver ok">✔ 驗證碼有效<br><b>' + code + '</b></div>' : '<div class="rver bad">✘ 驗證失敗<br>報告內容被修改過</div>';
   h += '</div>';
   h += '<table class="rinfo"><tr><th>姓名</th><td>' + E(d.name) + '</td><th>班別</th><td>' + E(d.cls) + '</td><th>學號</th><td>' + E(d.no) + '</td></tr>';
-  h += '<tr><th>開始</th><td>' + dt(d.started) + '</td><th>完成</th><td>' + dt(d.finished) + '</td><th>嘗試次數</th><td>第 ' + E(d.attempt) + ' 次</td></tr></table>';
+  h += '<tr><th>開始</th><td>' + dt(d.started) + '</td><th>' + (part ? '交出' : '完成') + '</th><td>' + dt(d.finished) + '</td><th>嘗試次數</th><td>第 ' + E(d.attempt) + ' 次</td></tr></table>';
   if (d.teacherUsed) h += '<div class="rwarn">注意：這次任務期間曾經使用教師模式（跳頁或示範功能）。</div>';
+  if (part) {
+    var st = function (label, done, extra) { return '<tr><td>' + label + '</td><td>' + (done ? '<b style="color:#1F8049">已完成 ✔</b>' : '<b style="color:#B42B1C">未完成</b>（0 分' + (extra ? '，' + extra : '') + '）') + '</td></tr>'; };
+    h += '<div class="rpartial"><b>未完成（提早提交）</b>：學生在完成全部任務前交出這份報告，只計已完成的部分。<table class="rtbl" style="margin-top:6px">' + st('硬件接線', pg.hw) + st('程式填空', pg.code, '已答對 ' + pg.blanksOk + ' / ' + pg.blanksOf + ' 格') + st('上傳流程', pg.up) + '</table></div>';
+  }
   h += '<div class="rscore"><div class="rbig">' + s.total + '<small> / 100</small><div class="rgrade">' + E(s.grade) + '</div></div><div class="rbars">';
   h += bar('硬件接線', s.hw, 40) + bar('程式填空', s.code, 40) + bar('上傳流程', s.up, 20);
   h += '<p class="rmuted">實物測試：' + (d.real.confirmed ? '<b style="color:#1F8049">老師已確認成功 ✔</b>' : '未確認') + '　·　實物清單完成 ' + d.real.checked + ' / ' + d.real.of + ' 項</p>' + (d.ext && (d.ext.c1.done || d.ext.c2.done) ? '<p class="rmuted">延伸挑戰（不計入總分）：' + (d.ext.c1.done ? '聲光 SOS <b>' + d.ext.c1.score.total + '</b>/10' : '聲光 SOS 未完成') + '　·　' + (d.ext.c2.done ? '英文縮寫 <b>' + d.ext.c2.score.total + '</b>/10' : '英文縮寫 未完成') + '</p>' : '') + '</div></div>';
-  h += '<h2>1. 硬件接線（' + s.hw + ' / 40）</h2><p>接線錯誤 <b>' + d.hw.errors + '</b> 次（每次 −4）；使用提示 <b>' + d.hw.hints + '</b> 次（每次 −2）；最低 16 分。用時 ' + dur(d.dur.hw) + '。</p>' + list(d.hw.log, '沒有錯誤記錄。');
+  if (part && !pg.hw) h += '<h2>1. 硬件接線（0 / 40）</h2><p><b>未完成</b>（0 分）。下圖是交報告時的接線。</p>';
+  else h += '<h2>1. 硬件接線（' + s.hw + ' / 40）</h2><p>接線錯誤 <b>' + d.hw.errors + '</b> 次（每次 −4）；使用提示 <b>' + d.hw.hints + '</b> 次（每次 −2）；最低 16 分。用時 ' + dur(d.dur.hw) + '。</p>' + list(d.hw.log, '沒有錯誤記錄。');
   if (svg) h += '<div class="rsvg">' + svg + '</div>';
-  h += '<h2>2. 程式填空（' + s.code + ' / 40）</h2><p>每格 5 分，每答錯一次 −1（最多 −3），顯示答案只得 1 分。用時 ' + dur(d.dur.code) + '。</p>';
+  if (part && !pg.code) h += '<h2>2. 程式填空（0 / 40）</h2><p><b>未完成</b>（0 分）。交報告時已答對 ' + pg.blanksOk + ' / ' + pg.blanksOf + ' 格。</p>';
+  else {
+    h += '<h2>2. 程式填空（' + s.code + ' / 40）</h2><p>每格 5 分，每答錯一次 −1（最多 −3），顯示答案只得 1 分。用時 ' + dur(d.dur.code) + '。</p>';
   h += '<table class="rtbl"><thead><tr><th>空格</th><th>內容</th><th>答案</th><th>答錯</th><th>顯示答案</th><th>得分</th></tr></thead><tbody>' + d.code.blanks.map(function (b) { return '<tr><td>' + b.n + '</td><td>' + E(b.ask) + '</td><td class="rmono">' + E(b.ans) + '</td><td>' + b.wrong + '</td><td>' + (b.revealed ? '是' : '—') + '</td><td><b>' + b.pts + '</b> / 5</td></tr>'; }).join('') + '</tbody></table>';
   if (d.code.log && d.code.log.length) h += '<details><summary>填答記錄</summary>' + list(d.code.log, '') + '</details>';
-  h += '<h2>3. 上傳流程（' + s.up + ' / 20）</h2><p>選板、選 Port 或上傳出錯 <b>' + d.up.errors + '</b> 次（每次 −3，最低 8 分）。用時 ' + dur(d.dur.up) + '。</p>' + list(d.up.log, '一次成功，沒有錯誤記錄。');
+  }
+  if (part && !pg.up) h += '<h2>3. 上傳流程（0 / 20）</h2><p><b>未完成</b>（0 分）。</p>';
+  else h += '<h2>3. 上傳流程（' + s.up + ' / 20）</h2><p>選板、選 Port 或上傳出錯 <b>' + d.up.errors + '</b> 次（每次 −3，最低 8 分）。用時 ' + dur(d.dur.up) + '。</p>' + list(d.up.log, '一次成功，沒有錯誤記錄。');
   if (d.ext) {
     var x1 = d.ext.c1, x2 = d.ext.c2, ok1 = function (v) { return v ? '<b style="color:#1F8049">老師已確認 ✔</b>' : '未確認'; };
     h += '<h2>4. 延伸挑戰（選做，不計入 100 分總分）</h2>';
     h += '<table class="rtbl"><thead><tr><th>挑戰</th><th>狀態</th><th>得分</th><th>記錄</th><th>實物</th></tr></thead><tbody>';
-    h += '<tr><td>1. 聲光 SOS（Piezo）</td><td>' + (x1.done ? '完成' : '未完成') + '</td><td>' + (x1.done ? '<b>' + x1.score.total + '</b> / 10<br><span class="rmuted">接線 ' + x1.score.hw + '/4 · 程式 ' + x1.score.code + '/4 · 上傳 ' + x1.score.up + '/2</span>' : '—') + '</td><td class="rmuted">' + (x1.done ? '接線錯誤 ' + x1.hwErrors + ' 次、提示 ' + x1.hints + ' 次、填錯 ' + x1.wrong + ' 次、顯示答案 ' + x1.revealed + ' 格、上傳錯誤 ' + x1.flowErrors + ' 次' + (x1.pitch ? '、頻率 ' + E(x1.pitch) + ' Hz' : '') : '—') + '</td><td>' + (x1.done ? ok1(x1.confirmed) : '—') + '</td></tr>';
+    h += '<tr><td>1. 聲光 SOS（蜂鳴器）</td><td>' + (x1.done ? '完成' : '未完成') + '</td><td>' + (x1.done ? '<b>' + x1.score.total + '</b> / 10<br><span class="rmuted">接線 ' + x1.score.hw + '/4 · 程式 ' + x1.score.code + '/4 · 上傳 ' + x1.score.up + '/2</span>' : '—') + '</td><td class="rmuted">' + (x1.done ? '接線錯誤 ' + x1.hwErrors + ' 次、提示 ' + x1.hints + ' 次、填錯 ' + x1.wrong + ' 次、顯示答案 ' + x1.revealed + ' 格、上傳錯誤 ' + x1.flowErrors + ' 次' + (x1.pitch ? '、頻率 ' + E(x1.pitch) + ' Hz' : '') : '—') + '</td><td>' + (x1.done ? ok1(x1.confirmed) : '—') + '</td></tr>';
     h += '<tr><td>2. 英文縮寫' + (x2.initials ? '（<span class="rmono">' + E(x2.initials) + '</span>）' : '') + '</td><td>' + (x2.done ? '完成' : '未完成') + '</td><td>' + (x2.done ? '<b>' + x2.score.total + '</b> / 10<br><span class="rmuted">程式 ' + x2.score.code + '/8 · 上傳 ' + x2.score.up + '/2</span>' : '—') + '</td><td class="rmuted">' + (x2.done ? '檢查未通過 ' + x2.fails + ' 次' + (x2.revealed ? '、曾顯示答案' : '') + '、上傳錯誤 ' + x2.flowErrors + ' 次' : '—') + '</td><td>' + (x2.done ? ok1(x2.confirmed) : '—') + '</td></tr>';
     h += '</tbody></table>';
     if ((x1.log && x1.log.length) || (x2.log && x2.log.length)) h += '<details><summary>延伸挑戰記錄</summary>' + list((x1.log || []).map(function (l) { return '挑戰1 ' + l; }).concat((x2.log || []).map(function (l) { return '挑戰2 ' + l; })), '') + '</details>';
@@ -3137,6 +3332,7 @@ const REPORT_CSS = `
 .rtbl th{font-size:12px;color:#6a7a83}
 .rmono{font-family:Consolas,monospace}
 .rsvg{margin:10px 0;border-radius:8px;overflow:hidden}.rsvg svg{display:block;width:100%;height:auto}
+.rpartial{background:#FBEFD6;color:#5E4100;border-left:4px solid #D9961A;padding:10px 14px;border-radius:6px;margin:0 0 14px;font-size:14px}.rpartial .rtbl td{border-color:#EBD7AE}
 .rfoot{margin-top:24px;padding-top:12px;border-top:1px solid #dde5e1;font-size:12px;color:#6a7a83}
 .rep details{font-size:13px;margin-bottom:8px}.rep summary{cursor:pointer;color:#0B767A}
 @media (max-width:600px){.rep{padding:20px}.rscore{grid-template-columns:1fr}}`;
@@ -3166,11 +3362,11 @@ document.getElementById('r').innerHTML=d?renderReportBody(d,ok,box.sig,document.
 /* ---------------- report page ---------------- */
 stageInit.report = () => {
   const lastExt = Math.max(S.ext.c1.t.end || 0, S.ext.c2.t.end || 0);
-  if (!S.finishedAt || lastExt > S.finishedAt) { S.finishedAt = now(); save(); }
+  if (mainDone() && (!S.finishedAt || lastExt > S.finishedAt)) { S.finishedAt = now(); save(); }
   const rec = buildRecord(); const signed = signRecord(rec);
-  const sc = rec.score;
+  const sc = rec.score, partial = rec.status === 'partial';
   const sec = $('#st-report');
-  sec.innerHTML = `<div class="report-top">
+  sec.innerHTML = `${partial ? `<div class="partial-top">${alertBox('warn', `<b>這是未完成的報告（提早提交）。</b>只計已完成的部分，未完成的部分是 0 分。你可以先下載交給老師，之後再繼續做；完成後回來下載完整報告。`)}<button class="btn go" id="resumeBtn">返回繼續做</button></div>` : ''}<div class="report-top">
       <div class="score-card">
         <div class="eyebrow" style="color:#7FA7AC">第 6 步 · 成績</div>
         <div class="big">${sc.total}<small> / 100</small></div>
@@ -3192,17 +3388,18 @@ stageInit.report = () => {
           <li><b>不要修改檔案。</b>報告有驗證碼，內容被改過會顯示「驗證失敗」。</li>
         </ol>
         <div class="row"><button class="btn go lg" id="dlReport">下載成績報告</button><span class="small muted" id="dlMsg"></span></div>
-        ${rec.real.confirmed ? '' : `<p class="small muted">實物測試未有老師確認。如果稍後確認了，可以回到「實物挑戰」頁，再回來下載一次。</p>`}
-        ${rec.ext.c1.done && rec.ext.c2.done ? '' : `<p class="small muted">還有時間？可以回到「延伸挑戰」再做，完成後回來重新下載報告。</p>`}
+        ${rec.real.confirmed || partial ? '' : `<p class="small muted">實物測試未有老師確認。如果稍後確認了，可以回到「實物挑戰」頁，再回來下載一次。</p>`}
+        ${partial || (rec.ext.c1.done && rec.ext.c2.done) ? '' : `<p class="small muted">還有時間？可以回到「延伸挑戰」再做，完成後回來重新下載報告。</p>`}
       </div>
     </div>
     <div style="margin-top:22px"><div class="eyebrow" style="max-width:900px;margin:0 auto 8px">報告預覽</div><div class="rep">${renderReportBody(rec, true, signed.sig, extSVG())}</div></div>`;
   $('#dlReport').onclick = async () => {
-    const fname = `SOS_${rec.cls}_${rec.no}_${rec.name}.html`.replace(/[\\/:*?"<>|\s]+/g, '_');
+    const fname = `SOS${partial ? '_未完成' : ''}_${rec.cls}_${rec.no}_${rec.name}.html`.replace(/[\\/:*?"<>|\s]+/g, '_');
     const res = await saveFile(fname, reportFileHTML(rec, signed), 'text/html');
     $('#dlMsg').textContent = res === 'saved' ? `已下載：${fname}` : '未有下載，可以再按一次。';
     if (res === 'saved') { S.downloaded = (S.downloaded || 0) + 1; save(); }
   };
+  const rb = $('#resumeBtn'); if (rb) rb.onclick = () => goStage(S.resume && S.resume !== 'report' ? S.resume : STAGES[Math.min(S.unlocked, 2)]);
 };
 
 /* ---------------- teacher mode ---------------- */
@@ -3222,7 +3419,7 @@ function teacherPanel() {
         <div class="row" style="margin-top:6px">${STAGES.map((s, i) => `<button class="btn sm" data-jump="${s}">${['簡介', '接線', '編程', '實物', '延伸', '報告'][i]}</button>`).join('')}</div>
         <div class="tp-grid" style="margin-top:8px">
           <span class="small muted">主任務</span><div class="row"><button class="btn sm" data-auto="wire:main">自動完成接線</button><button class="btn sm" data-auto="fill:main">填上程式答案</button></div>
-          <span class="small muted">延伸 1</span><div class="row"><button class="btn sm" data-auto="wire:c1">自動完成 Piezo 接線</button><button class="btn sm" data-auto="fill:c1">填上程式答案</button></div>
+          <span class="small muted">延伸 1</span><div class="row"><button class="btn sm" data-auto="wire:c1">自動完成蜂鳴器接線</button><button class="btn sm" data-auto="fill:c1">填上程式答案</button></div>
           <span class="small muted">延伸 2</span><div class="row"><button class="btn sm" data-auto="fill:c2">填上答案（縮寫 SOS）</button></div>
         </div>` : '<p class="small muted">未有學生登入。可以先用一個示範名字登入（例如「老師示範」），再用跳頁和自動完成功能。</p>'}</div>
       <div style="border-top:1px solid var(--line);padding-top:12px"><b>這部電腦</b><p class="small muted">清除本機儲存的學生進度，讓下一位同學使用。</p><button class="btn sm" id="tpClear" style="margin-top:6px">清除學生進度</button></div>
@@ -3299,13 +3496,13 @@ function drawV(back) {
   const rows = vRows.slice().sort((a, b) => a.d && b.d ? (a.d.cls.localeCompare(b.d.cls) || (+a.d.no - +b.d.no)) : a.d ? -1 : 1);
   const keyCount = {}; rows.forEach(r => { if (r.d) { const k = r.d.cls + '-' + r.d.no; keyCount[k] = (keyCount[k] || 0) + 1; } });
   $('#vSum', back).textContent = vRows.length ? `共 ${vRows.length} 份 · 有效 ${vRows.filter(r => r.ok).length} 份 · 無效 ${vRows.filter(r => !r.ok).length} 份` : '未有檔案';
-  $('#vTbl', back).innerHTML = vRows.length ? `<thead><tr><th>驗證</th><th>班別</th><th>學號</th><th>姓名</th><th>總分</th><th>等級</th><th>接線</th><th>程式</th><th>上傳</th><th>實物</th><th>延伸 1</th><th>延伸 2</th><th>嘗試</th><th>用時</th><th>備註</th></tr></thead><tbody>${rows.map(r => {
-    if (!r.d) return `<tr class="bad"><td>✘</td><td colspan="14">${esc(r.fname)}：${r.err}</td></tr>`;
+  $('#vTbl', back).innerHTML = vRows.length ? `<thead><tr><th>驗證</th><th>班別</th><th>學號</th><th>姓名</th><th>狀態</th><th>總分</th><th>等級</th><th>接線</th><th>程式</th><th>上傳</th><th>實物</th><th>延伸 1</th><th>延伸 2</th><th>嘗試</th><th>用時</th><th>備註</th></tr></thead><tbody>${rows.map(r => {
+    if (!r.d) return `<tr class="bad"><td>✘</td><td colspan="15">${esc(r.fname)}：${r.err}</td></tr>`;
     const d = r.d, notes = [];
     if (!r.ok) notes.push('內容被修改過');
     if (d.teacherUsed) notes.push('曾用教師模式');
-    if (keyCount[d.cls + '-' + d.no] > 1) notes.push('同一學生有多份');
-    return `<tr class="${r.ok ? '' : 'bad'}"><td>${r.ok ? '<span class="pill ok">有效</span>' : '<span class="pill err">無效</span>'}</td><td>${esc(d.cls)}</td><td class="num">${esc(d.no)}</td><td>${esc(d.name)}</td><td class="num"><b>${d.score.total}</b></td><td>${esc(d.score.grade)}</td><td class="num">${d.score.hw}</td><td class="num">${d.score.code}</td><td class="num">${d.score.up}</td><td>${d.real.confirmed ? '✔' : '—'}</td><td class="num">${extCell(d, 'c1')}</td><td class="num">${extCell(d, 'c2')}</td><td class="num">${d.attempt}</td><td class="num">${fmtDur(d.dur.total)}</td><td class="small">${notes.join('、')}</td></tr>`;
+    if (keyCount[d.cls + '-' + d.no] > 1) { const latest = !rows.some(o => o.d && o !== r && o.d.cls === d.cls && o.d.no === d.no && o.d.finished > d.finished); notes.push('同一學生有多份' + (latest ? '（這份最新）' : '（較舊）')); }
+    return `<tr class="${r.ok ? '' : 'bad'}"><td>${r.ok ? '<span class="pill ok">有效</span>' : '<span class="pill err">無效</span>'}</td><td>${esc(d.cls)}</td><td class="num">${esc(d.no)}</td><td>${esc(d.name)}</td><td>${d.status === 'partial' ? '<span class="pill warn">未完成</span>' : '完成'}</td><td class="num"><b>${d.score.total}</b></td><td>${esc(d.score.grade)}</td><td class="num">${d.score.hw}</td><td class="num">${d.score.code}</td><td class="num">${d.score.up}</td><td>${d.real.confirmed ? '✔' : '—'}</td><td class="num">${extCell(d, 'c1')}</td><td class="num">${extCell(d, 'c2')}</td><td class="num">${d.attempt}</td><td class="num">${fmtDur(d.dur.total)}</td><td class="small">${notes.join('、')}</td></tr>`;
   }).join('')}</tbody>` : '';
 }
 function extCell(d, k) {
@@ -3315,12 +3512,12 @@ function extCell(d, k) {
 }
 function exportCsv() {
   if (!vRows.length) { toast('請先放入成績報告檔案。'); return; }
-  const head = ['班別', '學號', '姓名', '總分', '等級', '硬件接線(40)', '程式填空(40)', '上傳流程(20)', '接線錯誤次數', '接線提示次數', '程式填錯次數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '延伸1聲光SOS(10)', '延伸1實物確認', '延伸2英文縮寫(10)', '延伸2縮寫', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
+  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '硬件接線(40)', '程式填空(40)', '上傳流程(20)', '接線錯誤次數', '接線提示次數', '程式填錯次數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '延伸1聲光SOS(10)', '延伸1實物確認', '延伸2英文縮寫(10)', '延伸2縮寫', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
   const q = v => { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
   const lines = [head.join(',')];
   vRows.filter(r => r.d).sort((a, b) => a.d.cls.localeCompare(b.d.cls) || (+a.d.no - +b.d.no)).forEach(r => {
     const d = r.d;
-    lines.push([d.cls, d.no, d.name, d.score.total, d.score.grade, d.score.hw, d.score.code, d.score.up, d.hw.errors, d.hw.hints, d.code.blanks.reduce((a, b) => a + b.wrong, 0), d.code.blanks.filter(b => b.revealed).length, d.up.errors, d.real.confirmed ? '是' : '否', ...extCsv(d), d.attempt, d.dur.total != null ? (d.dur.total / 60).toFixed(1) : '', fmtTime(d.finished), d.teacherUsed ? '是' : '否', r.ok ? '有效' : '無效', r.code, r.fname].map(q).join(','));
+    lines.push([d.cls, d.no, d.name, d.status === 'partial' ? '未完成（提早提交）' : '完成', d.score.total, d.score.grade, d.score.hw, d.score.code, d.score.up, d.hw.errors, d.hw.hints, d.code.blanks.reduce((a, b) => a + b.wrong, 0), d.code.blanks.filter(b => b.revealed).length, d.up.errors, d.real.confirmed ? '是' : '否', ...extCsv(d), d.attempt, d.dur.total != null ? (d.dur.total / 60).toFixed(1) : '', fmtTime(d.finished), d.teacherUsed ? '是' : '否', r.ok ? '有效' : '無效', r.code, r.fname].map(q).join(','));
   });
   vRows.filter(r => !r.d).forEach(r => lines.push(head.map((h, i) => i === head.length - 3 ? '無效' : i === head.length - 1 ? r.fname : '').map(q).join(',')));
   saveFile(`SOS_成績_${fmtTime(Date.now()).slice(0, 10)}.csv`, '﻿' + lines.join('\r\n'), 'text/csv').then(r => { if (r === 'saved') toast('已匯出 CSV', 'ok'); });

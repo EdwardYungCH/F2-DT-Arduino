@@ -44,7 +44,7 @@ async def main():
         await pg.click('[data-check="3"]'); await pg.wait_for_timeout(200)
         print('step3', await pg.inner_text('#hwIssues'))
         # choose black and wire GND
-        await pg.click('#swatches .sw:nth-child(4)')
+        await pg.click('#swatches .sw:nth-child(1)')
         await drag(tuple(P['P:GND']),tuple(P['j14']))
         await pg.click('[data-check="4"]'); await pg.wait_for_timeout(200)
         await pg.click('[data-check="5"]'); await pg.wait_for_timeout(400)

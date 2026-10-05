@@ -8,6 +8,7 @@
     <button data-stage="ext" disabled><i>5</i><span>延伸挑戰</span></button>
     <button data-stage="report" disabled><i>6</i><span>成績報告</span></button>
   </nav>
+  <button class="btn sm early-btn" id="earlyBtn" hidden title="下課前未能完成？按這裏先交一份報告">未完成？先交報告</button>
   <div class="who" id="who"></div>
 </header>
 
@@ -89,9 +90,9 @@
     </div>
 
     <div class="card span-7">
-      <h3>需要的材料（模擬器已替你準備好）</h3>
-      <div class="parts" id="partsList"></div>
-      <p class="small muted" style="margin-top:10px">延伸挑戰（選做）另需：Piezo 蜂鳴器 × 1、杜邦線 × 2。</p>
+      <h3>認識電阻</h3>
+      <p class="small muted" style="margin:-6px 0 10px">套件有好幾種電阻，樣子很相似。今堂只用 220Ω。</p>
+      <div id="resCard"></div>
     </div>
 
     <div class="card span-5">
@@ -104,6 +105,14 @@
       </ol>
       <p class="small muted" style="margin-top:12px">做得快的同學，完成實物後可以做<b>延伸挑戰</b>：聲光 SOS 和閃出你的英文名縮寫。</p>
       <p class="small muted" style="margin-top:14px">接錯線或填錯答案都可以再改，但系統會記錄錯誤次數和使用提示次數。進度會自動儲存。</p>
+      <p class="small muted" style="margin-top:10px">下課前未能完成？按右上角的「<b>未完成？先交報告</b>」，報告只計已完成的部分。之後可以繼續做，完成後再交一份完整報告。</p>
+    </div>
+
+    <div class="card span-12">
+      <h3>材料清單</h3>
+      <p class="small muted" style="margin:-6px 0 8px">模擬器已替你準備好；做實物時，按這張表拿材料。</p>
+      <div id="partsList"></div>
+      <p class="small muted" style="margin-top:10px">延伸挑戰（選做）另需：蜂鳴器 × 1（挑戰 1）及杜邦線 2 條（藍 1、黑 1）。挑戰 2 不用加材料。</p>
     </div>
   </div>
 </section>
@@ -127,7 +136,7 @@
         <div class="swatches" id="swatches"></div>
         <div class="sel-tools" id="selTools"><span class="lbl">點選元件或導線可以反轉或移除</span></div>
       </div>
-      <svg id="hwSvg" viewBox="0 0 1090 640" aria-label="接線模擬器"></svg>
+      <svg id="hwSvg" viewBox="0 0 1150 640" aria-label="接線模擬器"></svg>
       <div class="ws-foot">
         <span>拉導線：在 Arduino 腳位或麵包板孔上按住，拖到另一個孔</span>
         <span>移動元件：按住元件拖動</span>

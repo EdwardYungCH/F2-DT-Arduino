@@ -115,7 +115,7 @@ function newState(student) {
   const attempt = (recall(akey) || 0) + 1; store(akey, attempt);
   const com = 'COM' + (3 + Math.floor(Math.random() * 6));
   return {
-    v: 1, id: randId(), student, attempt, teacherUsed: false,
+    v: 2, id: randId(), student, attempt, teacherUsed: false,
     startedAt: now(), finishedAt: null,
     stage: 'intro', unlocked: 0,
     t: { intro: now() },
@@ -135,6 +135,12 @@ function newExt() {
 /* progress saved by an older version of this page */
 function migrate(st) {
   if (!st.ext) st.ext = newExt();
+  if ((st.v || 1) < 2) {   // wire colours now match the kit (black, white, red, blue, green)
+    const map = { '#F2A91E': '#F4F4F0', '#EE6B1F': '#F4F4F0' };
+    [st.hw, st.ext.c1 && st.ext.c1.hw, st.ext.c2 && st.ext.c2.hw].forEach(h => { if (h) (h.wires || []).forEach(w => { if (map[w.color]) w.color = map[w.color]; }); });
+    if (map[st.hw.color]) st.hw.color = map[st.hw.color];
+    st.v = 2;
+  }
   return st;
 }
 
@@ -150,15 +156,35 @@ function logEv(sec, msg, counted = true) {
 }
 
 /* ---------------- scoring ---------------- */
+/* only finished parts score: an early (unfinished) report gets 0 for the parts not yet done */
 function scores(st = S) {
-  const hw = Math.max(16, 40 - 4 * st.hw.errors - 2 * st.hw.hints);
+  const done = { hw: !!st.hw.done, code: !!st.code.done, up: !!st.up.uploaded };
+  const hw = done.hw ? Math.max(16, 40 - 4 * st.hw.errors - 2 * st.hw.hints) : 0;
   let code = 0;
-  BLANKS.forEach(b => { const x = st.code.blanks[b.id] || {}; code += x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)); });
-  const up = Math.max(8, 20 - 3 * st.up.errors);
+  if (done.code) BLANKS.forEach(b => { const x = st.code.blanks[b.id] || {}; code += x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)); });
+  const up = done.up ? Math.max(8, 20 - 3 * st.up.errors) : 0;
   const total = hw + code + up;
   const grade = total >= 85 ? '優異' : total >= 70 ? '良好' : total >= 50 ? '合格' : '仍需努力';
-  return { hw, code, up, total, grade };
+  return { hw, code, up, total, grade, complete: done.hw && done.code && done.up };
 }
+const mainDone = (st = S) => !!(st && st.hw.done && st.code.done && st.up.uploaded);
+/* "未完成？先交報告": a partial report; the student can carry on and hand in a full one later */
+function earlySubmit() {
+  if (!S || mainDone()) return;
+  const okBlanks = BLANKS.filter(b => (S.code.blanks[b.id] || {}).status === 'ok').length;
+  const li = (label, done, extra) => `<li>${label}：${done ? '<b style="color:var(--ok)">已完成 ✔</b>' : `<b style="color:var(--err)">未完成</b>（0 分${extra ? '，' + extra : ''}）`}</li>`;
+  modal({
+    title: '未完成，先交報告？',
+    html: `<p>你還未完成全部任務。報告只會計<b>已完成</b>的部分：</p>
+      <ul class="tight" style="margin:8px 0 12px">${li('硬件接線', S.hw.done)}${li('程式填空', S.code.done, `已答對 ${okBlanks} / ${BLANKS.length} 格`)}${li('上傳流程', S.up.uploaded)}</ul>
+      <p>報告會寫明「<b>未完成（提早提交）</b>」。交了之後，你仍然可以<b>繼續做</b>；完成後再下載一份完整報告交給老師，老師會用<b>最新</b>的一份。</p>`,
+    actions: [{ label: '取消', kind: 'ghost' }, { label: '產生未完成報告', kind: 'go', onClick: () => {
+      if (S.stage !== 'report') S.resume = S.stage;
+      S.early = true; save(); goStage('report');
+    } }],
+  });
+}
+$('#earlyBtn').onclick = earlySubmit;
 /* extension challenges: 10 points each, reported separately (not part of the 100) */
 function extScores(st = S) {
   const e = st.ext; const res = { c1: null, c2: null };
@@ -179,7 +205,7 @@ const stageLeave = {};
 function goStage(name) {
   if (!S) return;
   const idx = STAGES.indexOf(stepperOf(name));
-  if (idx < 0 || (idx > S.unlocked && !teacherOn)) return;
+  if (idx < 0 || (idx > S.unlocked && !teacherOn && !(name === 'report' && S.early))) return;
   Object.values(stageLeave).forEach(f => { try { f(); } catch (e) {} });
   S.stage = name; save();
   $$('.stage').forEach(s => s.hidden = true);
@@ -196,12 +222,13 @@ function unlock(name) {
 function renderStepper() {
   $$('#stepper button').forEach((b, i) => {
     const st = b.dataset.stage;
-    b.disabled = !S || (i > S.unlocked && !teacherOn);
+    b.disabled = !S || (i > S.unlocked && !teacherOn && !(st === 'report' && S.early && !mainDone()));
     const cur = S && stepperOf(S.stage) === st;
     b.classList.toggle('current', !!cur);
     b.classList.toggle('done', !!(S && i < S.unlocked && !cur));
   });
   $('#who').textContent = S ? `${S.student.cls} · ${S.student.no} · ${S.student.name}` : '';
+  $('#earlyBtn').hidden = !S || mainDone() || S.stage === 'report';
 }
 $$('#stepper button').forEach(b => b.addEventListener('click', () => goStage(b.dataset.stage)));
 
@@ -286,21 +313,36 @@ function startApp() {
   goStage(S.stage || 'intro');
 }
 
+/* ---------------- materials (real kit) ---------------- */
+const MATERIALS = {
+  main: [
+    KIT.ROW.uno('控制整個過路燈'), KIT.ROW.usb(), KIT.ROW.board(),
+    { icon: KIT.ICON.leds(['#E8412B', '#E3A800', '#1E9E3E']), name: 'LED', look: '紅、黃、綠各 1 粒；<b>長腳是 +</b>，短腳是 −', qty: '3', use: '紅燈、黃燈、綠燈' },
+    KIT.ROW.res(220, 3, '每粒 LED 一粒，限制電流，保護 LED'),
+    KIT.ROW.res(10000, 1, '按鈕的<b>下拉電阻</b>（接 D2 和 GND）'),
+    KIT.ROW.btn('行人過路掣'),
+    KIT.ROW.wires({ black: 5, red: 2, white: 1, green: 1, blue: 1 }, '紅 = 5V 及紅燈、白 = 黃燈、綠 = 綠燈、藍 = 按鈕 D2、黑 = GND'),
+  ],
+  c1: [
+    KIT.ROW.buzzer('紅燈時發出「嘀嘀」聲'),
+    KIT.ROW.wires({ white: 1, black: 1 }, '白 = D8、黑 = GND'),
+  ],
+  c2: [
+    KIT.ROW.tilt('單車被搖動時斷開'),
+    KIT.ROW.res(10000, 1, '傾斜開關的下拉電阻'),
+    KIT.ROW.wires({ red: 1, blue: 1, black: 1 }, '紅 = 5V、藍 = D3、黑 = GND'),
+  ],
+};
+const EXT_EXTRA = '蜂鳴器 × 1（挑戰 1）、傾斜開關 × 1 及 10kΩ 電阻 × 1（挑戰 2），以及杜邦線。';
+
 /* ---------------- intro ---------------- */
 let introStop = null;
 const TL_COL = { G: '#1E9E3E', Y: '#E3A800', R: '#D8321F', RY: 'linear-gradient(90deg,#D8321F 50%,#E3A800 50%)' };
 stageInit.intro = () => {
   if (!$('#partsList').children.length) {
-    const led = c => `<svg viewBox="0 0 40 60"><path d="M10 26a10 10 0 0120 0v8H10z" fill="${c}"/><rect x="8" y="33" width="24" height="4" fill="#555"/><path d="M15 37v19" stroke="#999" stroke-width="2"/><path d="M25 37v6l3 3v12" stroke="#999" stroke-width="2" fill="none"/></svg>`;
-    const res = (b) => `<svg viewBox="0 0 80 30"><path d="M2 15h76" stroke="#999" stroke-width="2"/><rect x="22" y="7" width="36" height="16" rx="6" fill="#E4CFA6"/>${b.map((c, i) => `<rect x="${28 + i * 7 + (i === 3 ? 1 : 0)}" y="7" width="${i === 3 ? 3 : 4}" height="16" fill="${c}"/>`).join('')}</svg>`;
-    $('#partsList').innerHTML = [
-      ['Arduino UNO', '開發板 × 1', '<svg viewBox="0 0 70 52"><rect x="1" y="1" width="68" height="50" rx="4" fill="#0E7C9B"/><rect x="-2" y="8" width="14" height="12" fill="#B9C2C6"/><rect x="18" y="4" width="44" height="5" fill="#222"/><rect x="26" y="43" width="36" height="5" fill="#222"/><rect x="30" y="26" width="30" height="8" fill="#222"/></svg>'],
-      ['紅、黃、綠 LED', '各 1 粒', `<svg viewBox="0 0 90 60">${[['#E8412B', 0], ['#E3A800', 28], ['#1E9E3E', 56]].map(([c, x]) => `<g transform="translate(${x} 0)"><path d="M10 26a10 10 0 0120 0v8H10z" fill="${c}"/><path d="M15 37v19M25 37v19" stroke="#999" stroke-width="2"/></g>`).join('')}</svg>`],
-      ['電阻 220Ω', '紅紅啡金 × 3（LED 用）', res(['#D12B2B', '#D12B2B', '#7A4A1E', '#C9A227'])],
-      ['電阻 10kΩ', '啡黑橙金 × 1（按鈕用）', res(['#7A4A1E', '#1E1E1E', '#EE7B1F', '#C9A227'])],
-      ['按鈕', '4 隻腳 × 1', '<svg viewBox="0 0 60 60"><rect x="8" y="2" width="4" height="10" fill="#aaa"/><rect x="48" y="2" width="4" height="10" fill="#aaa"/><rect x="8" y="48" width="4" height="10" fill="#aaa"/><rect x="48" y="48" width="4" height="10" fill="#aaa"/><rect x="6" y="10" width="48" height="40" rx="4" fill="#2B2F33"/><circle cx="30" cy="30" r="12" fill="#C9352A"/></svg>'],
-      ['麵包板、杜邦線、USB 線', '杜邦線約 10 條', '<svg viewBox="0 0 70 40"><path d="M8 32C20 0 50 0 62 32" stroke="#D63A2F" stroke-width="4" fill="none"/><path d="M8 38C22 14 48 14 62 38" stroke="#222" stroke-width="4" fill="none"/></svg>'],
-    ].map(([b, s, svg]) => `<div class="part">${svg}<b>${b}</b><span>${s}</span></div>`).join('');
+    $('#partsList').innerHTML = KIT.table(MATERIALS.main);
+    $('#partsExt').innerHTML = '延伸挑戰（選做）另需：' + EXT_EXTRA;
+    $('#resCard').innerHTML = KIT.resCard([[220, 'LED 用'], [10000, '按鈕用']], [1000]);
     const total = PHASES.reduce((a, [, ms]) => a + ms, 0);
     let t = 0, html = '';
     PHASES.forEach(([st, ms, , f]) => { html += `<div class="seg" style="left:${(t / total * 100).toFixed(2)}%;width:${(ms / total * 100 - .4).toFixed(2)}%;background:${TL_COL[st]}"></div>`; if (f) html += `<div class="lab" style="left:${(t / total * 100).toFixed(2)}%">按掣</div>`; t += ms; });

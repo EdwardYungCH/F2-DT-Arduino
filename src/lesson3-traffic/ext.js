@@ -106,9 +106,9 @@ const EXT = (() => {
   }
   const tick = (ok, label) => `<li class="${ok ? 'ok' : ''}"><i>${ok ? '✓' : ''}</i><span>${label}</span></li>`;
   const CARDS = {
-    c1: { n: 1, title: '過路「嘀嘀」聲', desc: '加一個 Piezo：紅燈（行人過路）時急速「嘀嘀」響，就像香港真的過路燈。學習用 <code>for</code> 迴圈重複發聲。',
-      hw: '硬件：加入 Piezo（D8 → Piezo → GND）', code: '程式：完成 5 個空格（for 迴圈、tone）',
-      real: ['保留過路燈電路，<b>先拔走 USB 線</b>。', '把 Piezo 插到麵包板下半部，兩隻腳在不同號碼的直行。', '橙色線：D8 → Piezo 一隻腳；黑色線：GND → Piezo 另一隻腳。', '插回 USB 線，把程式貼到 Arduino IDE，然後上傳。', '按掣，紅燈時應該聽到「嘀嘀」聲。'] },
+    c1: { n: 1, title: '過路「嘀嘀」聲', desc: '加一個蜂鳴器：紅燈（行人過路）時急速「嘀嘀」響，就像香港真的過路燈。學習用 <code>for</code> 迴圈重複發聲。',
+      hw: '硬件：加入蜂鳴器（D8 → 蜂鳴器 → GND）', code: '程式：完成 5 個空格（for 迴圈、tone）',
+      real: ['保留過路燈電路，<b>先拔走 USB 線</b>。', '把蜂鳴器插到麵包板下半部，兩隻腳在不同號碼的直行。', '白色線：D8 → 蜂鳴器一隻腳；黑色線：GND → 蜂鳴器另一隻腳。', '插回 USB 線，把程式貼到 Arduino IDE，然後上傳。', '按掣，紅燈時應該聽到「嘀嘀」聲。'] },
     c2: { n: 2, title: '單車防盜警報', desc: '用傾斜開關做一個防盜器：單車被移動時，紅燈快速閃動。接法和按鈕一樣，但讀數的意思相反。',
       hw: '硬件：加入傾斜開關和 10kΩ 下拉電阻（D3）', code: '程式：完成 6 個空格',
       real: ['保留過路燈電路，<b>先拔走 USB 線</b>。', '把傾斜開關插到麵包板下半部，兩隻腳在不同號碼的直行。', '紅色線：5V → 開關一隻腳；藍色線：D3 → 開關另一隻腳。', '10kΩ：一端和 D3 同一直行，另一端接 GND。', '上傳程式後，把整塊板輕輕傾側，紅燈應該快閃。'] },
@@ -118,6 +118,7 @@ const EXT = (() => {
     const next = x.hw.done ? k + 'code' : k + 'hw';
     return `<article class="card ext-card">
       <div class="ext-top"><div class="ext-num">${c.n}</div><div><h3>${c.title}</h3><p class="muted small">${c.desc}</p></div>${status(x)}</div>
+      <details class="fold ext-mat"><summary>需要的材料（實物）</summary>${KIT.table(MATERIALS[k])}</details>
       <ul class="ext-prog">${tick(x.hw.done, c.hw)}${tick(x.code.done, c.code)}${tick(x.flow.uploaded, '驗證及上傳')}${tick(x.confirmed, '老師確認實物成功')}</ul>
       ${sc ? `<p class="ext-score"><b>${sc.total}</b> / 10　<span class="small muted">接線 ${sc.hw}/4 · 程式 ${sc.code}/4 · 上傳 ${sc.up}/2</span></p>` : '<p class="small muted">評分：接線 4 分、程式 4 分、上傳 2 分。</p>'}
       <div class="row">${x.done ? `<button class="btn" data-replay="${k}">再試一次模擬</button>` : `<button class="btn go" data-go="${next}">${status(x).includes('未開始') ? '開始挑戰 ' + c.n : '繼續挑戰 ' + c.n}</button>`}</div>
@@ -168,7 +169,7 @@ const EXT = (() => {
             <div class="sim-ctrl"><div id="c1Light">${trafficHTML(true)}</div><button class="btn go" id="c1Press">按下按鈕</button><span class="phase" id="c1Phase"></span></div>
             <div class="row">${muteBtnHTML()}</div>
           </div>
-          <p class="small muted" style="margin-top:8px">紅燈 5 秒內，<code>for</code> 迴圈令 Piezo「嘀」10 次。靜音時可以看 Piezo 旁邊的黃色聲波。</p>`,
+          <p class="small muted" style="margin-top:8px">紅燈 5 秒內，<code>for</code> 迴圈令蜂鳴器「嘀」10 次。靜音時可以看蜂鳴器旁邊的黃色聲波。</p>`,
         actions: [toExt],
         onOpen: back => { bindMute(back); const ON = $('.uLedON', back); ON && ON.setAttribute('fill', '#3CFF7A'); sim = trafficSim(back, { light: $('#c1Light', back), phase: $('#c1Phase', back), pressBtn: $('#c1Press', back), beep: true }); },
       });

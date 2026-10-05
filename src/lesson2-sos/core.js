@@ -116,11 +116,11 @@ function newState(student) {
   const attempt = (recall(akey) || 0) + 1; store(akey, attempt);
   const com = 'COM' + (3 + Math.floor(Math.random() * 6));
   return {
-    v: 3, id: randId(), student, attempt, teacherUsed: false,
+    v: 4, id: randId(), student, attempt, teacherUsed: false,
     startedAt: now(), finishedAt: null,
     stage: 'intro', unlocked: 0,
     t: { intro: now() },
-    hw: { led: null, res: null, wires: [], step: 0, errors: 0, hints: 0, hinted: {}, log: [], done: false, lastFailSig: '', stepFails: {}, color: '#F2A91E' },
+    hw: { led: null, res: null, wires: [], step: 0, errors: 0, hints: 0, hinted: {}, log: [], done: false, lastFailSig: '', stepFails: {}, color: '#F4F4F0' },
     code: { blanks: {}, checks: 0, done: false, log: [] },
     up: { usb: false, board: null, port: null, com, verified: false, uploaded: false, errors: 0, log: [], lastErrSig: '' },
     real: { checks: {}, confirmed: false },
@@ -146,6 +146,12 @@ function migrate(st) {
     fix(st.hw); fix(st.ext && st.ext.c1 && st.ext.c1.hw);
     st.v = 3;
   }
+  if (st.v < 4) {   // wire colours now match the kit (black, white, red, blue, green)
+    const map = { '#F2A91E': '#F4F4F0', '#EE6B1F': '#2F6FD6' };
+    [st.hw, st.ext && st.ext.c1 && st.ext.c1.hw, st.ext && st.ext.c2 && st.ext.c2.hw].forEach(h => { if (h) (h.wires || []).forEach(w => { if (map[w.color]) w.color = map[w.color]; }); });
+    if (map[st.hw.color]) st.hw.color = map[st.hw.color];
+    st.v = 4;
+  }
   return st;
 }
 
@@ -161,15 +167,35 @@ function logEv(sec, msg, counted = true) {
 }
 
 /* ---------------- scoring ---------------- */
+/* only finished parts score: an early (unfinished) report gets 0 for the parts not yet done */
 function scores(st = S) {
-  const hw = Math.max(16, 40 - 4 * st.hw.errors - 2 * st.hw.hints);
+  const done = { hw: !!st.hw.done, code: !!st.code.done, up: !!st.up.uploaded };
+  const hw = done.hw ? Math.max(16, 40 - 4 * st.hw.errors - 2 * st.hw.hints) : 0;
   let code = 0;
-  BLANKS.forEach(b => { const x = st.code.blanks[b.id] || {}; code += x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)); });
-  const up = Math.max(8, 20 - 3 * st.up.errors);
+  if (done.code) BLANKS.forEach(b => { const x = st.code.blanks[b.id] || {}; code += x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)); });
+  const up = done.up ? Math.max(8, 20 - 3 * st.up.errors) : 0;
   const total = hw + code + up;
   const grade = total >= 85 ? '優異' : total >= 70 ? '良好' : total >= 50 ? '合格' : '仍需努力';
-  return { hw, code, up, total, grade };
+  return { hw, code, up, total, grade, complete: done.hw && done.code && done.up };
 }
+const mainDone = (st = S) => !!(st && st.hw.done && st.code.done && st.up.uploaded);
+/* "未完成？先交報告": a partial report; the student can carry on and hand in a full one later */
+function earlySubmit() {
+  if (!S || mainDone()) return;
+  const okBlanks = BLANKS.filter(b => (S.code.blanks[b.id] || {}).status === 'ok').length;
+  const li = (label, done, extra) => `<li>${label}：${done ? '<b style="color:var(--ok)">已完成 ✔</b>' : `<b style="color:var(--err)">未完成</b>（0 分${extra ? '，' + extra : ''}）`}</li>`;
+  modal({
+    title: '未完成，先交報告？',
+    html: `<p>你還未完成全部任務。報告只會計<b>已完成</b>的部分：</p>
+      <ul class="tight" style="margin:8px 0 12px">${li('硬件接線', S.hw.done)}${li('程式填空', S.code.done, `已答對 ${okBlanks} / ${BLANKS.length} 格`)}${li('上傳流程', S.up.uploaded)}</ul>
+      <p>報告會寫明「<b>未完成（提早提交）</b>」。交了之後，你仍然可以<b>繼續做</b>；完成後再下載一份完整報告交給老師，老師會用<b>最新</b>的一份。</p>`,
+    actions: [{ label: '取消', kind: 'ghost' }, { label: '產生未完成報告', kind: 'go', onClick: () => {
+      if (S.stage !== 'report') S.resume = S.stage;
+      S.early = true; save(); goStage('report');
+    } }],
+  });
+}
+$('#earlyBtn').onclick = earlySubmit;
 /* extension challenges: 10 points each, reported separately (not part of the 100) */
 function extScores(st = S) {
   const e = st.ext; const res = { c1: null, c2: null };
@@ -195,7 +221,7 @@ const stageLeave = {};
 function goStage(name) {
   if (!S) return;
   const idx = STAGES.indexOf(stepperOf(name));
-  if (idx < 0 || (idx > S.unlocked && !teacherOn)) return;
+  if (idx < 0 || (idx > S.unlocked && !teacherOn && !(name === 'report' && S.early))) return;
   Object.values(stageLeave).forEach(f => { try { f(); } catch (e) {} });
   S.stage = name; save();
   $$('.stage').forEach(s => s.hidden = true);
@@ -212,12 +238,13 @@ function unlock(name) {
 function renderStepper() {
   $$('#stepper button').forEach((b, i) => {
     const st = b.dataset.stage;
-    b.disabled = !S || (i > S.unlocked && !teacherOn);
+    b.disabled = !S || (i > S.unlocked && !teacherOn && !(st === 'report' && S.early && !mainDone()));
     const cur = S && stepperOf(S.stage) === st;
     b.classList.toggle('current', !!cur);
     b.classList.toggle('done', !!(S && i < S.unlocked && !cur));
   });
   $('#who').textContent = S ? `${S.student.cls} · ${S.student.no} · ${S.student.name}` : '';
+  $('#earlyBtn').hidden = !S || mainDone() || S.stage === 'report';
 }
 $$('#stepper button').forEach(b => b.addEventListener('click', () => goStage(b.dataset.stage)));
 
@@ -304,18 +331,26 @@ function startApp() {
   goStage(S.stage || 'intro');
 }
 
+/* ---------------- materials (real kit) ---------------- */
+const MATERIALS = {
+  main: [
+    KIT.ROW.uno('控制 LED 閃出 SOS'), KIT.ROW.usb(), KIT.ROW.board(),
+    { icon: KIT.ICON.led('#E8412B'), name: 'LED（紅色）', look: '<b>長腳是 +</b>，短腳是 −；短腳那邊的邊緣是平的', qty: '1', use: 'SOS 求救燈' },
+    KIT.ROW.res(220, 1, '限制電流，保護 LED'),
+    KIT.ROW.wires({ white: 1, black: 1 }, '白 = D13、黑 = GND'),
+  ],
+  c1: [
+    KIT.ROW.buzzer('LED 閃的同時「嗶」一聲'),
+    KIT.ROW.wires({ blue: 1, black: 1 }, '藍 = D8、黑 = GND'),
+  ],
+};
+
 /* ---------------- intro ---------------- */
 let introStop = null;
 stageInit.intro = () => {
   if (!$('#partsList').children.length) {
-    $('#partsList').innerHTML = [
-      ['Arduino UNO', '開發板 × 1', '<svg viewBox="0 0 70 52"><rect x="1" y="1" width="68" height="50" rx="4" fill="#0E7C9B"/><rect x="-2" y="8" width="14" height="12" fill="#B9C2C6"/><rect x="18" y="4" width="44" height="5" fill="#222"/><rect x="26" y="43" width="36" height="5" fill="#222"/><rect x="30" y="26" width="30" height="8" fill="#222"/></svg>'],
-      ['麵包板', '免焊接駁 × 1', '<svg viewBox="0 0 70 52"><rect x="1" y="1" width="68" height="50" rx="3" fill="#F2F1EA" stroke="#CFCCC0"/>' + Array.from({length: 40}, (_, i) => `<rect x="${7 + (i % 10) * 6}" y="${i < 20 ? 10 + Math.floor(i / 10) * 7 : 30 + Math.floor((i - 20) / 10) * 7}" width="3" height="3" fill="#555"/>`).join('') + '<rect x="3" y="24" width="64" height="3" fill="#E2E0D5"/></svg>'],
-      ['LED（紅色）', '長腳 + ，短腳 −', '<svg viewBox="0 0 40 60"><path d="M10 26a10 10 0 0120 0v8H10z" fill="#E8412B"/><rect x="8" y="33" width="24" height="4" fill="#C23320"/><path d="M15 37v19" stroke="#999" stroke-width="2"/><path d="M25 37v6l3 3v12" stroke="#999" stroke-width="2" fill="none"/></svg>'],
-      ['電阻 220Ω', '紅紅啡金 × 1', '<svg viewBox="0 0 80 30"><path d="M2 15h76" stroke="#999" stroke-width="2"/><rect x="22" y="7" width="36" height="16" rx="6" fill="#E4CFA6"/><rect x="28" y="7" width="4" height="16" fill="#D12B2B"/><rect x="35" y="7" width="4" height="16" fill="#D12B2B"/><rect x="42" y="7" width="4" height="16" fill="#7A4A1E"/><rect x="50" y="7" width="3" height="16" fill="#C9A227"/></svg>'],
-      ['杜邦線', '公對公 × 2', '<svg viewBox="0 0 70 40"><path d="M8 32C20 0 50 0 62 32" stroke="#F2A91E" stroke-width="4" fill="none"/><path d="M8 38C22 14 48 14 62 38" stroke="#222" stroke-width="4" fill="none"/></svg>'],
-      ['USB 線', '連接電腦 × 1', '<svg viewBox="0 0 70 40"><rect x="2" y="12" width="16" height="16" rx="2" fill="#8A969B"/><path d="M18 20c20 0 20 14 34 14h8" stroke="#333" stroke-width="4" fill="none"/><rect x="58" y="28" width="10" height="12" fill="#8A969B"/></svg>'],
-    ].map(([b, s, svg]) => `<div class="part">${svg}<b>${b}</b><span>${s}</span></div>`).join('');
+    $('#partsList').innerHTML = KIT.table(MATERIALS.main);
+    $('#resCard').innerHTML = KIT.resCard([[220, 'LED 用']], [1000, 10000]);
     // timeline
     const total = SOS_SEQ.reduce((a, [, ms]) => a + ms, 0);
     let t = 0, html = '';
