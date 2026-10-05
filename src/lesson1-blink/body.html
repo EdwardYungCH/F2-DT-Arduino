@@ -1,8 +1,8 @@
 <header class="topbar">
-  <div class="brand"><div class="brand-lamp" aria-hidden="true"></div><b>SOS 求救燈</b><span>Arduino UNO 實作</span></div>
+  <div class="brand"><div class="brand-lamp" aria-hidden="true"></div><b>Arduino 初體驗</b><span>第 1 堂 · 閃動 L 燈</span></div>
   <nav class="stepper" id="stepper" aria-label="任務進度">
     <button data-stage="intro" disabled><i>1</i><span>簡介</span></button>
-    <button data-stage="hw" disabled><i>2</i><span>硬件接線</span></button>
+    <button data-stage="hw" disabled><i>2</i><span>認識硬件</span></button>
     <button data-stage="code" disabled><i>3</i><span>編程及上傳</span></button>
     <button data-stage="real" disabled><i>4</i><span>實物挑戰</span></button>
     <button data-stage="ext" disabled><i>5</i><span>延伸挑戰</span></button>
@@ -18,11 +18,14 @@
 <section class="stage" id="st-login">
   <div class="login-wrap">
     <div class="login-hero">
-      <h1><small>ARDUINO UNO · DT</small>SOS 求救燈</h1>
-      <p>用一塊 Arduino UNO、一粒 LED 和一粒電阻，做一盞會自動閃出國際求救信號的燈。先在電腦上模擬接線和編程，最後在真的 UNO 板上做一次。</p>
+      <h1><small>ARDUINO UNO · DT</small>Arduino 初體驗</h1>
+      <p>Arduino UNO 是一塊細小的電腦板。今堂先認識板上的主要部分，再寫你的第一個程式，令板上的 L 燈每秒閃一次。先在電腦上模擬，最後在真的 UNO 上做一次。</p>
       <div class="lamp-row">
         <div class="lamp" id="heroLamp" aria-hidden="true"></div>
-        <div class="morse" id="heroMorse" aria-label="SOS 的摩斯密碼：三短、三長、三短"></div>
+        <div class="stack" style="gap:6px">
+          <div class="blinkbar" id="heroBar" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <p class="small" style="color:#A9BEC2">亮 1 秒 → 熄 1 秒 → 不停重複</p>
+        </div>
       </div>
     </div>
     <form class="card login-card" id="loginForm" autocomplete="off" novalidate>
@@ -49,70 +52,73 @@
     <div class="intro-head">
       <div>
         <div class="eyebrow">第 1 步 · 今日任務</div>
-        <h2>製作一盞 SOS 求救燈</h2>
-        <p>你要把一粒 LED 接到 Arduino UNO 的第 13 號腳，再寫程式令它不停閃出 <b>··· ––– ···</b>（三短、三長、三短）。這就是全世界通用的摩斯密碼求救信號 SOS。</p>
+        <h2>認識 Arduino，令 L 燈閃起來</h2>
+        <p>Arduino UNO 板上有一粒細小的 <b>L 燈</b>，它在板內已經接到 <b>13 號腳</b>。今堂你要先認識 UNO 板，再寫第一個程式，令 L 燈<b>亮 1 秒、熄 1 秒</b>，不停重複。今堂<b>不用接任何零件</b>。</p>
       </div>
-      <button class="btn go lg" id="introNext">開始接線</button>
+      <button class="btn go lg" id="introNext">開始認識硬件</button>
     </div>
 
     <div class="card span-7">
-      <h3>SOS 怎樣閃？</h3>
+      <h3>程式怎樣令 L 燈閃？</h3>
       <div class="row" style="gap:22px;align-items:center">
         <div class="lamp" id="introLamp" style="width:70px;height:70px;border-width:5px" aria-hidden="true"></div>
         <div class="stack" style="gap:6px;flex:1;min-width:240px">
-          <div class="morse" id="introMorse" style="--x:1"></div>
-          <p class="small muted">摩斯密碼用長短不同的閃光代表字母。S 是三下短閃，O 是三下長閃。</p>
+          <div class="phase" id="introPhase"></div>
+          <p class="small muted">電腦把程式經 USB 線<b>上傳</b>到 UNO。之後 UNO 會自己不停執行程式，就算拔走 USB 線、改用電池供電也一樣。</p>
         </div>
       </div>
       <table class="timing" style="margin-top:14px">
-        <thead><tr><th>動作</th><th>時間</th><th>程式寫法</th></tr></thead>
-        <tbody>
-          <tr><td>短閃（亮）</td><td class="num">0.2 秒</td><td class="num">delay(200);</td></tr>
-          <tr><td>長閃（亮）</td><td class="num">0.6 秒</td><td class="num">delay(600);</td></tr>
-          <tr><td>每下閃光之間（熄）</td><td class="num">0.2 秒</td><td class="num">delay(200);</td></tr>
-          <tr><td>字母之間（熄）</td><td class="num">0.6 秒</td><td class="num">delay(600);</td></tr>
-          <tr><td>一次 SOS 完成後（熄）</td><td class="num">2 秒</td><td class="num">delay(2000);</td></tr>
+        <thead><tr><th>程式</th><th>意思</th><th>時間</th></tr></thead>
+        <tbody id="introRows">
+          <tr><td class="num">digitalWrite(13, HIGH);</td><td>13 號腳輸出 5V：開燈</td><td class="num">—</td></tr>
+          <tr><td class="num">delay(1000);</td><td>等一等</td><td class="num">1 秒</td></tr>
+          <tr><td class="num">digitalWrite(13, LOW);</td><td>13 號腳輸出 0V：關燈</td><td class="num">—</td></tr>
+          <tr><td class="num">delay(1000);</td><td>等一等</td><td class="num">1 秒</td></tr>
         </tbody>
       </table>
       <div class="tl" id="introTL" aria-hidden="true"></div>
-      <p class="small muted" style="margin-top:8px">Arduino 的 <code>delay()</code> 用「毫秒」計時：1 秒 = 1000 毫秒。</p>
+      <p class="small muted" style="margin-top:8px"><code>delay()</code> 用「毫秒」計時：1 秒 = 1000 毫秒。四行做完之後，<code>loop()</code> 會由頭再做，所以燈會不停閃。</p>
     </div>
 
     <div class="card span-5">
       <h3>你會學到</h3>
       <ol class="goals">
-        <li>分辨 LED 的正極（長腳）和負極（短腳），明白為什麼要加電阻</li>
-        <li>認識麵包板哪些孔是相通的，用它接駁簡單電路</li>
-        <li>重溫 <code>pinMode</code>、<code>digitalWrite</code>、<code>delay</code>，並學用變數 <code>ledPin</code> 記住腳位</li>
-        <li>重溫選擇開發板和連接埠，然後編譯及上傳程式</li>
+        <li>認識 UNO 板的主要部分：USB 插口、電源插口、RESET 掣、13 號腳、GND、5V、L 燈和主晶片</li>
+        <li>知道麵包板上哪些孔是相通的（下一堂接線會用到）</li>
+        <li>程式的結構：<code>setup()</code> 只做一次，<code>loop()</code> 不停重複</li>
+        <li>三個指令：<code>pinMode</code>、<code>digitalWrite</code>、<code>delay</code></li>
+        <li>第一次選擇開發板（Board）和連接埠（Port），然後上傳程式</li>
       </ol>
-      <p class="fact" style="margin-top:16px">SOS 不是任何英文的縮寫。人們選它，是因為「三短三長三短」很容易發送，也很難和其他信號混淆。它在 1908 年起成為國際通用的無線電求救信號。</p>
+      <p class="fact" style="margin-top:16px">Arduino 在 2005 年於意大利誕生，原本是給設計學生用的工具，讓不懂電子的人也可以做出會動、會發光、會發聲的作品。</p>
     </div>
 
     <div class="card span-7">
-      <h3>認識電阻</h3>
-      <p class="small muted" style="margin:-6px 0 10px">套件有好幾種電阻，樣子很相似。今堂只用 220Ω。</p>
-      <div id="resCard"></div>
+      <h3>安全守則</h3>
+      <ul class="safety">
+        <li><b>先接線，後通電。</b>改動電路之前，先拔走 USB 線。</li>
+        <li><b>5V 不可以直接接到 GND。</b>這樣會短路，UNO 和電腦的 USB 插口都可能損壞。</li>
+        <li><b>不要把 UNO 放在金屬或濕的桌面上。</b>板底的焊點碰到金屬也會短路。</li>
+        <li><b>拔 USB 線時拿住插頭</b>，不要拉電線。</li>
+      </ul>
     </div>
 
     <div class="card span-5">
       <h3>任務流程</h3>
       <ol class="flow">
-        <li><b>硬件接線</b><span>用拖拉方式接好電路，跟着步驟做</span></li>
-        <li><b>程式填空</b><span>完成 8 個空格，按「檢查答案」</span></li>
-        <li><b>選板及上傳</b><span>像真的一樣選 Board 和 Port，再上傳</span></li>
+        <li><b>認識硬件</b><span>貼標籤、麵包板小測、插 USB 線</span></li>
+        <li><b>程式填空</b><span>完成 6 個空格，按「檢查答案」</span></li>
+        <li><b>選板及上傳</b><span>第一次上傳，會一步一步帶你做</span></li>
         <li><b>成績報告</b><span>下載報告檔，交給老師</span></li>
       </ol>
-      <p class="small muted" style="margin-top:12px">做得快的同學，完成實物後可以做<b>延伸挑戰</b>：聲光 SOS 和閃出你的英文名縮寫。</p>
-      <p class="small muted" style="margin-top:14px">接錯線或填錯答案都可以再改，但系統會記錄錯誤次數和使用提示次數。進度會自動儲存。</p>
+      <p class="small muted" style="margin-top:12px">做得快的同學，完成實物後可以做<b>延伸挑戰</b>：心跳燈和修好壞掉的程式。</p>
+      <p class="small muted" style="margin-top:14px">答錯可以再改，但系統會記錄錯誤次數和使用提示次數。進度會自動儲存。</p>
       <p class="small muted" style="margin-top:10px">下課前未能完成？按右上角的「<b>未完成？先交報告</b>」，報告只計已完成的部分。之後可以繼續做，完成後再交一份完整報告。</p>
     </div>
 
     <div class="card span-12">
       <h3>材料清單</h3>
-      <p class="small muted" style="margin:-6px 0 8px">模擬器已替你準備好；做實物時，按這張表拿材料。</p>
+      <p class="small muted" style="margin:-6px 0 8px">今堂只需要 UNO 和 USB 線。麵包板小測只在電腦上做，不用拿出來。</p>
       <div id="partsList"></div>
-      <p class="small muted" style="margin-top:10px">延伸挑戰（選做）另需：蜂鳴器 × 1（挑戰 1）及杜邦線 2 條（藍 1、黑 1）。挑戰 2 不用加材料。</p>
     </div>
   </div>
 </section>
@@ -122,8 +128,8 @@
   <div class="hw-layout">
     <aside class="panel" id="hwPanel">
       <div>
-        <div class="eyebrow" id="hwEyebrow">第 2 步</div>
-        <h2 id="hwTitle">硬件接線</h2>
+        <div class="eyebrow">第 2 步</div>
+        <h2>認識硬件</h2>
       </div>
       <ol class="steps" id="hwSteps"></ol>
       <div class="issues" id="hwIssues" aria-live="polite"></div>
@@ -131,17 +137,9 @@
       <div class="know" id="hwKnow"></div>
     </aside>
     <div class="ws">
-      <div class="ws-bar">
-        <span class="muted">導線顏色</span>
-        <div class="swatches" id="swatches"></div>
-        <div class="sel-tools" id="selTools"><span class="lbl">點選元件或導線可以反轉或移除</span></div>
-      </div>
-      <svg id="hwSvg" viewBox="0 0 1150 640" aria-label="接線模擬器"></svg>
-      <div class="ws-foot">
-        <span>拉導線：在 Arduino 腳位或麵包板孔上按住，拖到另一個孔</span>
-        <span>移動元件：按住元件拖動</span>
-        <span>移除：拖到右下角的回收區，或選取後按 <kbd>Delete</kbd></span>
-      </div>
+      <div class="ws-bar"><b id="hwBarTitle"></b><span class="muted" id="hwBarHint"></span></div>
+      <svg id="hwSvg" viewBox="0 0 1150 640" aria-label="認識硬件"></svg>
+      <div class="ws-foot" id="hwFoot"></div>
     </div>
   </div>
 </section>
@@ -157,7 +155,7 @@
           <button class="mbtn" data-menu="sketch">Sketch</button>
           <button class="mbtn" data-menu="tools">Tools</button>
           <button class="mbtn" data-menu="help">Help</button>
-          <span class="title">SOS_Light | Arduino IDE</span>
+          <span class="title">Blink_L | Arduino IDE</span>
         </div>
         <div class="ide-toolbar">
           <button class="tb" id="btnVerify" title="Verify（驗證 / 編譯）" aria-label="Verify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
@@ -179,7 +177,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg>
           </div>
           <div class="ide-main">
-            <div class="ide-tabs"><div class="ide-tab">SOS_Light.ino</div></div>
+            <div class="ide-tabs"><div class="ide-tab">Blink_L.ino</div></div>
             <div class="editor" id="editor"></div>
             <div class="ide-out">
               <div class="ide-out-h"><b>Output</b><span id="outState"></span></div>
@@ -207,7 +205,7 @@
 </main>
 
 <footer class="foot">
-  <span>設計與科技科 · Arduino UNO SOS 求救燈實作 · 進度會自動儲存在這部電腦</span>
+  <span>設計與科技科 · Arduino 初體驗：閃動 L 燈 · 進度會自動儲存在這部電腦</span>
   <button class="linkbtn" id="teacherBtn">教師模式</button>
 </footer>
 <div id="modalRoot"></div>

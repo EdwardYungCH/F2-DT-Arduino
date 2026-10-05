@@ -24,7 +24,8 @@ async def run(p, n):
     await pg.wait_for_timeout(300)
     await pg.click('#earlyBtn'); await pg.wait_for_timeout(200)
     txt = await pg.inner_text('.modal')
-    check('未完成，先交報告' in txt and '已答對 3 / 8 格' in txt, f'L{n} confirm dialog lists progress')
+    nb = await pg.evaluate('()=>BLANKS.length')
+    check('未完成，先交報告' in txt and f'已答對 3 / {nb} 格' in txt, f'L{n} confirm dialog lists progress')
     await pg.screenshot(path=OUT + f'l{n}-1-confirm.png')
     await pg.click('.modal .actions .btn.go'); await pg.wait_for_timeout(400)
     stage = await pg.evaluate('() => S.stage')
@@ -42,7 +43,7 @@ async def run(p, n):
     f1 = OUT + f'l{n}-partial.html'; await d.save_as(f1)
     rp = await ctx.new_page(); await rp.goto('file://' + f1); await rp.wait_for_timeout(300)
     rt = await rp.inner_text('#r')
-    check('驗證碼有效' in rt and '未完成（提早提交）' in rt and '已答對 3 / 8 格' in rt, f'L{n} report file valid and marked unfinished')
+    check('驗證碼有效' in rt and '未完成（提早提交）' in rt and f'已答對 3 / {nb} 格' in rt, f'L{n} report file valid and marked unfinished')
     await rp.screenshot(path=OUT + f'l{n}-3-file.png', full_page=True); await rp.close()
     # carry on
     await pg.click('#resumeBtn'); await pg.wait_for_timeout(300)
@@ -72,7 +73,7 @@ async def run(p, n):
 
 async def main():
     async with async_playwright() as p:
-        for n in (2, 3): await run(p, n)
+        for n in (1, 2, 3): await run(p, n)
     print('FAILURES:', FAIL)
     sys.exit(1 if FAIL else 0)
 asyncio.run(main())
