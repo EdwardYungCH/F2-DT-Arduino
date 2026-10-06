@@ -7,7 +7,7 @@
 | 1 | Arduino 初體驗：閃動 L 燈（含延伸挑戰：心跳燈、修好壞掉的程式） | https://edwardyungch.github.io/f2-dt-arduino/lesson1/ |
 | 2 | SOS 求救燈（含延伸挑戰：聲光 SOS、英文縮寫） | https://edwardyungch.github.io/f2-dt-arduino/lesson2/ |
 | 3 | 行人過路燈（含延伸挑戰：過路嘀嘀聲、單車防盜警報） | https://edwardyungch.github.io/f2-dt-arduino/lesson3/ |
-| 4 | 準備中 | — |
+| 4 | 自動夜燈（含延伸挑戰：電位器調校靈敏度、越暗越亮） | https://edwardyungch.github.io/f2-dt-arduino/lesson4/ |
 | 5 | 準備中 | — |
 
 首頁 `index.html` 列出所有項目，供老師使用。上課時只把當堂的網址給學生；項目頁內沒有返回首頁的連結。
@@ -19,6 +19,7 @@ index.html              首頁（項目清單在檔內 LESSONS 陣列）
 lesson1/index.html      第 1 堂：Arduino 初體驗（由 src/lesson1-blink 建置）
 lesson2/index.html      第 2 堂：SOS 求救燈（由 src/lesson2-sos 建置，不要直接修改）
 lesson3/index.html      第 3 堂：行人過路燈（由 src/lesson3-traffic 建置）
+lesson4/index.html      第 4 堂：自動夜燈（由 src/lesson4-nightlight 建置）
 src/lessonN-*/          各堂的原始碼及 build.py
 src/shared/             各堂共用：套件材料清單、電阻辨認卡及小測（kit.js、kit.css）
 tools/                  Playwright 自動測試（主任務流程、延伸挑戰、接線檢查、未完成報告）

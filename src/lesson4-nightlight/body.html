@@ -1,0 +1,216 @@
+<header class="topbar">
+  <div class="brand"><div class="brand-lamp" aria-hidden="true"></div><b>自動夜燈</b><span>Arduino UNO 實作</span></div>
+  <nav class="stepper" id="stepper" aria-label="任務進度">
+    <button data-stage="intro" disabled><i>1</i><span>簡介</span></button>
+    <button data-stage="hw" disabled><i>2</i><span>硬件接線</span></button>
+    <button data-stage="code" disabled><i>3</i><span>編程及上傳</span></button>
+    <button data-stage="real" disabled><i>4</i><span>實物挑戰</span></button>
+    <button data-stage="ext" disabled><i>5</i><span>延伸挑戰</span></button>
+    <button data-stage="report" disabled><i>6</i><span>成績報告</span></button>
+  </nav>
+  <button class="btn sm early-btn" id="earlyBtn" hidden title="下課前未能完成？按這裏先交一份報告">未完成？先交報告</button>
+  <div class="who" id="who"></div>
+</header>
+
+<main id="app">
+
+<!-- ===================== LOGIN ===================== -->
+<section class="stage" id="st-login">
+  <div class="login-wrap">
+    <div class="login-hero">
+      <h1><small>ARDUINO UNO · DT</small>自動夜燈</h1>
+      <p>天一黑，夜燈就自己亮起；天亮了，它又自己熄滅。今次 Arduino 要用<b>光感應器</b>「看」環境有多暗，讀到的不再只是 HIGH 或 LOW，而是 0 至 1023 的數字。</p>
+      <div class="lamp-row">
+        <div id="heroWrap" class="hero-scene"></div>
+        <div class="phase" id="heroRead"></div>
+      </div>
+    </div>
+    <form class="card login-card" id="loginForm" autocomplete="off" novalidate>
+      <div>
+        <div class="eyebrow">學生登記</div>
+        <h2 style="font-size:22px;margin-top:4px">輸入你的資料</h2>
+        <p class="muted small" style="margin-top:4px">資料會印在成績報告上，請小心填寫。</p>
+      </div>
+      <div class="field"><label for="inName">姓名</label><input id="inName" maxlength="20" placeholder="例如：陳大文"></div>
+      <div class="field-row">
+        <div class="field"><label for="inCls">班別</label><input id="inCls" maxlength="6" placeholder="例如：2A"></div>
+        <div class="field"><label for="inNo">學號</label><input id="inNo" inputmode="numeric" maxlength="3" placeholder="例如：12"></div>
+      </div>
+      <div class="form-err" id="loginErr"></div>
+      <div id="resumeBox" hidden></div>
+      <button class="btn go lg" type="submit" id="loginBtn">開始任務</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===================== INTRO ===================== -->
+<section class="stage" id="st-intro" hidden>
+  <div class="intro-grid">
+    <div class="intro-head">
+      <div>
+        <div class="eyebrow">第 1 步 · 今日任務</div>
+        <h2>製作一盞自動夜燈</h2>
+        <p>你要把一個<b>光感應器</b>和一粒 LED 接到 Arduino UNO。Arduino 不停讀取光感應器：<b>讀數大過門檻值（天黑）就開燈，否則關燈</b>。</p>
+      </div>
+      <button class="btn go lg" id="introNext">開始接線</button>
+    </div>
+
+    <div class="card span-7">
+      <h3>夜燈怎樣運作？</h3>
+      <div class="intro-demo">
+        <div id="introSceneWrap"></div>
+        <div class="stack" style="gap:10px;flex:1;min-width:230px">
+          <label class="small" for="introSlider">拉動滑桿，把環境變暗：<b id="introLabel"></b></label>
+          <input type="range" id="introSlider" min="0" max="100" value="40" class="dark-slider">
+          <div class="readout">A0 讀數 <b id="introVal">0</b></div>
+          <div id="introGauge"></div>
+          <div class="phase small" id="introLamp"></div>
+        </div>
+      </div>
+      <table class="timing" style="margin-top:14px">
+        <thead><tr><th>環境</th><th>A0 讀數（大約）</th><th>夜燈（門檻 700）</th></tr></thead>
+        <tbody>
+          <tr><td>電筒照住</td><td class="num">80</td><td>關燈</td></tr>
+          <tr><td>課室燈光</td><td class="num">450</td><td>關燈</td></tr>
+          <tr><td>用手遮住</td><td class="num">980</td><td><b>開燈</b></td></tr>
+        </tbody>
+      </table>
+      <p class="small muted" style="margin-top:8px">記住：這個電路是<b>越暗，讀數越大</b>。真的讀數每塊板、每個課室都不同，做實物時你要自己量度，再決定門檻值。</p>
+    </div>
+
+    <div class="card span-5">
+      <h3>你會學到</h3>
+      <ol class="goals">
+        <li>用 <code>analogRead</code> 讀取<b>類比</b>讀數（0 – 1023）</li>
+        <li>光感應器和 10kΩ 電阻組成<b>分壓電路</b>，接到 A0</li>
+        <li>用 <b>Serial Monitor</b> 看 Arduino 讀到的數字</li>
+        <li>用<b>門檻值</b>和 <code>if</code> / <code>else</code> 決定開燈或關燈</li>
+      </ol>
+      <p class="fact" style="margin-top:16px">上一堂的按鈕只有兩個狀態：按下（HIGH）或放開（LOW），這叫<b>數碼</b>信號。光暗卻有很多程度，所以要用<b>類比</b>輸入：Arduino 把 0V 至 5V 變成 0 至 1023 的數字。</p>
+    </div>
+
+    <div class="card span-7">
+      <h3>認識電阻</h3>
+      <p class="small muted" style="margin:-6px 0 10px">今堂用兩種電阻，樣子很相似，要分清楚。</p>
+      <div id="resCard"></div>
+    </div>
+
+    <div class="card span-5">
+      <h3>任務流程</h3>
+      <ol class="flow">
+        <li><b>硬件接線</b><span>用拖拉方式接好電路，跟着步驟做</span></li>
+        <li><b>程式填空</b><span>完成 8 個空格，按「檢查答案」</span></li>
+        <li><b>選板及上傳</b><span>像真的一樣選 Board 和 Port，再上傳，然後打開 Serial Monitor</span></li>
+        <li><b>成績報告</b><span>下載報告檔，交給老師</span></li>
+      </ol>
+      <p class="small muted" style="margin-top:12px">做得快的同學，完成實物後可以做<b>延伸挑戰</b>：用電位器調校靈敏度，以及「越暗越亮」的夜燈。</p>
+      <p class="small muted" style="margin-top:14px">接錯線或填錯答案都可以再改，但系統會記錄錯誤次數和使用提示次數。進度會自動儲存。</p>
+      <p class="small muted" style="margin-top:10px">下課前未能完成？按右上角的「<b>未完成？先交報告</b>」，報告只計已完成的部分。之後可以繼續做，完成後再交一份完整報告。</p>
+    </div>
+
+    <div class="card span-12">
+      <h3>材料清單</h3>
+      <p class="small muted" style="margin:-6px 0 8px">模擬器已替你準備好；做實物時，按這張表拿材料。</p>
+      <div id="partsList"></div>
+      <p class="small muted" style="margin-top:10px" id="partsExt"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== HARDWARE ===================== -->
+<section class="stage" id="st-hw" hidden>
+  <div class="hw-layout">
+    <aside class="panel" id="hwPanel">
+      <div>
+        <div class="eyebrow" id="hwEyebrow">第 2 步</div>
+        <h2 id="hwTitle">硬件接線</h2>
+      </div>
+      <ol class="steps" id="hwSteps"></ol>
+      <div class="issues" id="hwIssues" aria-live="polite"></div>
+      <div class="statline" id="hwStats"></div>
+      <div class="know" id="hwKnow"></div>
+    </aside>
+    <div class="ws">
+      <div class="ws-bar">
+        <span class="muted">導線顏色</span>
+        <div class="swatches" id="swatches"></div>
+        <div class="sel-tools" id="selTools"><span class="lbl">點選元件或導線可以反轉或移除</span></div>
+      </div>
+      <svg id="hwSvg" viewBox="0 0 1150 640" aria-label="接線模擬器"></svg>
+      <div class="ws-foot">
+        <span>拉導線：在 Arduino 腳位或麵包板孔上按住，拖到另一個孔</span>
+        <span>移動元件：按住元件拖動</span>
+        <span>移除：拖到右下角的回收區，或選取後按 <kbd>Delete</kbd></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CODE / IDE ===================== -->
+<section class="stage" id="st-code" hidden>
+  <div class="code-layout">
+    <div class="ide-wrap">
+      <div class="ide" id="ide">
+        <div class="ide-menubar" id="ideMenubar">
+          <button class="mbtn" data-menu="file">File</button>
+          <button class="mbtn" data-menu="edit">Edit</button>
+          <button class="mbtn" data-menu="sketch">Sketch</button>
+          <button class="mbtn" data-menu="tools">Tools</button>
+          <button class="mbtn" data-menu="help">Help</button>
+          <span class="title">Night_Light | Arduino IDE</span>
+        </div>
+        <div class="ide-toolbar">
+          <button class="tb" id="btnVerify" title="Verify（驗證 / 編譯）" aria-label="Verify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+          <button class="tb" id="btnUpload" title="Upload（上傳）" aria-label="Upload"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></button>
+          <button class="tb" disabled title="Debug" aria-label="Debug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5v14l11-7z"/></svg></button>
+          <div class="boardsel">
+            <button id="boardSelBtn"><i class="dot" id="boardDot"></i><span id="boardSelTxt">Select Board</span><svg width="10" height="10" viewBox="0 0 10 10"><path d="M1 3l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+          </div>
+          <div class="right">
+            <button class="tb" title="Serial Plotter" aria-label="Serial Plotter" data-deco="1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l5-6 4 4 8-9"/></svg></button>
+            <button class="tb" id="btnMonitor" title="Serial Monitor" aria-label="Serial Monitor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg></button>
+          </div>
+        </div>
+        <div class="ide-body">
+          <div class="ide-side" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h6l2 2h8v12H4z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 6V3M16 6V3M8 21v-3M16 21v-3"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h4v16H5zM11 4h4v16h-4zM17 5l3 1-3 14-3-1z"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg>
+          </div>
+          <div class="ide-main">
+            <div class="ide-tabs"><div class="ide-tab">Night_Light.ino</div></div>
+            <div class="editor" id="editor"></div>
+            <div class="ide-out">
+              <div class="ide-out-h"><b>Output</b><span id="outState"></span></div>
+              <pre id="ideOut"></pre>
+            </div>
+          </div>
+        </div>
+        <div class="ide-status"><span id="stPos">Ln 1, Col 1</span><span>UTF-8</span><span id="stBoard">No board selected</span></div>
+      </div>
+      <div class="ide-note" id="ideNote" hidden></div>
+    </div>
+    <aside class="panel" id="codePanel"></aside>
+  </div>
+</section>
+
+<!-- ===================== REAL ===================== -->
+<section class="stage" id="st-real" hidden></section>
+
+<!-- ===================== EXTENSIONS ===================== -->
+<section class="stage" id="st-ext" hidden></section>
+
+<!-- ===================== REPORT ===================== -->
+<section class="stage" id="st-report" hidden></section>
+
+</main>
+
+<footer class="foot">
+  <span>設計與科技科 · Arduino UNO 自動夜燈實作 · 進度會自動儲存在這部電腦</span>
+  <button class="linkbtn" id="teacherBtn">教師模式</button>
+</footer>
+<div id="modalRoot"></div>
+<div id="toast" aria-live="polite"></div>
+<div id="tip" hidden></div>
+<div class="teacher-bar" id="teacherBar" hidden>教師模式<button id="tbOpen">工具</button><button id="tbExit">登出</button></div>

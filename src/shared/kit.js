@@ -28,6 +28,8 @@ const KIT = (() => {
     btn: '<svg viewBox="0 0 60 60" aria-hidden="true"><rect x="8" y="2" width="4" height="10" fill="#aaa"/><rect x="48" y="2" width="4" height="10" fill="#aaa"/><rect x="8" y="48" width="4" height="10" fill="#aaa"/><rect x="48" y="48" width="4" height="10" fill="#aaa"/><rect x="6" y="10" width="48" height="40" rx="4" fill="#2B2F33"/><circle cx="30" cy="30" r="12" fill="#C9352A"/></svg>',
     buzzer: '<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M22 44v14M38 44v14" stroke="#999" stroke-width="2"/><circle cx="30" cy="26" r="21" fill="#1F1F1F"/><circle cx="30" cy="26" r="15" fill="none" stroke="#3A3A3A" stroke-width="1.5"/><circle cx="30" cy="26" r="3.5" fill="#555"/></svg>',
     tilt: '<svg viewBox="0 0 80 30" aria-hidden="true"><path d="M2 15h22" stroke="#C9A53A" stroke-width="2"/><path d="M56 15h22" stroke="#9AA3A7" stroke-width="2"/><rect x="22" y="6" width="36" height="18" rx="6" fill="#2E9E55" stroke="#1D6E3A"/><rect x="25" y="9" width="30" height="4" rx="2" fill="#7FD79C" opacity=".55"/></svg>',
+    lsensor: '<svg viewBox="0 0 40 60" aria-hidden="true"><path d="M15 36v20" stroke="#999" stroke-width="2"/><path d="M25 36v6l3 3v10" stroke="#999" stroke-width="2" fill="none"/><rect x="10" y="12" width="20" height="22" rx="3" fill="#E9F1F4" stroke="#9FB3BB"/><rect x="10" y="10" width="20" height="5" rx="1.5" fill="#F8FCFD" stroke="#9FB3BB"/><rect x="16" y="20" width="8" height="6" fill="#4A4A4A"/><path d="M16 28h8" stroke="#C9A53A" stroke-width="1.4"/><text x="10" y="56" font-size="9" font-weight="700" fill="#C47A00">+</text></svg>',
+    pot: '<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M14 44v14M46 44v14M30 8V2" stroke="#999" stroke-width="2"/><rect x="6" y="14" width="48" height="32" rx="3" fill="#2B2F33"/><circle cx="30" cy="30" r="12" fill="#1A1A1A" stroke="#555"/><path d="M30 30V19" stroke="#ddd" stroke-width="3" stroke-linecap="round"/></svg>',
     wires: cols => `<svg viewBox="0 0 70 ${12 + cols.length * 6}" aria-hidden="true">${cols.map((c, i) => { const d = `M6 ${8 + i * 6}C24 ${i * 6 - 2} 46 ${i * 6 + 18} 64 ${8 + i * 6}`; return `<path d="${d}" stroke="rgba(0,0,0,.45)" stroke-width="5" fill="none" stroke-linecap="round"/><path d="${d}" stroke="${WIRE[c][0]}" stroke-width="3.4" fill="none" stroke-linecap="round"/>`; }).join('')}</svg>`,
   };
   /* wire summary: {black: 5, red: 2} -> "黑 5、紅 2" with colour dots */
@@ -49,6 +51,9 @@ const KIT = (() => {
     buzzer: (use) => ({ icon: ICON.buzzer, name: '蜂鳴器', look: '黑色圓形，兩隻腳；<b>沒有正負極</b>，兩隻腳可以對調', qty: '1', use }),
     tilt: (use) => ({ icon: ICON.tilt, name: '傾斜開關', look: '綠色小圓柱，兩隻腳；搖動時入面有「沙沙」聲（小鋼珠）', qty: '1', use }),
     btn: (use) => ({ icon: ICON.btn, name: '按鈕', look: '黑色方形，<b>4 隻腳</b>，中間有一粒圓掣', qty: '1', use }),
+    led: (color, name, use) => ({ icon: ICON.led(color), name, look: '<b>長腳是 +</b>，短腳是 −', qty: '1', use }),
+    lsensor: (use) => ({ icon: ICON.lsensor, name: '光感應器', look: '透明、<b>平頂</b>，樣子像 LED，兩隻腳；<b>有正負極</b>：長腳是 +，短腳是 −', qty: '1', use }),
+    pot: (use) => ({ icon: ICON.pot, name: '電位器（10kΩ）', look: '黑色方形，有一粒可以轉動的旋鈕；<b>3 隻腳</b>：一邊 2 隻，另一邊中間 1 隻', qty: '1', use }),
   };
 
   /* ---------- resistor identification card ---------- */
