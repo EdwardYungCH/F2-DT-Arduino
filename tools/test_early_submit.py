@@ -1,4 +1,4 @@
-"""Early (unfinished) report for lessons 1 to 4: only finished parts score, the student can carry on and hand in a full report later."""
+"""Early (unfinished) report for lessons 1 to 5: only finished parts score, the student can carry on and hand in a full report later."""
 import asyncio, os, re, sys
 from playwright.async_api import async_playwright
 ROOT = os.path.abspath(os.path.dirname(__file__) + '/..')
@@ -73,7 +73,7 @@ async def run(p, n):
 
 async def main():
     async with async_playwright() as p:
-        for n in (1, 2, 3, 4): await run(p, n)
+        for n in (1, 2, 3, 4, 5): await run(p, n)
     print('FAILURES:', FAIL)
     sys.exit(1 if FAIL else 0)
 asyncio.run(main())
