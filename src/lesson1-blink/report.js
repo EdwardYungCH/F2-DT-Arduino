@@ -6,7 +6,7 @@ const FULL_CODE = CODE_TEMPLATE.map(l => l.replace(/\{\{(b\d)\}\}/g, (_, id) => 
 /* ---------------- 實物挑戰 ---------------- */
 const REAL_ITEMS = [
   ['準備材料', 'Arduino UNO 和 USB 線（不用其他零件）。'],
-  ['認出板上的部件', '在真的 UNO 上找出：USB 插口、電源插口、RESET 掣、13 號腳、GND、5V、L 燈和主晶片。'],
+  ['認出板上的部件', '在真的 UNO 上找出：USB 插口、電源插口、RESET 掣、D13（D13）、GND、5V、L 燈和主晶片。'],
   ['插上 USB 線', 'UNO 板上綠色的 ON 燈會亮起。有些新板出廠時已經有閃燈程式，所以 L 燈可能已經在閃，不用理會。'],
   ['把程式貼到 Arduino IDE', '按右邊的「複製完整程式」，在 IDE 中全選原有內容（Ctrl+A），再貼上（Ctrl+V）。'],
   ['選擇 Board 和 Port', 'Tools → Board → Arduino AVR Boards → Arduino Uno；Tools → Port → 有 (Arduino Uno) 字樣的 COM。'],
@@ -26,7 +26,7 @@ stageInit.real = () => {
         <ul class="checklist">${REAL_ITEMS.map(([b, s], i) => `<li><label><input type="checkbox" id="rc${i}" data-i="${i}" ${S.real.checks[i] ? 'checked' : ''}><div><b>${i + 1}. ${b}</b><span>${s}</span></div></label></li>`).join('')}</ul>
       </div>
       <div class="card"><h3>UNO 板的各部分</h3><div class="sos-stage">${HW.circuitSVG({ labels: true })}</div>
-        <p class="small muted" style="margin-top:8px">L 燈在板內已經接到 13 號腳，所以今堂不用接任何零件。</p></div>
+        <p class="small muted" style="margin-top:8px">L 燈在板內已經接到 D13，所以今堂不用接任何零件。</p></div>
     </div>
     <div class="stack" style="gap:18px">
       <div class="card"><h3>老師確認</h3>

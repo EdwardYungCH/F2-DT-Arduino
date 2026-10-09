@@ -78,7 +78,7 @@ const EXT = (() => {
             ${e.c1.done ? '<button class="btn" data-replay="c1">再看一次（有聲）</button>' : `<button class="btn go" data-go="${c1Next}">${status(e.c1, true).includes('未開始') ? '開始挑戰 1' : '繼續挑戰 1'}</button>`}
           </div>
           ${e.c1.done ? `<details class="fold ext-real" ${e.c1.confirmed ? '' : 'open'}><summary>在真的 UNO 上做一次</summary>
-            <ol class="goals small"><li>保留原本的 LED 電路，<b>先拔走 USB 線</b>。</li><li>把蜂鳴器插到麵包板，兩隻腳在不同號碼的直行。</li><li>藍色線：D8 → 蜂鳴器一隻腳；黑色線：GND → 蜂鳴器另一隻腳。</li><li>插回 USB 線，把程式貼到 Arduino IDE，然後上傳。</li><li>LED 閃時應該聽到「嗶」聲。沒有聲？檢查是否用了 <code>tone()</code>，以及蜂鳴器兩隻腳是否插在不同直行。</li></ol>
+            <ol class="goals small"><li>保留原本的 LED 電路，<b>先拔走 USB 線</b>。</li><li>把蜂鳴器插到麵包板，兩隻腳在不同的直行。</li><li>藍色線：D8 → 蜂鳴器一隻腳；黑色線：GND → 蜂鳴器另一隻腳。</li><li>插回 USB 線，把程式貼到 Arduino IDE，然後上傳。</li><li>LED 閃時應該聽到「嗶」聲。沒有聲？檢查是否用了 <code>tone()</code>，以及蜂鳴器兩隻腳是否插在不同直行。</li></ol>
             <div class="row"><button class="btn sm primary" data-copy="c1">複製完整程式</button><span class="small muted" data-copymsg="c1"></span></div>
             ${e.c1.confirmed ? alertBox('ok', '老師已確認實物成功。') : '<button class="btn sm teal" data-confirm="c1">老師確認實物成功</button>'}
           </details>` : ''}

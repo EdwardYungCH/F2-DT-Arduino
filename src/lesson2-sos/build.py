@@ -7,7 +7,7 @@ r = lambda f: open(here + f, encoding='utf-8').read()
 head, body, sha = r('head.html'), r('body.html'), r('sha.js')
 shared = lambda f: open(here + '../shared/' + f, encoding='utf-8').read()
 head = head.replace('</style>', shared('kit.css') + '</style>', 1)
-app = shared('kit.js') + '\n' + shared('help.js') + '\n' + '\n'.join(r(f) for f in ['core.js', 'hw.js', 'code.js', 'ext.js', 'report.js', 'glue.js'])
+app = shared('kit.js') + '\n' + shared('help.js') + '\n' + shared('wire.js') + '\n' + '\n'.join(r(f) for f in ['core.js', 'hw.js', 'code.js', 'ext.js', 'report.js', 'glue.js'])
 # a literal </script inside the JS (the report template) would end the tag early
 app = app.replace('</script', '<\\/script').replace('<!--', '<\\!--')
 sha = sha.replace('</script', '<\\/script')

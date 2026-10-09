@@ -241,7 +241,7 @@ const HW = (() => {
     return o;
   }
 
-  const pinPretty = n => /^D\d+$/.test(n) ? `D${n.slice(1)}（${n.slice(1)} 號腳）` : (PIN_LABEL[n] || n);
+  const pinPretty = n => /^SV/.test(n) ? (PIN_LABEL[n] || n) : `〔${pinName(n)}〕`;
   const endName = id => id.startsWith('P:') ? pinName(P[id].name) : id;
   function analyze(h = S.hw) {
     const find = buildNets(h.wires);
@@ -259,21 +259,21 @@ const HW = (() => {
     if (!h.led) add(1, 'led_missing', '請先把元件盒中的 LED 拖到麵包板上。', false);
     else {
       const ak = ledAK(h.led); A = find(ak.a); K = find(ak.k);
-      if (A === K) add(1, 'led_short', 'LED 兩隻腳插在<b>相通</b>的孔（同一號碼的直行，或同一條電源軌），LED 被短路了，不會亮。請把兩隻腳放在不同號碼的直行。');
+      if (A === K) add(1, 'led_short', 'LED 兩隻腳插在<b>相通</b>的孔（同一個直行，或同一條電源軌），LED 被短路了，不會亮。請把兩隻腳插在不同的直行。');
     }
     if (!h.res) {
       if (h.led && A !== K && ((d13 === A && K === gnd) || (d13 === K && A === gnd))) add(2, 'no_resistor', '<b>漏接電阻！</b>LED 直接接到 D13 和 GND，中間沒有電阻，電流太大會燒壞 LED。請把 220Ω 電阻串聯在電路中。');
       else add(2, 'res_missing', '請把元件盒中的 220Ω 電阻拖到麵包板上。', false);
     } else {
       const [r1, r2] = resHoles(h.res); R1 = find(r1); R2 = find(r2);
-      if (R1 === R2) add(2, 'res_short', '電阻兩隻腳插在相通的孔，電阻被短路，沒有作用。請把它放在同一橫排、跨過不同號碼的直行。');
+      if (R1 === R2) add(2, 'res_short', '電阻兩隻腳插在相通的孔，電阻被短路，沒有作用。請把它放在同一橫排、跨過不同的直行。');
     }
     if (h.led && h.res && A !== K && R1 !== R2) {
       const sA = R1 === A || R2 === A, sK = R1 === K || R2 === K;
-      if (sA && sK) add(2, 'parallel', '電阻兩端分別接到 LED 兩隻腳，變成<b>並聯</b>了。電阻只需要<b>一隻腳</b>和 LED 在同一號碼的直行（串聯）。');
+      if (sA && sK) add(2, 'parallel', '電阻兩端分別接到 LED 兩隻腳，變成<b>並聯</b>了。電阻只需要<b>一隻腳</b>和 LED 在同一個直行（串聯）。');
       else if (!sA && !sK) {
         if ((d13 === A && K === gnd) || (d13 === K && A === gnd)) add(2, 'no_resistor', '<b>漏接電阻！</b>LED 直接接到 D13 和 GND，電流沒有經過電阻，會燒壞 LED。電阻要和 LED 串聯。');
-        else add(2, 'not_series', '電阻和 LED 沒有連接起來。電阻其中一隻腳要插在和 LED <b>長腳（+）同一號碼</b>的直行，兩者才會串聯。');
+        else add(2, 'not_series', '電阻和 LED 沒有連接起來。電阻其中一隻腳要插在和 LED <b>長腳（+）同一個</b>直行，兩者才會串聯。');
       } else {
         const side = sA ? 'anode' : 'cathode';
         const M = sA ? A : K;
@@ -288,11 +288,11 @@ const HW = (() => {
           const other = pX.filter(n => n !== 'GND' && n !== 'D13');
           if (other.length) {
             const n = other[0];
-            if (['5V', '3V3', 'VIN'].includes(n)) add(3, 'wrong_pin', `你把電路接到了 <b>${PIN_LABEL[n]}</b>。這樣 LED 只會一直亮，程式不能控制它閃爍。請把線改接到 <b>13</b> 號腳（D13）。`);
-            else add(3, 'wrong_pin', `你把線接到了 <b>${pinPretty(n)}</b>，但今次的程式控制的是 <b>D13</b>。請把線改接到 13 號腳。`);
+            if (['5V', '3V3', 'VIN'].includes(n)) add(3, 'wrong_pin', `你把電路接到了 <b>${PIN_LABEL[n]}</b>。這樣 LED 只會一直亮，程式不能控制它閃爍。請把線改接到 〔D13〕。`);
+            else add(3, 'wrong_pin', `你把線接到了 <b>${pinPretty(n)}</b>，但今次的程式控制的是 D13。請把線改接到 〔D13〕。`);
           } else if (pX.includes('GND')) add(3, 'gnd_anode', 'GND 接到了 LED 長腳（+）那一邊，方向反了。長腳那邊要接 D13，短腳（−）那邊才接 GND。');
-          else if (!wiredPins.has('D13')) add(3, 'd13_missing', '還未連接 D13。請由 Arduino 上方的 <b>13</b> 號腳拉一條導線到電阻另一端的直行。', false);
-          else add(3, 'd13_nowhere', 'D13 的導線接到了<b>沒有元件</b>的位置。導線要插在和電阻另一隻腳<b>同一號碼</b>的直行，才算連接。');
+          else if (!wiredPins.has('D13')) add(3, 'd13_missing', '還未連接 D13。請由 Arduino 上方的 〔D13〕 拉一條導線到電阻另一端的直行。', false);
+          else add(3, 'd13_nowhere', 'D13 的導線接到了<b>沒有元件</b>的位置。導線要插在和電阻另一隻腳<b>同一個</b>直行，才算連接。');
         }
         if (gnd === Y) { /* ok */ }
         else if (gnd === X) add(4, 'gnd_anode', 'GND 接到了 LED 長腳（+）那一邊。長腳要向 D13，短腳（−）那邊才接 GND。');
@@ -301,7 +301,7 @@ const HW = (() => {
           const other = pY.filter(n => n !== 'D13' && n !== 'GND');
           if (other.length) add(4, 'wrong_gnd', `LED 短腳（−）那邊應該接 <b>GND</b>，你接了 <b>${pinPretty(other[0])}</b>。`);
           else if (!wiredPins.has('GND')) add(4, 'gnd_missing', '還未連接 GND。請由 Arduino 的 <b>GND</b> 腳拉一條導線到 LED 短腳（−）的直行。', false);
-          else add(4, 'gnd_nowhere', 'GND 的導線接到了<b>沒有元件</b>的位置。導線要插在和 LED 短腳（−）<b>同一號碼</b>的直行。');
+          else add(4, 'gnd_nowhere', 'GND 的導線接到了<b>沒有元件</b>的位置。導線要插在和 LED 短腳（−）<b>同一個</b>直行。');
         }
         const midOther = pM.filter(n => n !== 'D13' && n !== 'GND');
         if (midOther.length) add(4, 'mid_pin', `LED 和電阻之間的相連點不應該接到 ${pinPretty(midOther[0])}。請移除那條線。`);
@@ -339,17 +339,17 @@ const HW = (() => {
     else {
       const [l1, l2] = pzHoles(h.pz); const N1 = find(l1), N2 = find(l2);
       out.legs = { N1, N2 };
-      if (N1 === N2) add(1, 'pz_short', '蜂鳴器兩隻腳插在<b>相通</b>的孔，被短路了，不會響。請把兩隻腳放在不同號碼的直行。');
+      if (N1 === N2) add(1, 'pz_short', '蜂鳴器兩隻腳插在<b>相通</b>的孔，被短路了，不會響。請把兩隻腳放在不同的直行。');
       else {
         const legPins = [...new Set(pinsIn(N1).concat(pinsIn(N2)))].filter(n => n !== 'GND');
         const extTouches = net => h.wires.some(w => find(w.a) === net);
         // step 2: D8
         if (N1 !== d8 && N2 !== d8) {
-          if (legPins.includes('D13')) add(2, 'pz_on_d13', '蜂鳴器接到了 <b>D13</b>，那是 LED 用的腳。程式用 <b>D8</b> 控制蜂鳴器，請改接到 8 號腳。');
-          else if (legPins.some(n => ['5V', '3V3', 'VIN'].includes(n))) add(2, 'pz_power', `蜂鳴器接到了 <b>${PIN_LABEL[legPins.find(n => ['5V', '3V3', 'VIN'].includes(n))]}</b>。蜂鳴器要不停開關的信號才會發聲，接電源腳不會響。請改接到 <b>8</b> 號腳。`);
-          else if (legPins.some(n => /^[DA]\d+$/.test(n))) add(2, 'pz_wrong_pin', `蜂鳴器接到了 <b>${pinPretty(legPins.find(n => /^[DA]\d+$/.test(n)))}</b>，但程式用的是 <b>D8</b>。請改接到 8 號腳。`);
-          else if (!extTouches(d8) && !h.wires.some(w => w.a === 'P:D8' || w.b === 'P:D8')) add(2, 'd8_missing', '還未連接 D8。請由 Arduino 上方的 <b>8</b> 號腳拉一條導線到蜂鳴器其中一隻腳的直行。', false);
-          else add(2, 'd8_nowhere', 'D8 的導線接到了<b>沒有元件</b>的位置。導線要插在和蜂鳴器其中一隻腳<b>同一號碼</b>的直行。');
+          if (legPins.includes('D13')) add(2, 'pz_on_d13', '蜂鳴器接到了 <b>D13</b>，那是 LED 用的腳。程式用 D8 控制蜂鳴器，請改接到 〔D8〕。');
+          else if (legPins.some(n => ['5V', '3V3', 'VIN'].includes(n))) add(2, 'pz_power', `蜂鳴器接到了 <b>${PIN_LABEL[legPins.find(n => ['5V', '3V3', 'VIN'].includes(n))]}</b>。蜂鳴器要不停開關的信號才會發聲，接電源腳不會響。請改接到 〔D8〕。`);
+          else if (legPins.some(n => /^[DA]\d+$/.test(n))) add(2, 'pz_wrong_pin', `蜂鳴器接到了 <b>${pinPretty(legPins.find(n => /^[DA]\d+$/.test(n)))}</b>，但程式用的是 D8。請改接到 〔D8〕。`);
+          else if (!extTouches(d8) && !h.wires.some(w => w.a === 'P:D8' || w.b === 'P:D8')) add(2, 'd8_missing', '還未連接 D8。請由 Arduino 上方的 〔D8〕 拉一條導線到蜂鳴器其中一隻腳的直行。', false);
+          else add(2, 'd8_nowhere', 'D8 的導線接到了<b>沒有元件</b>的位置。導線要插在和蜂鳴器其中一隻腳<b>同一個</b>直行。');
         }
         // step 3: GND
         if (N1 !== gnd && N2 !== gnd) {
@@ -357,7 +357,7 @@ const HW = (() => {
           const otherPins = sigLeg ? pinsIn(sigLeg).filter(n => n !== 'GND') : [];
           if (otherPins.length) add(3, 'pz_gnd_wrong', `蜂鳴器另一隻腳應該接 <b>GND</b>，你接了 <b>${pinPretty(otherPins[0])}</b>。`);
           else if (!extTouches(gnd)) add(3, 'gnd_missing', '還未連接 GND。請由 Arduino 下方 POWER 那一排的 <b>GND</b> 腳，拉一條導線到蜂鳴器另一隻腳的直行。', false);
-          else add(3, 'gnd_nowhere', 'GND 的導線接到了<b>沒有元件</b>的位置。導線要插在和蜂鳴器另一隻腳<b>同一號碼</b>的直行。');
+          else add(3, 'gnd_nowhere', 'GND 的導線接到了<b>沒有元件</b>的位置。導線要插在和蜂鳴器另一隻腳<b>同一個</b>直行。');
         }
       }
     }
@@ -377,7 +377,7 @@ const HW = (() => {
     return cands[0] || null;
   }
   function resTarget(h = S.hw) {
-    if (!h.led) return { h1: 'h9', h2: 'h13' };
+    if (!h.led) return { h1: 'h3', h2: 'h7' };
     const { a } = ledAK(h.led); const pa = parseHole(a); if (!pa || RAIL_NAME[pa.row]) return null;
     const occ = occupancy(h); if (h.res) resHoles(h.res).forEach(x => delete occ[x]);
     const rows = 'abcde'.includes(pa.row) ? ['c', 'd', 'e', 'b', 'a'] : ['h', 'i', 'j', 'g', 'f'];
@@ -392,9 +392,11 @@ const HW = (() => {
   }
   function pzTarget() {
     const occ = occupancy(); if (H().pz) pzHoles(H().pz).forEach(x => delete occ[x]);
-    for (const [r, c] of [['f', 18], ['f', 19], ['a', 18], ['a', 10], ['f', 3]]) { const h1 = holeAt(r, c), h2 = holeAt(r, c + 3); if (!occ[h1] && !occ[h2]) return { h1, h2 }; }
+    for (const [r, c] of [['f', 13], ['f', 14], ['f', 18], ['a', 13], ['a', 18]]) { const h1 = holeAt(r, c), h2 = holeAt(r, c + 3); if (!occ[h1] && !occ[h2]) return { h1, h2 }; }
     return null;
   }
+  /* 分區：主任務 LED 區，延伸挑戰蜂鳴器區 */
+  const ZONES = { main: [{ name: 'LED 區', from: 3, to: 8 }], c1: [{ name: '蜂鳴器區', from: 13, to: 16 }] };
   function freeGndPin(occ) { return ['P:GND2', 'P:GND3', 'P:GND'].find(p => !occ[p]) || 'P:GND2'; }
   function stepTargets(step) {
     const h = H();
@@ -407,7 +409,7 @@ const HW = (() => {
       if (step === 3) return [freeGndPin(occ)].concat(fR ? [fR] : []);
       return [];
     }
-    if (step === 1) return h.led ? [] : ['f13', 'f14'];
+    if (step === 1) return h.led ? [] : ['f7', 'f8'];
     if (step === 2) { const t = resTarget(); return t && !h.res ? [t.h1, t.h2] : []; }
     const an = analyze(); if (!an.chain) return [];
     const occ = occupancy();
@@ -415,24 +417,25 @@ const HW = (() => {
     if (step === 4) { const y = freeHoleIn(an.chain.Y, an.find, occ); return ['P:GND'].concat(y ? [y] : []); }
     return [];
   }
-  const colOfNet = (net, find) => { const hs = HOLE_IDS.filter(id => find(id) === net); if (!hs.length) return null; const p = P[hs[0]]; return RAIL_NAME[p.row] ? RAIL_NAME[p.row] : `第 ${p.col} 號直行`; };
+  const colOfNet = (net, find) => { const hs = HOLE_IDS.filter(id => find(id) === net); if (!hs.length) return null; const p = P[hs[0]]; return RAIL_NAME[p.row] ? RAIL_NAME[p.row] : `〔第${p.col}直行〕`; };
   function stepBody(step) {
     if (MODE === 'c1') {
       const h = H();
-      if (step === 1) { const t = pzTarget(); return `<p>LED 電路已經接好（今次不用改動）。把元件盒中的 <b>蜂鳴器</b>拖到麵包板，兩隻腳要在<b>不同號碼</b>的直行。</p><p>你的蜂鳴器 <b>沒有正負極</b>，兩隻腳可以對調。</p>${t ? `<p>建議位置：黃色閃動的 <b>${t.h1}</b> 和 <b>${t.h2}</b>。</p>` : ''}`; }
+      if (step === 1) { const t = pzTarget(); return `<p>LED 電路已經接好（今次不用改動）。把元件盒中的 <b>蜂鳴器</b>拖到麵包板的<b>蜂鳴器區</b>，兩隻腳要在<b>不同的直行</b>。</p><p>你的蜂鳴器 <b>沒有正負極</b>，兩隻腳可以對調。</p>${t ? `<p>建議位置：黃色閃動的 〔${t.h1}〕 和 〔${t.h2}〕。</p>` : ''}`; }
       const an = analyzeC1();
       const L = an.legs ? colOfNet(an.find(pzHoles(h.pz)[0]), an.find) : null, R = an.legs ? colOfNet(an.find(pzHoles(h.pz)[1]), an.find) : null;
-      if (step === 2) return `<p>選一種導線顏色（建議<b>藍色</b>），由 Arduino 上方的 <b>8</b> 號腳拉到蜂鳴器 ${L ? `左腳的<b>${L}</b>` : '其中一隻腳的直行'}。</p>`;
-      if (step === 3) return `<p>選<b>黑色</b>導線，由 Arduino <b>下方</b> POWER 那一排的 <b>GND</b> 腳，拉到蜂鳴器 ${R ? `右腳的<b>${R}</b>` : '另一隻腳的直行'}。</p><p class="small">UNO 上方和下方一共有 3 個 GND，它們是相通的，用哪一個都可以。</p>`;
+      if (step === 2) return `<p>選一種導線顏色（建議<b>藍色</b>），由 〔D8〕（Arduino 上方，板上印 8）拉到蜂鳴器${L ? `左腳的 ${L}` : '其中一隻腳的直行'}。</p><p class="small muted">小心：〔D8〕 是 Arduino 上的腳位，和麵包板的〔第8直行〕無關。</p>`;
+      if (step === 3) return `<p>選<b>黑色</b>導線，由 Arduino <b>下方</b> POWER 那一排的 〔GND〕 腳，拉到蜂鳴器${R ? `右腳的 ${R}` : '另一隻腳的直行'}。</p><p class="small">UNO 上方和下方一共有 3 個 GND，它們是相通的，用哪一個都可以。</p>`;
       return `<p>檢查兩條新導線都接好，而且沒有改動原本的 LED 電路，然後按「完成接線檢查」。</p>`;
     }
-    if (step === 1) return `<p>把元件盒中的 LED 拖到麵包板。<b>長腳（+）</b>在左，<b>短腳（−）</b>在右，兩隻腳要在<b>不同號碼</b>的直行。</p><p>建議位置：黃色閃動的 <b>f13</b> 和 <b>f14</b>。</p>`;
-    if (step === 2) { const t = resTarget(); return `<p>把 220Ω 電阻拖到麵包板，令電阻其中一隻腳和 LED <b>長腳（+）</b>在<b>同一號碼</b>的直行，這樣兩者就串聯起來。</p>${t ? `<p>建議位置：<b>${t.h1}</b> 至 <b>${t.h2}</b>。</p>` : ''}`; }
+    if (step === 1) return `<p>把元件盒中的 LED 拖到麵包板的 <b>LED 區</b>。<b>長腳（+）</b>在左，<b>短腳（−）</b>在右，兩隻腳要在<b>不同的直行</b>。</p><p>建議位置：黃色閃動的 〔f7〕 和 〔f8〕。</p><p class="small muted">麵包板的位置寫法：<b>行字母 + 直行號碼</b>，例如 f7 = f 行、第 7 直行。</p>`;
+    if (step === 2) { const t = resTarget(); return `<p>把 220Ω 電阻拖到麵包板，令電阻其中一隻腳和 LED <b>長腳（+）</b>在<b>同一個直行</b>，這樣兩者就串聯起來。</p>${t ? `<p>建議位置：〔${t.h1}〕 至 〔${t.h2}〕。</p>` : ''}`; }
     const an = analyze();
-    if (step === 3) { const c = an.chain ? colOfNet(an.chain.X, an.find) : null; return `<p>選一種導線顏色（建議<b>白色</b>），在 Arduino 上方的 <b>13</b> 號腳按住，拖到${c ? `電阻另一端的<b>${c}</b>` : '電阻另一端的直行'}，放開滑鼠。</p>`; }
-    if (step === 4) { const c = an.chain ? colOfNet(an.chain.Y, an.find) : null; return `<p>選<b>黑色</b>導線，由 Arduino 的 <b>GND</b> 腳（在 13 號腳左邊）拉到 LED <b>短腳（−）</b>的${c ? `<b>${c}</b>` : '直行'}。</p><p class="small">黑色代表負極 / 接地，是電子接線的習慣。</p>`; }
+    if (step === 3) { const c = an.chain ? colOfNet(an.chain.X, an.find) : null; return `<p>選一種導線顏色（建議<b>白色</b>），在 〔D13〕（Arduino 上方，板上印 13）按住，拖到${c ? `電阻另一端的 ${c}` : '電阻另一端的直行'}，放開滑鼠。</p><p class="small muted">小心：〔D13〕 是 Arduino 上的腳位，和麵包板的〔第13直行〕無關。</p>`; }
+    if (step === 4) { const c = an.chain ? colOfNet(an.chain.Y, an.find) : null; return `<p>選<b>黑色</b>導線，由 Arduino 的 〔GND〕 腳（在 13 旁邊）拉到 LED <b>短腳（−）</b>的${c ? ` ${c}` : '直行'}。</p><p class="small">黑色代表負極 / 接地，是電子接線的習慣。</p>`; }
     return `<p>檢查所有導線都接好，沒有多餘的線，然後按「完成接線檢查」。</p>`;
   }
+
 
   /* ---------- UI state ---------- */
   let svg, gDyn, gHint, gGroup, gGhost, gFlow, gFixed;
@@ -472,6 +475,7 @@ const HW = (() => {
     return resSVG(a, b, opts);
   }
 
+  let gZone, gCall;
   function build() {
     svg = $('#hwSvg');
     svg.innerHTML = DEFS + `<rect x="0" y="0" width="1150" height="640" fill="url(#matgrid)"/>` + unoSVG() + boardSVG() +
@@ -489,8 +493,8 @@ const HW = (() => {
         <text x="${TRASH.x + TRASH.w / 2}" y="${TRASH.y + 74}" font-size="12" fill="#CFE3DD" text-anchor="middle">回收區</text>
         <text x="${TRASH.x + TRASH.w / 2}" y="${TRASH.y + 92}" font-size="10.5" fill="#9DBDB3" text-anchor="middle">拖到這裏移除</text>
       </g>
-      <g id="gFixed"></g><g id="gGroup"></g><g id="gHint"></g><g id="gDyn"></g><g id="gFlow"></g><g id="gGhost"></g>`;
-    gDyn = $('#gDyn'); gHint = $('#gHint'); gGroup = $('#gGroup'); gGhost = $('#gGhost'); gFlow = $('#gFlow'); gFixed = $('#gFixed');
+      <g id="gZone"></g><g id="gFixed"></g><g id="gGroup"></g><g id="gHint"></g><g id="gDyn"></g><g id="gFlow"></g><g id="gCall"></g><g id="gGhost"></g>`;
+    gZone = $('#gZone'); gCall = $('#gCall'); gDyn = $('#gDyn'); gHint = $('#gHint'); gGroup = $('#gGroup'); gGhost = $('#gGhost'); gFlow = $('#gFlow'); gFixed = $('#gFixed');
     svg.addEventListener('pointerdown', onDown);
     svg.addEventListener('pointermove', onMove);
     svg.addEventListener('pointerup', onUp);
@@ -530,6 +534,9 @@ const HW = (() => {
     let tg = [];
     if (!h.done && (cur === 1 || (MODE === 'main' && cur === 2) || h.hinted[cur])) tg = stepTargets(cur);
     gHint.innerHTML = tg.map(id => { const q = P[id]; return `<circle class="pulse" cx="${q.x}" cy="${q.y}" r="8"/><circle class="target-dot" cx="${q.x}" cy="${q.y}" r="4" opacity=".9"/>`; }).join('');
+    const zs = ZONES.main.map(z => ({ ...z, faded: MODE !== 'main' })).concat(MODE === 'main' ? [] : ZONES.c1);
+    gZone.innerHTML = !h.done && (MODE === 'main' ? [1, 2] : [1]).includes(cur) ? WIRE.zonesSVG(zs, { colX, BY }) : '';
+    gCall.innerHTML = h.done || cur > STEPS().length ? '' : WIRE.pinCallouts(stepTargets(cur), P);
     renderSelTools();
   }
   function selBox(type) { const b = partBox(type); return `<rect x="${b.x - 4}" y="${b.y - 4}" width="${b.w + 8}" height="${b.h + 8}" rx="6" fill="rgba(255,255,255,.12)" stroke="#fff" stroke-dasharray="4 3"/>`; }
@@ -560,8 +567,8 @@ const HW = (() => {
     const id = nearestPoint(p);
     if (!id) { hideTip(); gGroup.innerHTML = ''; return; }
     const q = P[id];
-    if (q.kind === 'pin') { showTip(`<b>${pinName(q.name)}</b> · ${q.label}`, e); gGroup.innerHTML = `<circle cx="${q.x}" cy="${q.y}" r="8" fill="none" stroke="#FFD27A" stroke-width="2"/>`; return; }
-    showTip(holeLabel(id), e);
+    if (q.kind === 'pin') { showTip(WIRE.tipPin(q.name, q.label), e); gGroup.innerHTML = `<circle cx="${q.x}" cy="${q.y}" r="8" fill="none" stroke="#FFD27A" stroke-width="2"/>`; return; }
+    showTip(WIRE.tipHole(id), e);
     gGroup.innerHTML = HOLE_IDS.filter(x => P[x].group === q.group).map(x => `<rect x="${P[x].x - 6}" y="${P[x].y - 6}" width="12" height="12" rx="3" fill="rgba(255,210,122,.45)" stroke="#E0A63A"/>`).join('');
   }
 
@@ -615,7 +622,7 @@ const HW = (() => {
       if (snap) g += [snap.h1, snap.h2].map(x => `<circle cx="${P[x].x}" cy="${P[x].y}" r="6" fill="none" stroke="${snap.ok ? '#6CF09A' : '#FF6B5E'}" stroke-width="2.5"/>`).join('');
       gGhost.innerHTML = g;
       gGroup.innerHTML = snap ? [snap.h1, snap.h2].flatMap(x => HOLE_IDS.filter(y => P[y].group === P[x].group)).map(x => `<rect x="${P[x].x - 6}" y="${P[x].y - 6}" width="12" height="12" rx="3" fill="rgba(255,210,122,.35)"/>`).join('') : '';
-      if (snap) showTip(`${partName[type]}：<b>${snap.h1}</b> 至 <b>${snap.h2}</b>${snap.ok ? '' : '（已有東西）'}`, e); else hideTip();
+      if (snap) showTip(`${partName[type]}：麵包板 <b>${snap.h1}</b> 至 <b>${snap.h2}</b>${snap.ok ? '' : '（已有東西）'}`, e); else hideTip();
     } else {
       const from = P[drag.fixed];
       const tgt = nearestPoint(p);
@@ -625,7 +632,7 @@ const HW = (() => {
       const end = ok ? P[tgt] : p;
       gGhost.innerHTML = wireSVG({ color }, { pa: from, pb: end, ghost: true }) + (tgt ? `<circle cx="${P[tgt].x}" cy="${P[tgt].y}" r="8" fill="none" stroke="${ok ? '#6CF09A' : '#FF6B5E'}" stroke-width="2.5"/>` : '');
       if (drag.wire) { const wg = gDyn.querySelector(`[data-wire="${drag.wire.id}"]`); if (wg) wg.parentNode.setAttribute('opacity', '.15'); }
-      if (tgt) { const q = P[tgt]; showTip(q.kind === 'pin' ? `<b>${pinName(q.name)}</b> · ${q.label}` : holeLabel(tgt), e); } else hideTip();
+      if (tgt) { const q = P[tgt]; showTip(q.kind === 'pin' ? WIRE.tipPin(q.name, q.label) : WIRE.tipHole(tgt), e); } else hideTip();
     }
   }
   function onUp(e) {
@@ -663,6 +670,11 @@ const HW = (() => {
 
   /* ---------- checking ---------- */
   const layoutSig = () => { const h = H(); return JSON.stringify([h.led, h.res, h.pz, h.wires.map(w => [w.a, w.b].sort().join('-')).sort()]); };
+  function crowdTips() {
+    const base = S.hw, h = H(), an = doAnalyze(), find = an.find || (x => x);
+    const ps = [base.led && { name: 'LED', legs: ledHoles(base.led) }, base.res && { name: '220Ω 電阻', legs: resHoles(base.res) }, MODE === 'c1' && h.pz && { name: '蜂鳴器', legs: pzHoles(h.pz) }].filter(Boolean);
+    return WIRE.crowded(ps, (a, b) => find(a) === find(b));
+  }
   function runCheck(upto) {
     const h = H(), last = STEPS().length;
     const an = doAnalyze();
@@ -673,7 +685,7 @@ const HW = (() => {
     if (!rel.length) {
       h.step = Math.max(h.step, upto);
       if (upto >= last) { finish(); return; }
-      changed(); lastIssues = { kind: 'ok', html: alertBox('ok', `第 ${upto} 步正確！繼續下一步。`) }; renderPanel(); return;
+      changed(); lastIssues = { kind: 'ok', html: alertBox('ok', `第 ${upto} 步正確！繼續下一步。`) + WIRE.crowdBox(crowdTips()) }; renderPanel(); return;
     }
     const counted = rel.some(i => i.counts);
     const sig = layoutSig();
@@ -683,7 +695,7 @@ const HW = (() => {
       h.stepFails[h.step + 1] = (h.stepFails[h.step + 1] || 0) + 1;
       rel.filter(i => i.counts).forEach(i => pushLog(h, i.msg.replace(/<[^>]+>/g, '')));
     }
-    lastIssues = { kind: counted ? 'err' : 'warn', html: rel.map(i => alertBox(i.counts ? 'err' : 'warn', i.msg)).join('') + (newErr ? `<p class="small muted">已記錄 1 次接線錯誤。</p>` : (counted ? '<p class="small muted">電路未有改動，這次不再重複扣分。</p>' : '')) };
+    lastIssues = { kind: counted ? 'err' : 'warn', html: rel.map(i => alertBox(i.counts ? 'err' : 'warn', i.msg)).join('') + (newErr ? `<p class="small muted">已記錄 1 次接線錯誤。</p>` : (counted ? '<p class="small muted">電路未有改動，這次不再重複扣分。</p>' : '')) + WIRE.crowdBox(crowdTips()) };
     save(); renderPanel();
   }
   function flowLines() { return allWires(H()).map(w => `<path class="flowline" d="${wirePath(P[w.a], P[w.b])}"/>`).join(''); }
@@ -711,8 +723,8 @@ const HW = (() => {
     $('#hwTitle').textContent = MODE === 'c1' ? '加入蜂鳴器' : '硬件接線';
     $('#hwKnow').innerHTML = MODE === 'c1'
       ? `<div><b>蜂鳴器：</b>裏面有一塊會震動的薄片。Arduino 用 <code>tone()</code> 令腳位每秒開關幾百至幾千次，薄片跟着震動，就發出聲音。</div><div><b>沒有正負極：</b>你用的蜂鳴器兩隻腳可以對調。</div><div><b>為甚麼用 D8：</b>D13 已經控制 LED，蜂鳴器要用另一支腳，程式才可以分開控制。</div>`
-      : `<div><b>麵包板：</b>同一個號碼的 a–e 五個孔是相通的（f–j 另一組）。把滑鼠移到孔上，會顯示哪些孔相通。</div><div><b>LED：</b>長腳是正極（+），短腳是負極（−）。電流只可以由 + 流向 −。</div><div><b>電阻：</b>限制電流，保護 LED。今次用 220Ω（紅紅黑黑棕）。</div>`;
-    $('#hwSteps').innerHTML = steps.map((st, i) => {
+      : `<div><b>麵包板：</b>同一個直行的 a 至 e 五個孔是相通的（f 至 j 另一組）。把滑鼠移到孔上，會顯示哪些孔相通。</div><div><b>LED：</b>長腳是正極（+），短腳是負極（−）。電流只可以由 + 流向 −。</div><div><b>電阻：</b>限制電流，保護 LED。今次用 220Ω（紅紅黑黑棕）。</div>`;
+    $('#hwSteps').innerHTML = WIRE.fmt(steps.map((st, i) => {
       const n = i + 1, cls = n <= h.step ? 'done' : n === cur && !h.done ? 'cur' : 'locked';
       let body = '';
       if (cls === 'cur') {
@@ -724,7 +736,7 @@ const HW = (() => {
         if ((h.stepFails[n] || 0) >= 2 && ws.includes(n) && !h.hinted[n]) body += `<div class="sb">${alertBox('info', '試了幾次也不成功？可以按「顯示提示位置」，看看應該接到哪裏。')}</div>`;
       }
       return `<li class="${cls}"><div class="sh"><i>${n <= h.step ? '✓' : n}</i>${st.t}</div>${body}</li>`;
-    }).join('');
+    }).join(''));
     $$('#hwSteps [data-check]').forEach(b => b.onclick = () => runCheck(+b.dataset.check));
     $$('#hwSteps [data-hint]').forEach(b => b.onclick = () => {
       const n = +b.dataset.hint;
@@ -736,7 +748,7 @@ const HW = (() => {
     const next = MODE === 'c1' ? 'c1code' : 'code';
     let issues = lastIssues ? lastIssues.html : '';
     if (h.done) issues = alertBox('ok', '接線正確，已經完成！') + `<button class="btn go" id="hwNext">下一步：編寫程式</button>`;
-    $('#hwIssues').innerHTML = issues;
+    $('#hwIssues').innerHTML = WIRE.fmt(issues);
     const nx = $('#hwNext'); if (nx) nx.onclick = () => goStage(next);
     $('#hwStats').innerHTML = `<span class="pill ${h.errors ? 'err' : ''}">接線錯誤 ${h.errors} 次</span><span class="pill ${h.hints ? 'warn' : ''}">使用提示 ${h.hints} 次</span>` + (MODE === 'c1' ? '<button class="btn sm ghost" id="hwBackExt">返回延伸挑戰</button>' : '');
     const bk = $('#hwBackExt'); if (bk) bk.onclick = () => goStage('ext');
@@ -754,19 +766,20 @@ const HW = (() => {
   function autoWire(mode = MODE) {
     if (mode === 'c1') {
       const h = S.ext.c1.hw;
-      h.pz = { h1: 'f18' };
-      h.wires = [{ id: 'wd8', a: 'P:D8', b: 'j18', color: '#2F6FD6' }, { id: 'wg2', a: 'P:GND2', b: 'j21', color: '#2A2A2A' }];
+      h.pz = { h1: 'f13' };
+      h.wires = [{ id: 'wd8', a: 'P:D8', b: 'j13', color: '#2F6FD6' }, { id: 'wg2', a: 'P:GND2', b: 'j16', color: '#2A2A2A' }];
       h.step = 3;
     } else {
-      S.hw.led = { h1: 'f13', flipped: false }; S.hw.res = { h1: 'h9' };
-      S.hw.wires = [{ id: 'wd13', a: 'P:D13', b: 'j9', color: '#F4F4F0' }, { id: 'wgnd', a: 'P:GND', b: 'j14', color: '#2A2A2A' }];
+      S.hw.led = { h1: 'f7', flipped: false }; S.hw.res = { h1: 'h3' };
+      S.hw.wires = [{ id: 'wd13', a: 'P:D13', b: 'j3', color: '#F4F4F0' }, { id: 'wgnd', a: 'P:GND', b: 'j8', color: '#2A2A2A' }];
       S.hw.step = 4;
     }
     S.teacherUsed = true; save();
     if (built) { render(); renderPanel(); }
   }
 
-  return { enter, circuitSVG, analyze, analyzeC1, autoWire, runCheck, P, HOLE_IDS, ledAK, mode: () => MODE };
+  const layout = () => ({ parts: [S.hw.led && { type: 'led', color: 'red', flipped: S.hw.led.flipped, legs: ledHoles(S.hw.led) }, S.hw.res && { type: 'res', ohm: 220, legs: resHoles(S.hw.res) }].filter(Boolean), wires: S.hw.wires.slice() });
+  return { layout, enter, circuitSVG, analyze, analyzeC1, autoWire, runCheck, P, HOLE_IDS, ledAK, mode: () => MODE };
 })();
 stageInit.hw = () => HW.enter('main');
 stageInit.c1hw = () => HW.enter('c1');

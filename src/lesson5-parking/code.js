@@ -14,7 +14,7 @@ const CODE_TEMPLATE = [
   'int threshold = {{b2}};          // 門檻值：讀數大過它 = 有車',
   '',
   'void setup() {',
-  '  gate.{{b3}}({{b4}});        // 伺服馬達的橙線接在幾號腳？',
+  '  gate.{{b3}}({{b4}});        // 伺服馬達的橙線接在 D 幾？',
   '  gate.write(0);             // 一開機先關閘',
   '  pinMode(redPin, OUTPUT);',
   '  pinMode(greenPin, OUTPUT);',
@@ -43,7 +43,7 @@ const BLANKS = [
   { id: 'b1', ans: 'Servo.h', ctx: 'include', ask: '伺服馬達程式庫的檔名', hint: '程式庫叫 Servo（S 大寫），檔名後面加 <em>.h</em>：<code>Servo.h</code>。' },
   { id: 'b2', ans: '700', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：沒有車時讀數約 450，有車遮住時約 980。門檻值要在兩者<em>中間</em>，例如 700。' },
   { id: 'b3', ans: 'attach', ctx: 'method', obj: 'Servo', ask: '把伺服馬達「接」到腳位的指令', hint: '把伺服馬達「連接」到腳位，英文是 <em>attach</em>（全部小寫）。' },
-  { id: 'b4', ans: '9', ctx: 'arg', ask: '橙線接在哪一號腳', hint: '伺服馬達的橙線（白色杜邦線）接在 UNO 上方的幾號腳？只填數字。' },
+  { id: 'b4', ans: '9', ctx: 'arg', ask: '橙線接在 D 幾', hint: '伺服馬達的橙線（白色杜邦線）接在 UNO 上方的 D 幾？只填數字（例如 D7 就寫 7）。' },
   { id: 'b5', ans: 'write', ctx: 'method', obj: 'Servo', ask: '叫伺服馬達轉到某個角度的指令', hint: '看第 12 行：關閘用的是 <code>gate.write(0)</code>，開閘也用同一個指令。' },
   { id: 'b6', ans: '90', ctx: 'arg', ask: '開閘的角度', hint: '閘門由水平（0°）升到垂直，是幾多度？只填數字。' },
   { id: 'b7', ans: '3000', ctx: 'delay', ask: '開閘等多久', hint: '等 3 秒。1 秒 = 1000 毫秒，3 秒 = ? 毫秒。' },
@@ -60,7 +60,7 @@ const C1_TEMPLATE = [
   '',
   'int redPin = 12;',
   'int greenPin = 10;',
-  'int buttonPin = {{e1}};           // 按鈕接在第幾號腳？',
+  'int buttonPin = {{e1}};           // 按鈕接在 D 幾？',
   'int threshold = 700;',
   '',
   'void setup() {',
@@ -91,7 +91,7 @@ const C1_TEMPLATE = [
   '}',
 ];
 const C1_BLANKS = [
-  { id: 'e1', ans: '2', ctx: 'init', ask: '按鈕接在哪一號腳', hint: '按鈕的藍色線接在 UNO 的幾號腳？只填數字。' },
+  { id: 'e1', ans: '2', ctx: 'init', ask: '按鈕接在 D 幾', hint: '按鈕的藍色線接在 UNO 的 D 幾？只填數字（例如 D7 就寫 7）。' },
   { id: 'e2', ans: 'INPUT', ctx: 'mode', ask: '按鈕腳位的模式', hint: 'Arduino 要「讀取」按鈕，所以是「輸入」，英文<em>全部大寫</em>。' },
   { id: 'e3', ans: '||', ctx: 'op', accept: v => v === '||' || v === 'or', ask: '「或者」的符號', hint: '「或者」寫成兩條直線 <code>||</code>（Enter 鍵上面，按 Shift + \\）。' },
   { id: 'e4', ans: 'digitalRead', ctx: 'func', argc: 1, ask: '讀取按鈕的指令', hint: '第 3 堂學過：讀取按鈕用 digital<em>Read</em>。' },
@@ -302,7 +302,7 @@ const IDE = (() => {
       }
       if (b.id === 'b3' && lc === 'write') return '<code>write</code> 是轉角度。這一行要先把伺服馬達「接」到腳位。';
       if (b.id === 'b3' && lc === 'pinmode') return '伺服馬達不用 pinMode，要用程式庫提供的 <code>attach</code>。';
-      if (b.id === 'b4' && /^d?\d+$/i.test(v)) return /^d/i.test(v) ? '只寫數字，不用寫 D。' : v === '12' || v === '10' ? '那是 LED 的腳。伺服馬達的橙線接在另一支腳。' : '看清楚接線：伺服馬達的橙線（白色杜邦線）接在幾號腳？';
+      if (b.id === 'b4' && /^d?\d+$/i.test(v)) return /^d/i.test(v) ? '只寫數字，不用寫 D。' : v === '12' || v === '10' ? '那是 LED 的腳。伺服馬達的橙線接在另一支腳。' : '看清楚接線：伺服馬達的橙線（白色杜邦線）接在 D 幾？';
       if (b.id === 'b5' && lc === 'attach') return '<code>attach</code> 只在 setup 用一次，設定腳位。轉角度要用另一個指令（看第 12 行）。';
       if (b.id === 'b5' && lc === 'digitalwrite') return '伺服馬達不用 digitalWrite，要用 <code>gate.</code> 後面的指令。';
       if (b.id === 'b6' && v === '180') return '180° 會令閘門轉過頭，變成向另一邊。閘門由水平升到垂直，只需要 90°。';
@@ -312,7 +312,7 @@ const IDE = (() => {
       if (b.id === 'b8' && v === '90') return '90° 是開閘。關閘要轉回一開機時的角度。';
     }
     if (cn === 'c1') {
-      if (b.id === 'e1' && /^\d+$/.test(v)) return '看清楚接線：按鈕的藍色線接在幾號腳？';
+      if (b.id === 'e1' && /^\d+$/.test(v)) return '看清楚接線：按鈕的藍色線接在 D 幾？';
       if (b.id === 'e2' && lc === 'output') return 'OUTPUT 是「輸出」（例如 LED）。按鈕是給 Arduino 讀取的，所以是「輸入」。';
       if (b.id === 'e3' && v === '&&') return '<code>&&</code> 是「而且」：要有車<b>而且</b>按下按鈕才開閘。管理員要可以<b>單獨</b>開閘，所以要用「或者」。';
       if (b.id === 'e3' && v === '|') return '「或者」要寫<b>兩條</b>直線 <code>||</code>。';

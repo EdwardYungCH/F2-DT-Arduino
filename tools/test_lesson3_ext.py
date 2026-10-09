@@ -49,7 +49,7 @@ async def main():
         # ---- challenge 2: tilt switch
         await pg.click('[data-go="c2hw"]'); await pg.wait_for_timeout(300)
         await drag((BIN(0), 575), H('d3', 20, -25)); await check(1)
-        await drag(H('i19'), H('a3')); await drag(H('P:D3'), H('a5')); await check(2)
+        await drag(H('i24'), H('a3')); await drag(H('P:D3'), H('a5')); await check(2)
         await check(3, 'no pull-down')
         await pg.screenshot(path=OUT + 'x3-c2-float.png')
         await drag((BIN(2), 574), H('c5', 40)); await drag(H('P:GND2'), H('a9')); await check(3, '220 by mistake')

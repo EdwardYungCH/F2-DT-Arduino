@@ -8,7 +8,7 @@ const REAL_ITEMS = [
   ['準備材料', '按上面的材料清單拿齊材料。電阻要用 220Ω（有 2 條紅色）。'],
   ['先接線，後通電', '接線時<b>不要</b>插 USB 線，避免接錯時短路。'],
   ['照你的接線圖接駁', '按下面的圖插好 LED、電阻和兩條導線。'],
-  ['通電前再檢查一次', 'LED 長腳（+）向 D13 那邊；黑線接 GND；電阻和 LED 有一隻腳在同一號碼的直行。'],
+  ['通電前再檢查一次', 'LED 長腳（+）向 D13 那邊；黑線接 GND；電阻和 LED 有一隻腳在同一個直行。'],
   ['插上 USB 線', 'UNO 板上綠色的 ON 燈會亮起。'],
   ['把程式貼到 Arduino IDE', '按右邊的「複製完整程式」，在 IDE 中全選原有內容，再貼上。'],
   ['選擇 Board 和 Port', 'Tools → Board → Arduino AVR Boards → Arduino Uno；Tools → Port → 有 (Arduino Uno) 字樣的 COM。'],
@@ -16,6 +16,8 @@ const REAL_ITEMS = [
   ['觀察 LED', '看到 ··· ––– ··· 不停重複，就成功了！請老師過來確認。'],
 ];
 stageInit.real = () => {
+  if (!S.real.wl) S.real.wl = {};
+  const lay = HW.layout();
   const sec = $('#st-real');
   const done = REAL_ITEMS.filter((_, i) => S.real.checks[i]).length;
   sec.innerHTML = `<div class="real-layout">
@@ -28,6 +30,7 @@ stageInit.real = () => {
       </div>
       <div class="card"><h3>你的接線圖</h3><div class="sos-stage">${HW.circuitSVG()}</div>
         <p class="small muted" style="margin-top:8px">D13 → 220Ω 電阻 → LED 長腳（+）→ LED 短腳（−）→ GND</p></div>
+      <div class="card" id="wlCard">${WIRE.listHTML(lay.parts, lay.wires, S.real.wl)}</div>
     </div>
     <div class="stack" style="gap:18px">
       <div class="card"><h3>老師確認</h3>
@@ -39,7 +42,7 @@ stageInit.real = () => {
       </div>
       <div class="card"><h3>遇到問題？</h3>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>情況</th><th>可能原因及解決方法</th></tr></thead><tbody>
-          <tr><td>LED 完全不亮</td><td>LED 接反了（長腳要向 D13）；導線未插緊；電阻或 LED 的腳沒有和導線在同一號碼的直行。</td></tr>
+          <tr><td>LED 完全不亮</td><td>LED 接反了（長腳要向 D13）；導線未插緊；電阻或 LED 的腳沒有和導線在同一個直行。</td></tr>
           <tr><td>LED 非常暗</td><td>用錯了電阻（例如 1kΩ 或 10kΩ）。LED 要用 220Ω：紅紅黑黑棕，有 2 條紅色。</td></tr>
           <tr><td>板上 L 燈在閃，但 LED 不亮</td><td>程式已經成功上傳，問題在外接電路。逐條檢查導線和 LED 方向。</td></tr>
           <tr><td>LED 一直亮，不會閃</td><td>導線接到了 5V 而不是 D13。</td></tr>
@@ -58,6 +61,8 @@ stageInit.real = () => {
   KIT.quiz($('#resQuiz'), [
     { ask: '套件有幾種電阻。哪一粒是 LED 要用的 <b>220Ω</b>？', ans: 220, tip: '數一數紅色環：220Ω 有 <b>2 條</b>紅色。' },
   ], [1000, 10000, 220], S.real.resQuiz);
+
+  WIRE.bindList($('#wlCard'), S.real.wl, save);
   $$('.checklist input', sec).forEach(cb => cb.onchange = () => {
     S.real.checks[cb.dataset.i] = cb.checked; save();
     $('#realCount').textContent = `${REAL_ITEMS.filter((_, i) => S.real.checks[i]).length} / ${REAL_ITEMS.length}`;

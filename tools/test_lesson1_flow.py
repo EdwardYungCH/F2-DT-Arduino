@@ -70,6 +70,14 @@ async def main():
         for h in ['tn5', 'tn10', 'tn22']: await click_svg(*H[h])
         await pg.click('[data-check="1"]'); await pg.wait_for_timeout(200)
         check(await pg.evaluate('()=>S.hw.step') == 2, 'quiz done -> USB step')
+        await pg.wait_for_timeout(800)
+        check(await pg.is_visible('.pq-svg'), 'practice quiz (pins vs holes) opens after the breadboard quiz')
+        await pg.click('[data-pq="f12"]'); await pg.wait_for_timeout(100)
+        check('麵包板的孔' in await pg.inner_text('#pqFb'), 'practice: clicking column 12 for D12 explains the difference')
+        for t in ['P:D12', 'f13', 'P:D9', 'j7']: await pg.click(f'[data-pq="{t}"]'); await pg.wait_for_timeout(80)
+        check(await pg.evaluate('()=>S.hw.pinQuiz.done') is True, 'practice quiz done (not scored)')
+        await pg.screenshot(path=OUT + '03b-pinquiz.png')
+        await pg.click('.modal .actions .btn'); await pg.wait_for_timeout(200)
 
         # ---- 3. USB ----
         pl = (G['plug']['x'], G['plug']['y'])

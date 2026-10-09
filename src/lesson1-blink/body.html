@@ -53,7 +53,7 @@
       <div>
         <div class="eyebrow">第 1 步 · 今日任務</div>
         <h2>認識 Arduino，令 L 燈閃起來</h2>
-        <p>Arduino UNO 板上有一粒細小的 <b>L 燈</b>，它在板內已經接到 <b>13 號腳</b>。今堂你要先認識 UNO 板，再寫第一個程式，令 L 燈<b>亮 1 秒、熄 1 秒</b>，不停重複。今堂<b>不用接任何零件</b>。</p>
+        <p>Arduino UNO 板上有一粒細小的 <b>L 燈</b>，它在板內已經接到 <b>13 號腳</b>（寫作 <b>D13</b>）。今堂你要先認識 UNO 板，再寫第一個程式，令 L 燈<b>亮 1 秒、熄 1 秒</b>，不停重複。今堂<b>不用接任何零件</b>。</p>
       </div>
       <button class="btn go lg" id="introNext">開始認識硬件</button>
     </div>
@@ -70,9 +70,9 @@
       <table class="timing" style="margin-top:14px">
         <thead><tr><th>程式</th><th>意思</th><th>時間</th></tr></thead>
         <tbody id="introRows">
-          <tr><td class="num">digitalWrite(13, HIGH);</td><td>13 號腳輸出 5V：開燈</td><td class="num">—</td></tr>
+          <tr><td class="num">digitalWrite(13, HIGH);</td><td>D13 輸出 5V：開燈</td><td class="num">—</td></tr>
           <tr><td class="num">delay(1000);</td><td>等一等</td><td class="num">1 秒</td></tr>
-          <tr><td class="num">digitalWrite(13, LOW);</td><td>13 號腳輸出 0V：關燈</td><td class="num">—</td></tr>
+          <tr><td class="num">digitalWrite(13, LOW);</td><td>D13 輸出 0V：關燈</td><td class="num">—</td></tr>
           <tr><td class="num">delay(1000);</td><td>等一等</td><td class="num">1 秒</td></tr>
         </tbody>
       </table>
@@ -83,7 +83,7 @@
     <div class="card span-5">
       <h3>你會學到</h3>
       <ol class="goals">
-        <li>認識 UNO 板的主要部分：USB 插口、電源插口、RESET 掣、13 號腳、GND、5V、L 燈和主晶片</li>
+        <li>認識 UNO 板的主要部分：USB 插口、電源插口、RESET 掣、D13（13 號腳）、GND、5V、L 燈和主晶片</li>
         <li>知道麵包板上哪些孔是相通的（下一堂接線會用到）</li>
         <li>程式的結構：<code>setup()</code> 只做一次，<code>loop()</code> 不停重複</li>
         <li>三個指令：<code>pinMode</code>、<code>digitalWrite</code>、<code>delay</code></li>

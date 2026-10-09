@@ -69,8 +69,8 @@ const HW = (() => {
     { key: 'dc', text: '電源插口', desc: '接火牛或電池盒。不接電腦時，用它供電。', tx: UX + 21, ty: UY + 248, bx: UX + 21, by: UY + 248 },
     { key: 'reset', text: 'RESET 掣', desc: '按一下，程式會由頭再執行一次。', tx: UX + 89, ty: UY + 29, bx: UX + 89, by: UY + 29 },
     { key: 'gnd', text: 'GND', desc: '接地，即電源的負極（−）。', tx: TOP1X(3), ty: topY, bx: TOP1X(3) - 26, by: UY - 30, left: true },
-    { key: 'd13', text: '13 號腳', desc: '數位腳 13。板上的 L 燈在板內已經接到這支腳。', tx: TOP1X(4), ty: topY, bx: TOP1X(4) + 26, by: UY - 30 },
-    { key: 'l', text: 'L 燈', desc: '板上的小 LED，內部接到 13 號腳。今堂就是要令它閃。', tx: UX + 125, ty: UY + 93, bx: UX + 98, by: UY + 93 },
+    { key: 'd13', text: 'D13 腳', desc: '數位腳 13，寫作 D13（板上印 13）。板上的 L 燈在板內已經接到這支腳。', tx: TOP1X(4), ty: topY, bx: TOP1X(4) + 26, by: UY - 30 },
+    { key: 'l', text: 'L 燈', desc: '板上的小 LED，內部接到 D13。今堂就是要令它閃。', tx: UX + 125, ty: UY + 93, bx: UX + 98, by: UY + 93 },
     { key: 'chip', text: '主晶片', desc: 'ATmega328P，就是 UNO 的「大腦」，負責執行你的程式。', tx: UX + 298, ty: UY + 207, bx: UX + 298, by: UY + 207 },
     { key: 'v5', text: '5V', desc: '輸出 5V 電源，即正極（+）。', tx: BOT1X(4), ty: botY, bx: BOT1X(4), by: UY + UH + 30 },
   ];
@@ -89,9 +89,9 @@ const HW = (() => {
   const RAIL_NAME = { tp: '上方「+」電源軌', tn: '上方「−」電源軌', bn: '下方「−」電源軌', bp: '下方「+」電源軌' };
   const QUIZ = [
     { target: 'c7', ask: '點選所有和 <b class="hole">c7</b> 相通的孔（c7 本身不用點）。', ans: ['a7', 'b7', 'd7', 'e7'],
-      know: '同一號碼的 <b>a–e</b> 五個孔是相通的（一條直行）。' },
+      know: '同一個直行的 <b>a 至 e</b> 五個孔是相通的。' },
     { target: 'h20', ask: '點選所有和 <b class="hole">h20</b> 相通的孔。', ans: ['f20', 'g20', 'i20', 'j20'],
-      know: '同一號碼的 <b>f–j</b> 五個孔是另一組。中間的坑把上下兩半<b>分開</b>，所以 e20 和 f20 不相通。' },
+      know: '同一個直行的 <b>f 至 j</b> 五個孔是另一組。中間的坑把上下兩半<b>分開</b>，所以 e20 和 f20 不相通。' },
     { target: 'tn1', rail: 'tn', need: 3, ask: '最上面藍線旁的是「−」電源軌。點選<b>任何 3 個</b>和 <b class="hole">−</b> 軌最左邊那個孔相通的孔。',
       know: '電源軌是<b>左右整行</b>相通的，所以很多零件可以共用同一條「−」（GND）或「+」（5V）。' },
   ];
@@ -253,7 +253,7 @@ const HW = (() => {
     return `<p>USB 線一頭插電腦，另一頭插 UNO。把<b>插頭</b>拖到 UNO 上<b>正確的插口</b>。</p><p class="small muted">UNO 左邊有兩個插口：銀色方形的是 USB 插口，黑色圓形的是電源插口。</p>`;
   }
   const KNOW = [
-    `<div><b>USB 插口：</b>連接電腦，上傳程式，同時為 UNO 供電。</div><div><b>13 號腳和 L 燈：</b>L 燈在板內接到 13 號腳。程式控制 13 號腳，L 燈就會跟着亮或熄。</div><div><b>GND 和 5V：</b>GND 是負極（−），5V 是正極（+）。兩者直接相連就會短路。</div>`,
+    `<div><b>USB 插口：</b>連接電腦，上傳程式，同時為 UNO 供電。</div><div><b>D13 和 L 燈：</b>L 燈在板內接到 D13（13 號腳）。程式控制 D13，L 燈就會跟着亮或熄。</div><div><b>GND 和 5V：</b>GND 是負極（−），5V 是正極（+）。兩者直接相連就會短路。</div>`,
     () => QUIZ.slice(0, Math.min(H().quiz.q + 1, 3)).map(q => `<div>${q.know}</div>`).join(''),
     `<div><b>插上 USB 線之後：</b>UNO 上綠色的 <b>ON</b> 燈會亮起，電腦會多了一個 <b>COM</b> 連接埠。上傳程式時就要選這個連接埠。</div>`,
   ];
@@ -267,6 +267,11 @@ const HW = (() => {
     $('#hwIssues').innerHTML = h.done
       ? alertBox('ok', '認識硬件完成！下一步：寫你的第一個程式。') + `<button class="btn go" id="hwNext">下一步：編寫程式</button>`
       : (issues ? issues.html : '');
+    if (h.step >= 2 || h.done) {
+      const pq = h.pinQuiz || {};
+      $('#hwIssues').insertAdjacentHTML('beforeend', `<div class="pq-card">${alertBox(pq.done ? 'ok' : 'info', `<b>小練習（不計分）：分辨 Arduino 腳位和麵包板位置</b><br>${pq.done ? '已完成 ✓' : '4 題，在圖上點選。'} <button class="btn sm ${pq.done ? 'ghost' : 'teal'}" id="pqOpen">${pq.done ? '再做一次' : '開始'}</button>`)}</div>`);
+      $('#pqOpen').onclick = openPinQuiz;
+    }
     $('#hwStats').innerHTML = `<span class="pill ${h.errors ? 'err' : ''}">錯誤 ${h.errors} 次</span><span class="pill ${h.hints ? 'warn' : ''}">使用提示 ${h.hints} 次</span>`;
     const k = KNOW[h.done ? 2 : st];
     $('#hwKnow').innerHTML = typeof k === 'function' ? k() : k;
@@ -274,6 +279,7 @@ const HW = (() => {
     $$('[data-hint]', $('#hwPanel')).forEach(b => b.onclick = () => askHint(+b.dataset.hint));
     const nx = $('#hwNext'); if (nx) nx.onclick = () => { if (!S.t.code) S.t.code = now(); unlock('code'); goStage('code'); };
   }
+  function openPinQuiz() { const h = H(); h.pinQuiz = Object.assign(h.pinQuiz || {}, { right: 0 }); save(); WIRE.pinQuiz(h.pinQuiz, () => { save(); renderPanel(); }); }
   const say = (kind, html) => { issues = Object.assign(issues || {}, { html: alertBox(kind, html) }); };
 
   /* ---------- checking ---------- */
@@ -318,8 +324,8 @@ const HW = (() => {
         const tgt = HOLES[Q.target];
         if (wrong.some(id => id === Q.target)) msg = `${Q.target} 本身不用點。`;
         else if (wrong.some(id => HOLES[id].col === tgt.col && HOLES[id].row.length === 1)) msg = `中間的坑把上下兩半分開。${'abcde'.includes(tgt.row) ? 'a–e' : 'f–j'} 以外的孔，和 ${Q.target} <b>不相通</b>。`;
-        else if (wrong.some(id => HOLES[id].row === tgt.row)) msg = `同一<b>橫行</b>的孔（例如 ${tgt.row}${tgt.col + 1}）並不相通。相通的是<b>同一號碼</b>的直行。`;
-        else if (wrong.length) msg = `有些孔和 ${Q.target} 不在同一組。相通的是同一號碼、同一半的五個孔。`;
+        else if (wrong.some(id => HOLES[id].row === tgt.row)) msg = `同一<b>橫行</b>的孔（例如 ${tgt.row}${tgt.col + 1}）並不相通。相通的是<b>同一個直行</b>的孔。`;
+        else if (wrong.length) msg = `有些孔和 ${Q.target} 不在同一組。相通的是同一個直行、同一半的五個孔。`;
         if (!wrong.length && sel.length < Q.ans.length) { say('warn', `答對了 ${sel.length} 個，還有 ${Q.ans.length - sel.length} 個相通的孔未點。`); renderPanel(); return; }
       }
       if (wrong.length) {
@@ -330,7 +336,7 @@ const HW = (() => {
       }
       pushLog(h, `麵包板第 ${q + 1} 題正確`);
       h.quiz.q++; h.quiz.sel = []; quizMark = null; h.lastFailSig = '';
-      if (h.quiz.q >= QUIZ.length) { h.step = 2; say('ok', '麵包板小測全部正確！最後一步：用 USB 線把 UNO 接到電腦。'); }
+      if (h.quiz.q >= QUIZ.length) { h.step = 2; say('ok', '麵包板小測全部正確！最後一步：用 USB 線把 UNO 接到電腦。'); if (!h.pinQuiz) setTimeout(openPinQuiz, 500); }
       else say('ok', `正確！${Q.know}<br>下一題。`);
       save(); render(); renderPanel();
     }

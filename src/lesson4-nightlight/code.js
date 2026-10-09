@@ -7,7 +7,7 @@ const CODE_TEMPLATE = [
   '// 自動夜燈：天黑自動開燈',
   '// 光感應器接 A0（越暗，讀數越大）；LED 接 D9',
   '',
-  'int ledPin = 9;             // LED 接在 9 號腳',
+  'int ledPin = 9;             // LED 接在 D9',
   'int val = 0;                // 用來記住光感應器的讀數',
   'int threshold = {{b1}};          // 門檻值：讀數大過它，就當天黑',
   '',

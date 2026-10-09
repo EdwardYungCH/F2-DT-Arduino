@@ -5,23 +5,23 @@
 HELP.setLesson(1);
 const CODE_TEMPLATE = [
   '// 我的第一個程式：閃動 L 燈',
-  '// L 燈在 UNO 板上，板內已經接到 13 號腳',
+  '// L 燈在 UNO 板上，板內已經接到 D13',
   '',
   'void setup() {',
   '  // setup() 的內容：開機時只做一次',
-  '  pinMode(13, {{b1}});        // 把 13 號腳設定為「輸出」',
+  '  pinMode(13, {{b1}});        // 把 D13設定為「輸出」',
   '}',
   '',
   'void loop() {',
   '  // loop() 的內容：做完之後由頭再做，不停重複',
-  '  {{b2}}(13, {{b3}});   // 開燈：13 號腳輸出高電位',
+  '  {{b2}}(13, {{b3}});   // 開燈：D13輸出高電位',
   '  delay({{b4}});              // 亮 1 秒',
-  '  digitalWrite(13, {{b5}});    // 關燈：13 號腳輸出低電位',
+  '  digitalWrite(13, {{b5}});    // 關燈：D13輸出低電位',
   '  delay({{b6}});              // 熄 1 秒',
   '}',
 ];
 const BLANKS = [
-  { id: 'b1', ans: 'OUTPUT', ctx: 'mode', ask: '13 號腳的模式', hint: 'Arduino 要「送出」信號去控制 L 燈，所以要設定為「輸出」。英文要<em>全部大寫</em>。' },
+  { id: 'b1', ans: 'OUTPUT', ctx: 'mode', ask: 'D13的模式', hint: 'Arduino 要「送出」信號去控制 L 燈，所以要設定為「輸出」。英文要<em>全部大寫</em>。' },
   { id: 'b2', ans: 'digitalWrite', ctx: 'func', argc: 2, ask: '控制腳位開關的指令', hint: '在第 13 行「關燈」那一行用的是<em>同一個指令</em>。注意大小寫：digital 小寫，W 大寫。' },
   { id: 'b3', ans: 'HIGH', ctx: 'level', ask: '開燈時輸出的狀態', hint: '開燈 = 輸出 5V 高電位，英文是「高」，要<em>全部大寫</em>。' },
   { id: 'b4', ans: '1000', ctx: 'delay', ask: '亮多久', hint: 'delay() 用<em>毫秒</em>計時：1 秒 = 1000 毫秒。' },
@@ -740,7 +740,7 @@ const IDE = (() => {
         if (st.text !== st.lastRunSig) { st.wrongRuns = (st.wrongRuns || 0) + 1; st.lastRunSig = st.text; logTo(st, `上傳後燈號不對：${r.kind}`); }
         save();
         const tip = r.kind === 'alwayson' ? `想一想：關燈之後，程式立即回到 <code>loop()</code> 第一行再開燈。熄燈的時間只有百萬分之幾秒，眼睛看不到。${st.runTries >= 2 ? '<br><b>提示：</b>在 <code>digitalWrite(13, LOW);</code> 之後加一行 <code>delay(1000);</code>。' : ''}`
-          : r.kind === 'nomode' ? '檢查 <code>setup()</code> 有沒有 <code>pinMode(13, OUTPUT);</code>。' : '檢查 <code>loop()</code> 內控制 13 號腳的指令。';
+          : r.kind === 'nomode' ? '檢查 <code>setup()</code> 有沒有 <code>pinMode(13, OUTPUT);</code>。' : '檢查 <code>loop()</code> 內控制 D13的指令。';
         explainMap.c2 = { kind: 'warn', html: `<b>上傳成功，但是……</b>${r.why}這是<b>邏輯錯誤</b>：文法沒有問題，所以編譯器找不到，但程式做的事不對。<br>${tip}` };
         setBusy(false); renderPanel(); EXT.showWrongRun(r); return;
       }
@@ -768,7 +768,7 @@ const IDE = (() => {
       wide: true,
       html: `<div class="sos-stage" id="resStage">${HW.circuitSVG()}</div>
         <div class="stack" style="margin-top:12px;gap:8px">
-          <p>你的程式令 13 號腳<b>每秒開關一次</b>，所以板上的 L 燈亮 1 秒、熄 1 秒，不停重複。</p>
+          <p>你的程式令 D13<b>每秒開關一次</b>，所以板上的 L 燈亮 1 秒、熄 1 秒，不停重複。</p>
           <div class="speed"><label for="spd"><b>試一試：</b>如果把兩個 <code id="spdCode">delay(1000);</code> 都改成這個數值……</label>
             <input type="range" id="spd" min="100" max="2000" step="100" value="1000" aria-label="delay 的數值（毫秒）"></div>
           <p class="small muted">數值愈細，閃得愈快。在實物挑戰中，你會在真的 UNO 上改一改這個數字，證明程式是你上傳的。</p>

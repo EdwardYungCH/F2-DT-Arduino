@@ -167,7 +167,7 @@ const EXT = (() => {
       title: c1 ? (fresh ? '上傳成功！轉動電位器試試' : '調校靈敏度') : (fresh ? '上傳成功！試試把環境變暗' : '越暗越亮'),
       wide: true, dismissable: false,
       html: `<div class="sos-stage">${c1 ? HW.circuitSVG(S.hw, S.ext.c1.hw) : HW.circuitSVG(S.hw)}</div>${nightPanelHTML(which)}
-        <p class="small muted" style="margin-top:8px">${c1 ? '電位器的讀數（0 至 1023）就是門檻值。旋鈕轉得越大，要越暗才會開燈。' : 'analogWrite 令 9 號腳極快地開關，開的時間越長，LED 看起來越亮。'}</p>`,
+        <p class="small muted" style="margin-top:8px">${c1 ? '電位器的讀數（0 至 1023）就是門檻值。旋鈕轉得越大，要越暗才會開燈。' : 'analogWrite 令 D9極快地開關，開的時間越長，LED 看起來越亮。'}</p>`,
       actions: [toExt],
       onOpen: back => { const ON = $('.uLedON', back); ON && ON.setAttribute('fill', '#3CFF7A'); sim = nightSim(back, { mode: which }); },
     });

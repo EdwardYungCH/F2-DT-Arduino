@@ -16,6 +16,8 @@ const REAL_ITEMS = [
   ['測試', '平時綠燈；按一下按鈕，燈號轉黃、紅、紅＋黃，再回到綠燈。請老師過來確認。'],
 ];
 stageInit.real = () => {
+  if (!S.real.wl) S.real.wl = {};
+  const lay = HW.layout();
   const sec = $('#st-real');
   const done = REAL_ITEMS.filter((_, i) => S.real.checks[i]).length;
   sec.innerHTML = `<div class="real-layout">
@@ -28,6 +30,7 @@ stageInit.real = () => {
       </div>
       <div class="card"><h3>你的接線圖</h3><div class="sos-stage">${HW.circuitSVG()}</div>
         <p class="small muted" style="margin-top:8px">D12 / D11 / D10 → 220Ω → 紅 / 黃 / 綠 LED → 「−」電源軌 → GND；5V → 按鈕 → D2，10kΩ 由 D2 接到 GND。</p></div>
+      <div class="card" id="wlCard">${WIRE.listHTML(lay.parts, lay.wires, S.real.wl)}</div>
     </div>
     <div class="stack" style="gap:18px">
       <div class="card"><h3>老師確認</h3>
@@ -58,6 +61,8 @@ stageInit.real = () => {
     { ask: '哪一粒是 <b>220Ω</b>（LED 用）？', ans: 220, tip: '數一數紅色環：220Ω 有 <b>2 條</b>紅色。' },
     { ask: '哪一粒是 <b>10kΩ</b>（按鈕的下拉電阻）？', ans: 10000, tip: '10kΩ 只有 <b>1 條</b>紅色（第 4 條）。沒有紅色的是 1kΩ。' },
   ], [10000, 220, 1000], S.real.resQuiz);
+
+  WIRE.bindList($('#wlCard'), S.real.wl, save);
   $$('.checklist input', sec).forEach(cb => cb.onchange = () => {
     S.real.checks[cb.dataset.i] = cb.checked; save();
     $('#realCount').textContent = `${REAL_ITEMS.filter((_, i) => S.real.checks[i]).length} / ${REAL_ITEMS.length}`;

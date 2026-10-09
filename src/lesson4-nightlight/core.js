@@ -352,7 +352,7 @@ const MATERIALS = {
     KIT.ROW.wires({ red: 1, black: 1, white: 1 }, '紅 = 「+」電源軌、黑 = 「−」電源軌、白 = A1'),
   ],
   c2: [
-    { icon: '', name: '不用新材料', look: '用主任務的電路就可以', qty: '—', use: 'LED 已經接在 <b>~9</b> 號腳，可以用 <code>analogWrite</code> 調光' },
+    { icon: '', name: '不用新材料', look: '用主任務的電路就可以', qty: '—', use: 'LED 已經接在 D9（板上印 ~9），可以用 <code>analogWrite</code> 調光' },
   ],
 };
 const EXT_EXTRA = '電位器 × 1 及杜邦線 3 條（挑戰 1）；挑戰 2 不用新材料。';

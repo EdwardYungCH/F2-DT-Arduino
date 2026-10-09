@@ -7,7 +7,7 @@ const CODE_TEMPLATE = [
   '// SOS 求救燈',
   '// 摩斯密碼：S = ···（三下短閃）  O = –––（三下長閃）',
   '',
-  'int ledPin = {{b1}};          // LED 接在 Arduino 的第幾號腳？',
+  'int ledPin = {{b1}};          // LED 接在 Arduino 的 D 幾？',
   '',
   'void setup() {',
   '  pinMode(ledPin, {{b2}});   // 把 ledPin 設定為「輸出」',
@@ -59,7 +59,7 @@ const CODE_TEMPLATE = [
   '}',
 ];
 const BLANKS = [
-  { id: 'b1', ans: '13', ctx: 'init', ask: 'LED 接在哪一號腳', hint: '回想接線模擬器：LED 的信號線接在 UNO 的幾號腳？只需要填數字。' },
+  { id: 'b1', ans: '13', ctx: 'init', ask: 'LED 接在 D 幾', hint: '回想接線模擬器：LED 的信號線接在 UNO 的 D 幾？只需要填數字（例如 D7 就寫 7）。' },
   { id: 'b2', ans: 'OUTPUT', ctx: 'mode', ask: '腳位的模式', hint: 'LED 是由 Arduino「送出」信號去控制的，所以要設定成「輸出」。英文要<em>全部大寫</em>。' },
   { id: 'b3', ans: 'HIGH', ctx: 'level', ask: '開燈時輸出的狀態', hint: '開燈 = 腳位輸出 5V 高電位，英文是「高」，要<em>全部大寫</em>。' },
   { id: 'b4', ans: '200', ctx: 'delay', ask: '短閃亮多久', hint: 'delay() 用<em>毫秒</em>計時：1 秒 = 1000 毫秒，0.2 秒 = ? 毫秒。' },
@@ -76,8 +76,8 @@ const C1_TEMPLATE = (() => {
     '// 延伸挑戰 1：聲光 SOS',
     '// LED 閃的同時，蜂鳴器發出「嗶」聲',
     '',
-    'int ledPin = 13;              // LED 接在 13 號腳',
-    'int buzzerPin = {{e1}};           // 蜂鳴器接在第幾號腳？',
+    'int ledPin = 13;              // LED 接在 D13',
+    'int buzzerPin = {{e1}};           // 蜂鳴器接在 D 幾？',
     'int pitch = {{e2}};             // 聲音頻率（Hz），建議 1000',
     '',
     'void setup() {',
@@ -113,7 +113,7 @@ const C1_TEMPLATE = (() => {
 })();
 const pitchOK = v => /^\d+$/.test(v) && +v >= 100 && +v <= 5000;
 const C1_BLANKS = [
-  { id: 'e1', ans: '8', ctx: 'init', ask: '蜂鳴器接在哪一號腳', hint: '回想剛才的接線：蜂鳴器的信號線接在 UNO 的幾號腳？只填數字。' },
+  { id: 'e1', ans: '8', ctx: 'init', ask: '蜂鳴器接在 D 幾', hint: '回想剛才的接線：蜂鳴器的信號線接在 UNO 的 D 幾？只填數字（例如 D7 就寫 7）。' },
   { id: 'e2', ans: '1000', ctx: 'init', accept: pitchOK, ask: '聲音頻率（Hz）', hint: '頻率 = 每秒震動多少次。填 <em>100 至 5000</em> 之間的整數，建議 1000。' },
   { id: 'e3', ans: 'OUTPUT', ctx: 'mode', ask: '蜂鳴器腳位的模式', hint: 'Arduino 要「送出」信號給蜂鳴器，所以是「輸出」。英文要<em>全部大寫</em>。' },
   { id: 'e4', ans: 'tone', ctx: 'func', argc: 2, ask: '令蜂鳴器發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
@@ -301,7 +301,7 @@ const IDE = (() => {
     if (b.ctx === 'delay' || b.ctx === 'init') {
       const f = parseFloat(v);
       if (!isNaN(f) && b.ctx === 'delay' && Math.round(f * 1000) === +b.ans) return 'delay() 的單位是<b>毫秒</b>，不是秒。';
-      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return v === '13' && b.id === 'e1' ? '13 號腳是 LED 用的。蜂鳴器接在另一支腳。' : '看清楚接線模擬器中，導線接在哪一號腳。';
+      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return v === '13' && b.id === 'e1' ? 'D13是 LED 用的。蜂鳴器接在另一支腳。' : '看清楚接線模擬器中，導線接在 D 幾。';
       if (b.ctx === 'delay' && /^\d+$/.test(v)) return '時間不對，再看看那一行的註解（灰色文字）。';
     }
     if ((b.id === 'b2' || b.id === 'e3') && lc === 'input') return 'INPUT 是「輸入」（例如讀取按鈕）；這裏要用「輸出」。';
@@ -314,7 +314,7 @@ const IDE = (() => {
     if (b.id === 'e5' && lc === 'tone') return 'tone 是開聲，停聲要用另一個指令。';
     if (b.id === 'e5' && lc === 'digitalwrite') return '停聲要用專門停止 tone() 的指令。';
     if (b.id === 'e6' && v === 'ledPin') return 'ledPin 是 LED 那支腳。要停的是蜂鳴器那支腳。';
-    if (b.id === 'e6' && v === '13') return '13 號腳是 LED 那支腳。要停的是蜂鳴器那支腳。';
+    if (b.id === 'e6' && v === '13') return 'D13是 LED 那支腳。要停的是蜂鳴器那支腳。';
     return '';
   }
   /* ---------- 說明卡及提示（共用 HELP） ---------- */
@@ -781,7 +781,7 @@ const IDE = (() => {
       html: `<div class="sos-stage" id="resStage">${HW.circuitSVG()}</div>
         <div class="row" style="margin-top:12px;justify-content:space-between">
           <div class="morse" id="resMorse" style="background:#0F1B20;border-radius:8px;padding:6px"></div>
-          <p class="small muted" style="max-width:32em">留意 UNO 板上的 <b>L</b> 燈也在同步閃：它在板上已接到 13 號腳。在真的板上，如果 L 燈閃但你的 LED 不亮，問題就在外接電路。</p>
+          <p class="small muted" style="max-width:32em">留意 UNO 板上的 <b>L</b> 燈也在同步閃：它在板上已接到 D13。在真的板上，如果 L 燈閃但你的 LED 不亮，問題就在外接電路。</p>
         </div>`,
       actions: [{ label: '留在這頁', kind: 'ghost', onClick: () => { stop && stop(); } }, { label: '下一步：實物挑戰', kind: 'go', onClick: () => { stop && stop(); goStage('real'); } }],
       dismissable: false,

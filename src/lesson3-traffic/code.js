@@ -9,8 +9,8 @@ const CODE_TEMPLATE = [
   '',
   'int redPin = 12;              // 紅燈',
   'int yellowPin = 11;           // 黃燈',
-  'int greenPin = {{b1}};             // 綠燈接在第幾號腳？',
-  'int buttonPin = {{b2}};            // 按鈕接在第幾號腳？',
+  'int greenPin = {{b1}};             // 綠燈接在 D 幾？',
+  'int buttonPin = {{b2}};            // 按鈕接在 D 幾？',
   '',
   'void setup() {',
   '  pinMode(redPin, OUTPUT);',
@@ -45,8 +45,8 @@ const CODE_TEMPLATE = [
   '}',
 ];
 const BLANKS = [
-  { id: 'b1', ans: '10', ctx: 'init', ask: '綠燈接在哪一號腳', hint: '回想接線：綠色 LED 的信號線接在 UNO 的幾號腳？只填數字。' },
-  { id: 'b2', ans: '2', ctx: 'init', ask: '按鈕接在哪一號腳', hint: '按鈕另一邊用藍色線接到 Arduino 的哪一號腳？只填數字。' },
+  { id: 'b1', ans: '10', ctx: 'init', ask: '綠燈接在 D 幾', hint: '回想接線：綠色 LED 的信號線接在 UNO 的 D 幾？只填數字（例如 D7 就寫 7）。' },
+  { id: 'b2', ans: '2', ctx: 'init', ask: '按鈕接在 D 幾', hint: '按鈕另一邊用藍色線接到 Arduino 的 D 幾？只填數字（例如 D7 就寫 7）。' },
   { id: 'b3', ans: 'INPUT', ctx: 'mode', ask: '按鈕腳位的模式', hint: 'Arduino 要「讀取」按鈕，所以是「輸入」，英文要<em>全部大寫</em>。' },
   { id: 'b4', ans: 'digitalRead', ctx: 'func', argc: 1, ask: '讀取按鈕的指令', hint: '寫出信號用 digital<em>Write</em>，讀取信號用 digital<em>Read</em>。注意 R 大寫。' },
   { id: 'b5', ans: '==', ctx: 'op', ask: '比較「是否等於」的符號', hint: '比較兩樣東西是否相等，要用<em>兩個</em>等號 <code>==</code>。' },
@@ -65,7 +65,7 @@ const C1_TEMPLATE = [
   'int yellowPin = 11;',
   'int greenPin = 10;',
   'int buttonPin = 2;',
-  'int buzzerPin = {{e1}};            // 蜂鳴器接在第幾號腳？',
+  'int buzzerPin = {{e1}};            // 蜂鳴器接在 D 幾？',
   '',
   'void setup() {',
   '  pinMode(redPin, OUTPUT);',
@@ -102,7 +102,7 @@ const C1_TEMPLATE = [
   '}',
 ];
 const C1_BLANKS = [
-  { id: 'e1', ans: '8', ctx: 'init', ask: '蜂鳴器接在哪一號腳', hint: '蜂鳴器的信號線（白色）接在 UNO 的幾號腳？只填數字。' },
+  { id: 'e1', ans: '8', ctx: 'init', ask: '蜂鳴器接在 D 幾', hint: '蜂鳴器的信號線（白色）接在 UNO 的 D 幾？只填數字（例如 D7 就寫 7）。' },
   { id: 'e2', ans: '10', ctx: 'init', ask: '迴圈重複幾多次', hint: '紅燈要響 5 秒，每次「嘀」連停頓共 0.5 秒。5 ÷ 0.5 = ?' },
   { id: 'e3', ans: 'tone', ctx: 'func', argc: 2, ask: '令蜂鳴器發聲的指令', hint: '發聲的指令是 <em>tone</em>（全部小寫），括號內寫腳位和頻率。' },
   { id: 'e4', ans: 'noTone', ctx: 'func', argc: 1, ask: '令蜂鳴器停聲的指令', hint: '停聲 = no + Tone，寫成 <em>noTone</em>，注意 T 大寫。' },
@@ -117,7 +117,7 @@ const C2_TEMPLATE = [
   '// 注意：這個程式會取代過路燈程式，只用紅燈做警報',
   '',
   'int redPin = 12;',
-  'int tiltPin = {{e1}};              // 傾斜開關接在第幾號腳？',
+  'int tiltPin = {{e1}};              // 傾斜開關接在 D 幾？',
   '',
   'void setup() {',
   '  pinMode(redPin, OUTPUT);',
@@ -137,7 +137,7 @@ const C2_TEMPLATE = [
   '}',
 ];
 const C2_BLANKS = [
-  { id: 'e1', ans: '3', ctx: 'init', ask: '傾斜開關接在哪一號腳', hint: '傾斜開關的信號線（藍色）接在 UNO 的幾號腳？只填數字。' },
+  { id: 'e1', ans: '3', ctx: 'init', ask: '傾斜開關接在 D 幾', hint: '傾斜開關的信號線（藍色）接在 UNO 的 D 幾？只填數字（例如 D7 就寫 7）。' },
   { id: 'e2', ans: 'INPUT', ctx: 'mode', ask: '開關腳位的模式', hint: '和按鈕一樣，Arduino 要「讀取」開關，所以是「輸入」。' },
   { id: 'e3', ans: 'digitalRead', ctx: 'func', argc: 1, ask: '讀取開關的指令', hint: '讀取信號用 digital<em>Read</em>，注意 R 大寫。' },
   { id: 'e4', ans: 'LOW', ctx: 'level', ask: '被移動時讀到甚麼', hint: '開關傾側時<em>斷開</em>，下拉電阻令腳位變成低電位。' },
@@ -291,7 +291,7 @@ const IDE = (() => {
     if (b.ctx === 'delay' || b.ctx === 'init') {
       const f = parseFloat(v);
       if (!isNaN(f) && b.ctx === 'delay' && Math.round(f * 1000) === +b.ans) return 'delay() 的單位是<b>毫秒</b>，不是秒。';
-      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return '看清楚接線模擬器中，導線接在哪一號腳。';
+      if ((b.id === 'b1' || b.id === 'e1') && /^\d+$/.test(v)) return '看清楚接線模擬器中，導線接在 D 幾。';
       if (b.ctx === 'delay' && /^\d+$/.test(v)) return '時間不對，再看看那一行的註解（灰色文字）。';
     }
     if ((b.id === 'b2' || b.id === 'e3') && lc === 'input') return 'INPUT 是「輸入」（例如讀取按鈕）；這裏要用「輸出」。';
@@ -312,7 +312,7 @@ const IDE = (() => {
     if (b.id === 'b3' && lc === 'output') return 'OUTPUT 是「輸出」（例如 LED）。按鈕是給 Arduino 讀取的，所以是「輸入」。';
     if (b.id === 'e2' && v === '5') return '5 是秒數。每次「嘀」連停頓只有 0.5 秒，5 秒內可以重複幾多次？';
     if (b.id === 'e4' && lc === 'high') return '直立時才是 HIGH。單車被移動時開關斷開，下拉電阻令它變成 LOW。';
-    if (b.id === 'e1' && ctxName() === 'c1' && v === '13') return '13 號腳沒有用。蜂鳴器的白色線接在哪一號腳？';
+    if (b.id === 'e1' && ctxName() === 'c1' && v === '13') return 'D13沒有用。蜂鳴器的白色線接在 D 幾？';
     return '';
   }
   /* ---------- 說明卡及提示（共用 HELP） ---------- */

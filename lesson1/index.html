@@ -533,6 +533,40 @@ details.fold-card>summary h3{vertical-align:middle}
 @keyframes hbpulse{0%,100%{box-shadow:0 0 0 0 rgba(224,138,0,0)}50%{box-shadow:0 0 0 4px rgba(224,138,0,.4)}}
 .blist li .acts{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
 .dk-new{font-style:normal;font-family:var(--f-body,inherit);font-size:10.5px;font-weight:700;background:#E08A00;color:#fff;border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:1px}
+.pdict .dict{max-height:210px;overflow:auto;padding-right:4px}
+/* ---------- 接線輔助：腳位 / 麵包板標籤、分區、接線清單（共用） ---------- */
+.tag-pin,.tag-hole,.tag-col,.tag-rail,.tag-sv{display:inline-block;font-family:var(--f-mono);font-weight:700;font-size:.92em;line-height:1.35;padding:0 6px;border-radius:5px;white-space:nowrap;vertical-align:baseline}
+.tag-pin{background:#0B3D63;color:#fff}
+.tag-hole,.tag-col{background:#fff;color:#1F2B2C;border:1.5px solid #8C9A9C}
+.tag-col{border-style:dashed}
+.tag-rail{background:#fff;border:1.5px solid}
+.tag-rail.p{color:#C0392B;border-color:#D63A2F}
+.tag-rail.n{color:#1F5FBF;border-color:#2F6FD6}
+.tag-sv{background:#3A3F44;color:#FFD9A8}
+#tip .big{font-size:16px;padding:2px 8px;margin-right:8px}
+#tip .tag-pin.big{background:#1565A8}
+#tip .tip-sub{color:#CFE3DD;font-size:12.5px}
+.crowd-m{margin-top:4px}
+.wlist{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface-2)}
+.wl-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wl-head #wlPrint{margin-left:auto}
+.wl-legend{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 2px;color:var(--ink-2)}
+.wlist h4{margin:12px 0 4px;font-size:14px}
+ol.wl{margin:0;padding-left:1.6em;display:flex;flex-direction:column;gap:5px}
+ol.wl label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;line-height:1.7}
+ol.wl input{margin-top:6px;width:16px;height:16px;flex:none}
+.wl-sw{display:inline-block;width:18px;height:7px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.4);margin-right:6px;vertical-align:middle}
+@media print{
+  body.print-wl *{visibility:hidden}
+  body.print-wl #wireList,body.print-wl #wireList *{visibility:visible}
+  body.print-wl #wireList{position:absolute;left:0;top:0;width:100%;border:0;background:#fff}
+  body.print-wl #wlPrint{display:none}
+  .tag-pin{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.pq-svg{width:100%;height:auto;display:block;border-radius:10px}
+.pq-q{margin:8px 0;font-size:15px}
+.pq-fb{min-height:44px;margin-top:8px}
+.pq-pt:hover rect:nth-child(2){fill:#FFD27A}
 </style>
 
 </head>
@@ -592,7 +626,7 @@ details.fold-card>summary h3{vertical-align:middle}
       <div>
         <div class="eyebrow">第 1 步 · 今日任務</div>
         <h2>認識 Arduino，令 L 燈閃起來</h2>
-        <p>Arduino UNO 板上有一粒細小的 <b>L 燈</b>，它在板內已經接到 <b>13 號腳</b>。今堂你要先認識 UNO 板，再寫第一個程式，令 L 燈<b>亮 1 秒、熄 1 秒</b>，不停重複。今堂<b>不用接任何零件</b>。</p>
+        <p>Arduino UNO 板上有一粒細小的 <b>L 燈</b>，它在板內已經接到 <b>13 號腳</b>（寫作 <b>D13</b>）。今堂你要先認識 UNO 板，再寫第一個程式，令 L 燈<b>亮 1 秒、熄 1 秒</b>，不停重複。今堂<b>不用接任何零件</b>。</p>
       </div>
       <button class="btn go lg" id="introNext">開始認識硬件</button>
     </div>
@@ -609,9 +643,9 @@ details.fold-card>summary h3{vertical-align:middle}
       <table class="timing" style="margin-top:14px">
         <thead><tr><th>程式</th><th>意思</th><th>時間</th></tr></thead>
         <tbody id="introRows">
-          <tr><td class="num">digitalWrite(13, HIGH);</td><td>13 號腳輸出 5V：開燈</td><td class="num">—</td></tr>
+          <tr><td class="num">digitalWrite(13, HIGH);</td><td>D13 輸出 5V：開燈</td><td class="num">—</td></tr>
           <tr><td class="num">delay(1000);</td><td>等一等</td><td class="num">1 秒</td></tr>
-          <tr><td class="num">digitalWrite(13, LOW);</td><td>13 號腳輸出 0V：關燈</td><td class="num">—</td></tr>
+          <tr><td class="num">digitalWrite(13, LOW);</td><td>D13 輸出 0V：關燈</td><td class="num">—</td></tr>
           <tr><td class="num">delay(1000);</td><td>等一等</td><td class="num">1 秒</td></tr>
         </tbody>
       </table>
@@ -622,7 +656,7 @@ details.fold-card>summary h3{vertical-align:middle}
     <div class="card span-5">
       <h3>你會學到</h3>
       <ol class="goals">
-        <li>認識 UNO 板的主要部分：USB 插口、電源插口、RESET 掣、13 號腳、GND、5V、L 燈和主晶片</li>
+        <li>認識 UNO 板的主要部分：USB 插口、電源插口、RESET 掣、D13（13 號腳）、GND、5V、L 燈和主晶片</li>
         <li>知道麵包板上哪些孔是相通的（下一堂接線會用到）</li>
         <li>程式的結構：<code>setup()</code> 只做一次，<code>loop()</code> 不停重複</li>
         <li>三個指令：<code>pinMode</code>、<code>digitalWrite</code>、<code>delay</code></li>
@@ -1146,6 +1180,217 @@ const HELP = (() => {
 })();
 
 /* =====================================================================
+   接線輔助（各堂共用）
+   - 兩種位置兩種寫法：UNO 腳位（深藍標籤）、麵包板位置（白色標籤）
+   - 滑鼠停在腳位 / 孔上的放大標籤
+   - 麵包板分區淡色底、目前步驟用到的腳位放大標示
+   - 「太擠」提示（不扣分）
+   - 實物接線清單（按學生自己的模擬器接線）
+   ===================================================================== */
+const WIRE = (() => {
+  const H = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  /* ---------- names ---------- */
+  const pinShort = n => (n === 'GND2' || n === 'GND3') ? 'GND' : n === '3V3' ? '3.3V' : n === 'VIN' ? 'Vin' : n;
+  const PRINTED = n => /^D\d+$/.test(n) ? ({ D3: '~3', D5: '~5', D6: '~6', D9: '~9', D10: '~10', D11: '~11' }[n] || n.slice(1)) : pinShort(n);
+  const RAIL = { tp: '「+」電源軌', tn: '「−」電源軌', bp: '下方「+」電源軌', bn: '下方「−」電源軌' };
+  const SERVO = { SVG: '伺服馬達插頭（啡線）', SV5: '伺服馬達插頭（紅線）', SVS: '伺服馬達插頭（橙線）' };
+  const parse = id => { const m = /^(tp|tn|bp|bn|[a-j])(\d+)$/.exec(id); return m ? { row: m[1], col: +m[2] } : null; };
+
+  /* ---------- tags used in step text, hints and error messages ---------- */
+  const pin = n => `<span class="tag-pin">UNO ${pinShort(n)}</span>`;
+  const hole = id => `<span class="tag-hole">麵包板 ${id}</span>`;
+  const col = c => `<span class="tag-col">第 ${c} 直行</span>`;
+  const rail = sign => `<span class="tag-rail ${sign === '+' ? 'p' : 'n'}">「${sign}」電源軌</span>`;
+  /* any point id: 'P:D12' / 'f13' / 'tp4' */
+  function tag(id) {
+    if (!id) return '';
+    if (id.startsWith('P:')) { const n = id.slice(2); return SERVO[n] ? `<span class="tag-sv">${SERVO[n]}</span>` : pin(n); }
+    const q = parse(id); if (!q) return H(id);
+    if (RAIL[q.row]) return rail(q.row.endsWith('p') ? '+' : '−');
+    return hole(id);
+  }
+
+  /* ---------- hover label (big) ---------- */
+  function tipPin(n, desc) {
+    if (SERVO[n]) return `<span class="tag-sv big">${SERVO[n]}</span>`;
+    const printed = PRINTED(n);
+    const extra = /^D\d+$/.test(n) ? `數位腳 · 板上印「${printed}」` : /^A\d$/.test(n) ? '類比輸入腳' : (desc || '');
+    return `<span class="tag-pin big">UNO ${pinShort(n)}</span><span class="tip-sub">${extra}</span>`;
+  }
+  function tipHole(id) {
+    const q = parse(id); if (!q) return H(id);
+    if (RAIL[q.row]) return `${rail(q.row.endsWith('p') ? '+' : '−')}<span class="tip-sub">${q.row[0] === 'b' ? '下方 · ' : ''}整條相通</span>`;
+    const half = 'abcde'.includes(q.row) ? 'a 至 e' : 'f 至 j';
+    return `<span class="tag-hole big">麵包板 ${id}</span><span class="tip-sub">${half} 的第 ${q.col} 直行相通</span>`;
+  }
+
+  /* ---------- zones on the breadboard (light bands with a name) ---------- */
+  /* zones: [{name, from, to, half: 'top'|'bot', hue, faded}] ; g: {colX, BY} */
+  const HUE = ['#2F80ED', '#E0A800', '#27AE60', '#9B51E0', '#EB5757', '#00A3A3'];
+  function zonesSVG(zones, g) {
+    return zones.map((z, i) => {
+      const c = z.hue || HUE[i % HUE.length];
+      const x1 = g.colX(z.from) - 10, x2 = g.colX(z.to) + 10;
+      const both = z.half === 'both', top = z.half !== 'bot';
+      const y1 = g.BY + (top ? 72 : 194), y2 = g.BY + (both || !top ? 296 : 175);
+      const ry = g.BY + (top ? 172 : 187);
+      return `<g class="zone${z.faded ? ' faded' : ''}" pointer-events="none">
+        <rect x="${x1}" y="${y1}" width="${x2 - x1}" height="${y2 - y1}" rx="6" fill="${c}" fill-opacity="${z.faded ? 0.05 : 0.12}" stroke="${c}" stroke-opacity="${z.faded ? 0.25 : 0.65}" stroke-dasharray="5 4"/>
+        <rect x="${(x1 + x2) / 2 - z.name.length * 6 - 6}" y="${ry}" width="${z.name.length * 12 + 12}" height="14" rx="7" fill="${c}" fill-opacity="${z.faded ? 0.35 : 0.92}"/>
+        <text x="${(x1 + x2) / 2}" y="${ry + 11}" font-size="10.5" font-weight="700" fill="#fff" text-anchor="middle">${z.name}</text>
+      </g>`;
+    }).join('');
+  }
+  /* big labels above the UNO pins that the current step uses */
+  function pinCallouts(ids, P) {
+    return ids.filter(id => id && id.startsWith('P:') && !SERVO[id.slice(2)] && P[id]).map(id => {
+      const q = P[id], n = pinShort(id.slice(2)), w = n.length * 9 + 18;
+      const up = q.y < 300, by = up ? q.y - 42 : q.y - 46;
+      return `<g class="pincall" pointer-events="none">
+        <path d="M${q.x} ${q.y - 9}L${q.x - 6} ${by + 22}H${q.x + 6}Z" fill="#0B3D63"/>
+        <rect x="${q.x - w / 2}" y="${by}" width="${w}" height="24" rx="6" fill="#0B3D63" stroke="#fff" stroke-width="1.5"/>
+        <text x="${q.x}" y="${by + 17}" font-size="14" font-weight="800" fill="#fff" text-anchor="middle" font-family="var(--f-mono, monospace)">${n}</text>
+        <circle cx="${q.x}" cy="${q.y}" r="8" fill="none" stroke="#FFD27A" stroke-width="2.5"/>
+      </g>`;
+    }).join('');
+  }
+
+  /* ---------- 「太擠」: legs of two different parts in neighbouring columns (same half), not joined ---------- */
+  /* parts: [{id, name, legs:[holeIds]}] ; same(a, b) -> true if the two holes are in the same net */
+  function crowded(parts, same) {
+    const out = [];
+    for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
+      const A = parts[i], B = parts[j];
+      if (A.legs.some(a => B.legs.some(b => a && b && same(a, b)))) continue;   // joined parts belong to the same small circuit
+      let hit = null;
+      A.legs.forEach(a => B.legs.forEach(b => {
+        const qa = parse(a), qb = parse(b); if (!qa || !qb || hit) return;
+        const ha = 'abcde'.includes(qa.row), hb = 'abcde'.includes(qb.row);
+        if (ha === hb && Math.abs(qa.col - qb.col) === 1 && !same(a, b)) hit = [qa.col, qb.col].sort((x, y) => x - y);
+      }));
+      if (hit) out.push(`<b>${A.name}</b>和<b>${B.name}</b>插在相鄰的直行（第 ${hit[0]} 和第 ${hit[1]} 直行）。電路沒有錯，但實物上腳容易碰在一起或插錯孔，建議隔開最少 1 個直行。`);
+    }
+    return out;
+  }
+  const crowdBox = msgs => msgs.length ? alertBox('warn', `<b>小提醒（不扣分）</b>${msgs.map(m => `<div class="crowd-m">${m}</div>`).join('')}`) : '';
+
+  /* ---------- real-hardware checklist from the student's own layout ---------- */
+  const WNAME = { '#2a2a2a': '黑色', '#f4f4f0': '白色', '#d63a2f': '紅色', '#2f6fd6': '藍色', '#2e9b4f': '綠色' };
+  const LEDN = { red: '紅色 LED', yellow: '黃色 LED', green: '綠色 LED' };
+  const BANDW = { 220: '紅紅黑黑棕', 1000: '棕黑黑棕棕', 10000: '棕黑黑紅棕' };
+  const OHMW = { 220: '220Ω', 1000: '1kΩ', 10000: '10kΩ' };
+  /* parts: [{type, color, ohm, flipped, legs}] (legs from the lesson's legHoles) ; wires: [{a, b, color}] */
+  function partLine(p) {
+    const L = p.legs || [];
+    const pol = () => { const [a, k] = p.flipped ? [L[1], L[0]] : [L[0], L[1]]; return `長腳（+）插 ${hole(a)}，短腳（−）插 ${hole(k)}`; };
+    if (p.type === 'led') return `<b>${LEDN[p.color] || 'LED'}</b>：${pol()}`;
+    if (p.type === 'ls') return `<b>光感應器</b>：${pol()}`;
+    if (p.type === 'res') return `<b>${OHMW[p.ohm] || ''} 電阻</b>（色環${BANDW[p.ohm] || ''}）：兩端插 ${hole(L[0])} 和 ${hole(L[1])}`;
+    if (p.type === 'btn') return `<b>按鈕</b>（跨過中間的坑，腳向上下）：四隻腳插 ${L.map(hole).join('、')}`;
+    if (p.type === 'pot') return `<b>電位器</b>（跨過中間的坑）：兩隻外腳插 ${hole(L[0])}、${hole(L[1])}，中間腳插 ${hole(L[2])}`;
+    if (p.type === 'pz') return `<b>蜂鳴器</b>：兩隻腳插 ${hole(L[0])} 和 ${hole(L[1])}（不分正負）`;
+    if (p.type === 'tilt') return `<b>傾斜開關</b>：兩隻腳插 ${hole(L[0])} 和 ${hole(L[1])}`;
+    return `<b>${p.type}</b>：${L.map(hole).join('、')}`;
+  }
+  function wireLine(w) {
+    const c = WNAME[String(w.color).toLowerCase()] || '';
+    const ends = [w.a, w.b].sort((x, y) => (y.startsWith('P:') ? 1 : 0) - (x.startsWith('P:') ? 1 : 0));
+    return `<i class="wl-sw" style="background:${w.color}"></i><b>${c}導線</b>：${tag(ends[0])} → ${tag(ends[1])}`;
+  }
+  /* key: S.real field that stores ticks ; returns HTML (bind with bindList) */
+  function listHTML(parts, wires, ticks) {
+    const row = (k, html) => `<li><label><input type="checkbox" data-wl="${k}" ${ticks && ticks[k] ? 'checked' : ''}><span>${html}</span></label></li>`;
+    const pk = parts.map((p, i) => row('p' + i + ':' + (p.legs || []).join(','), partLine(p))).join('');
+    const wk = wires.map(w => row('w:' + [w.a, w.b].sort().join('-'), wireLine(w))).join('');
+    const ck = [['c1', '每隻腳都插入正確的直行，<b>沒有插到隔離的直行</b>（逐隻數一數號碼）。'], ['c2', 'LED / 感應器的<b>兩隻腳沒有碰在一起</b>，電阻的腳也沒有碰到其他零件。'], ['c3', '每條導線都<b>插到底</b>，沒有插歪到旁邊的孔。']].map(([k, t]) => row('chk:' + k, t)).join('');
+    return `<div class="wlist" id="wireList">
+      <div class="wl-head"><b>實物接線清單</b><span class="small muted">按你在模擬器的接線列出。接好一項，就剔一項。</span><button class="btn sm ghost" id="wlPrint" type="button">🖨 列印清單</button></div>
+      <div class="wl-legend small"><span>${pin('D12')} = Arduino 上的腳位</span><span>${hole('f13')} = 麵包板的孔（行字母 + 直行號碼）</span></div>
+      <h4>① 先插元件</h4><ol class="wl">${pk}</ol>
+      <h4>② 再接導線</h4><ol class="wl">${wk}</ol>
+      <h4>③ 插完後三項檢查</h4><ol class="wl">${ck}</ol>
+      <p class="small muted wl-done" id="wlDone"></p>
+    </div>`;
+  }
+  function bindList(root, ticks, onChange) {
+    const upd = () => {
+      const all = root.querySelectorAll('[data-wl]'), n = [...all].filter(x => x.checked).length;
+      const d = root.querySelector('#wlDone'); if (d) d.textContent = `已完成 ${n} / ${all.length} 項` + (n === all.length ? ' ✓ 可以請老師檢查了。' : '');
+    };
+    root.querySelectorAll('[data-wl]').forEach(cb => cb.addEventListener('change', () => { ticks[cb.dataset.wl] = cb.checked; onChange && onChange(); upd(); }));
+    const pr = root.querySelector('#wlPrint');
+    if (pr) pr.onclick = () => { document.body.classList.add('print-wl'); setTimeout(() => { window.print(); setTimeout(() => document.body.classList.remove('print-wl'), 300); }, 50); };
+    upd();
+  }
+
+  /* light markup in step text / messages: 〔D12〕 pin · 〔f13〕 hole · 〔第13直行〕 column · 「+」電源軌 rail */
+  function fmt(html) {
+    return String(html)
+      .replace(/〔(D\d{1,2}|A[0-5]|5V|3V3|VIN|GND\d?)〕/g, (_, n) => pin(n))
+      .replace(/〔([a-j]\d{1,2})〕/g, (_, id) => hole(id))
+      .replace(/〔第(\d{1,2})直行〕/g, (_, c) => col(c))
+      .replace(/(^|[^>和])「([+−])」電源軌/g, (_, pre, sg) => pre + rail(sg));
+  }
+  /* ---------- 分辨小題：UNO 腳位 vs 麵包板位置（不計分） ---------- */
+  const PQ = [
+    { want: 'P:D12', ask: '點選 Arduino 上的 <b>D12</b> 腳（板上印 12）。' },
+    { want: 'f13', ask: '點選麵包板的 <b>f13</b>（f 行、第 13 直行）。' },
+    { want: 'P:D9', ask: '點選 Arduino 上的 <b>D9</b> 腳（板上印 <b>~9</b>）。' },
+    { want: 'j7', ask: '點選麵包板的 <b>j7</b>（j 行、第 7 直行）。' },
+  ];
+  const PQ_PINS = [['SCL', 'SCL'], ['SDA', 'SDA'], ['AREF', 'AREF'], ['GND', 'GND'], ['D13', '13'], ['D12', '12'], ['D11', '~11'], ['D10', '~10'], ['D9', '~9'], ['D8', '8'], null, ['D7', '7'], ['D6', '~6'], ['D5', '~5'], ['D4', '4'], ['D3', '~3'], ['D2', '2'], ['D1', 'TX→1'], ['D0', 'RX←0']];
+  function pinQuizSVG() {
+    let s = '<rect x="0" y="0" width="760" height="300" rx="10" fill="#1E5A4B"/>';
+    // UNO top header (as printed on the board)
+    s += '<rect x="14" y="14" width="732" height="86" rx="8" fill="#0E7C9B"/><text x="30" y="92" font-size="12" fill="#CFEFFF" font-weight="700">Arduino UNO 上方的排針（DIGITAL）</text>';
+    let x = 40;
+    PQ_PINS.forEach(p => {
+      if (!p) { x += 18; return; }
+      const [id, lab] = p;
+      s += `<g class="pq-pt" data-pq="P:${id}" style="cursor:pointer"><rect x="${x - 15}" y="20" width="30" height="64" fill="transparent"/><rect x="${x - 8}" y="26" width="16" height="16" rx="2" fill="#1B1B1B"/><rect x="${x - 3}" y="31" width="6" height="6" fill="#555"/><text x="${x}" y="${lab.length > 3 ? 70 : 62}" font-size="${lab.length > 3 ? 9 : 12}" fill="#fff" text-anchor="middle" font-weight="700" ${lab.length > 3 ? `transform="rotate(-90 ${x} 64)"` : ''}>${lab}</text></g>`;
+      x += 34;
+    });
+    // breadboard top half: rows j..f, columns 1..15
+    s += '<rect x="14" y="116" width="732" height="170" rx="8" fill="#F3F2EC"/><text x="30" y="280" font-size="12" fill="#5B6B6C" font-weight="700">麵包板（上半部）</text>';
+    const rows = ['j', 'i', 'h', 'g', 'f'];
+    for (let c = 1; c <= 15; c++) s += `<text x="${90 + (c - 1) * 42}" y="138" font-size="12" fill="#555" text-anchor="middle" font-weight="${c % 5 ? 400 : 700}">${c}</text>`;
+    rows.forEach((r, i) => {
+      const y = 158 + i * 22;
+      s += `<text x="44" y="${y + 4}" font-size="12" fill="#555" text-anchor="middle">${r}</text>`;
+      for (let c = 1; c <= 15; c++) { const cx = 90 + (c - 1) * 42; s += `<g class="pq-pt" data-pq="${r}${c}" style="cursor:pointer"><rect x="${cx - 18}" y="${y - 10}" width="36" height="20" fill="transparent"/><rect x="${cx - 5}" y="${y - 5}" width="10" height="10" rx="2" fill="#3A3A3A"/></g>`; }
+    });
+    return `<svg viewBox="0 0 760 300" class="pq-svg" role="img" aria-label="Arduino 排針和麵包板">${s}<g id="pqMark"></g></svg>`;
+  }
+  function pinQuiz(store, onChange) {
+    let k = 0, tries = 0;
+    const html = `<p class="small muted">Arduino 的腳位寫成 <b>D12</b>、<b>A0</b>；麵包板的孔寫成<b>行字母 + 直行號碼</b>，例如 <b>f13</b>。兩樣東西的數字<b>沒有關係</b>。這個小練習不計分。</p>
+      <div class="pq-q" id="pqQ"></div><div class="pq-wrap">${pinQuizSVG()}</div><div id="pqFb" class="pq-fb"></div>`;
+    modal({ title: '小練習：分辨腳位和麵包板位置', wide: true, html, actions: [{ label: '關閉', kind: 'ghost' }], onOpen: back => {
+      const q = () => { back.querySelector('#pqQ').innerHTML = k < PQ.length ? `<b>第 ${k + 1} / ${PQ.length} 題</b>　${PQ[k].ask}` : '<b>全部完成！</b>　記住：<b>D 幾</b>是 Arduino 的腳，<b>字母 + 數字</b>是麵包板的孔。'; };
+      const mark = (id, ok) => { const g = back.querySelector(`[data-pq="${id}"]`); if (!g) return; const r = g.querySelector('rect:nth-child(2)'); const b = r.getBBox(); back.querySelector('#pqMark').innerHTML = `<circle cx="${b.x + b.width / 2}" cy="${b.y + b.height / 2}" r="12" fill="none" stroke="${ok ? '#2ECC71' : '#E74C3C'}" stroke-width="3"/>`; };
+      q();
+      back.querySelectorAll('[data-pq]').forEach(g => g.addEventListener('click', () => {
+        if (k >= PQ.length) return;
+        const id = g.dataset.pq, want = PQ[k].want, fb = back.querySelector('#pqFb');
+        if (id === want) {
+          mark(id, true); k++; fb.innerHTML = alertBox('ok', '答對了！'); store.right = (store.right || 0) + 1;
+          if (k >= PQ.length) { store.done = true; store.tries = tries; }
+          onChange && onChange(); q(); return;
+        }
+        tries++; mark(id, false);
+        const isPin = id.startsWith('P:'), wantPin = want.startsWith('P:');
+        const nm = isPin ? id.slice(2) : id;
+        let msg = `你點了${isPin ? ` Arduino 的 <b>${nm}</b>` : `麵包板的 <b>${nm}</b>`}，再試一次。`;
+        if (wantPin && !isPin) msg = `這是<b>麵包板的孔 ${nm}</b>，不是 Arduino 的腳。${want.slice(2)} 在 Arduino 上方的排針。`;
+        if (!wantPin && isPin) msg = `這是 <b>Arduino 的 ${nm} 腳</b>，不是麵包板的孔。${want} 在下面的麵包板：先找 ${want[0]} 行，再數到第 ${want.slice(1)} 直行。`;
+        fb.innerHTML = alertBox('err', msg);
+      }));
+    } });
+  }
+  return { pinQuiz, fmt, pin, hole, col, rail, tag, tipPin, tipHole, zonesSVG, pinCallouts, crowded, crowdBox, listHTML, bindList, partLine, wireLine, PRINTED, pinShort };
+})();
+
+/* =====================================================================
    Arduino 初體驗（第 1 堂：閃動 L 燈）— 設定（老師可修改這裏）
    ===================================================================== */
 const CONFIG = {
@@ -1565,8 +1810,8 @@ const HW = (() => {
     { key: 'dc', text: '電源插口', desc: '接火牛或電池盒。不接電腦時，用它供電。', tx: UX + 21, ty: UY + 248, bx: UX + 21, by: UY + 248 },
     { key: 'reset', text: 'RESET 掣', desc: '按一下，程式會由頭再執行一次。', tx: UX + 89, ty: UY + 29, bx: UX + 89, by: UY + 29 },
     { key: 'gnd', text: 'GND', desc: '接地，即電源的負極（−）。', tx: TOP1X(3), ty: topY, bx: TOP1X(3) - 26, by: UY - 30, left: true },
-    { key: 'd13', text: '13 號腳', desc: '數位腳 13。板上的 L 燈在板內已經接到這支腳。', tx: TOP1X(4), ty: topY, bx: TOP1X(4) + 26, by: UY - 30 },
-    { key: 'l', text: 'L 燈', desc: '板上的小 LED，內部接到 13 號腳。今堂就是要令它閃。', tx: UX + 125, ty: UY + 93, bx: UX + 98, by: UY + 93 },
+    { key: 'd13', text: 'D13 腳', desc: '數位腳 13，寫作 D13（板上印 13）。板上的 L 燈在板內已經接到這支腳。', tx: TOP1X(4), ty: topY, bx: TOP1X(4) + 26, by: UY - 30 },
+    { key: 'l', text: 'L 燈', desc: '板上的小 LED，內部接到 D13。今堂就是要令它閃。', tx: UX + 125, ty: UY + 93, bx: UX + 98, by: UY + 93 },
     { key: 'chip', text: '主晶片', desc: 'ATmega328P，就是 UNO 的「大腦」，負責執行你的程式。', tx: UX + 298, ty: UY + 207, bx: UX + 298, by: UY + 207 },
     { key: 'v5', text: '5V', desc: '輸出 5V 電源，即正極（+）。', tx: BOT1X(4), ty: botY, bx: BOT1X(4), by: UY + UH + 30 },
   ];
@@ -1585,9 +1830,9 @@ const HW = (() => {
   const RAIL_NAME = { tp: '上方「+」電源軌', tn: '上方「−」電源軌', bn: '下方「−」電源軌', bp: '下方「+」電源軌' };
   const QUIZ = [
     { target: 'c7', ask: '點選所有和 <b class="hole">c7</b> 相通的孔（c7 本身不用點）。', ans: ['a7', 'b7', 'd7', 'e7'],
-      know: '同一號碼的 <b>a–e</b> 五個孔是相通的（一條直行）。' },
+      know: '同一個直行的 <b>a 至 e</b> 五個孔是相通的。' },
     { target: 'h20', ask: '點選所有和 <b class="hole">h20</b> 相通的孔。', ans: ['f20', 'g20', 'i20', 'j20'],
-      know: '同一號碼的 <b>f–j</b> 五個孔是另一組。中間的坑把上下兩半<b>分開</b>，所以 e20 和 f20 不相通。' },
+      know: '同一個直行的 <b>f 至 j</b> 五個孔是另一組。中間的坑把上下兩半<b>分開</b>，所以 e20 和 f20 不相通。' },
     { target: 'tn1', rail: 'tn', need: 3, ask: '最上面藍線旁的是「−」電源軌。點選<b>任何 3 個</b>和 <b class="hole">−</b> 軌最左邊那個孔相通的孔。',
       know: '電源軌是<b>左右整行</b>相通的，所以很多零件可以共用同一條「−」（GND）或「+」（5V）。' },
   ];
@@ -1749,7 +1994,7 @@ const HW = (() => {
     return `<p>USB 線一頭插電腦，另一頭插 UNO。把<b>插頭</b>拖到 UNO 上<b>正確的插口</b>。</p><p class="small muted">UNO 左邊有兩個插口：銀色方形的是 USB 插口，黑色圓形的是電源插口。</p>`;
   }
   const KNOW = [
-    `<div><b>USB 插口：</b>連接電腦，上傳程式，同時為 UNO 供電。</div><div><b>13 號腳和 L 燈：</b>L 燈在板內接到 13 號腳。程式控制 13 號腳，L 燈就會跟着亮或熄。</div><div><b>GND 和 5V：</b>GND 是負極（−），5V 是正極（+）。兩者直接相連就會短路。</div>`,
+    `<div><b>USB 插口：</b>連接電腦，上傳程式，同時為 UNO 供電。</div><div><b>D13 和 L 燈：</b>L 燈在板內接到 D13（13 號腳）。程式控制 D13，L 燈就會跟着亮或熄。</div><div><b>GND 和 5V：</b>GND 是負極（−），5V 是正極（+）。兩者直接相連就會短路。</div>`,
     () => QUIZ.slice(0, Math.min(H().quiz.q + 1, 3)).map(q => `<div>${q.know}</div>`).join(''),
     `<div><b>插上 USB 線之後：</b>UNO 上綠色的 <b>ON</b> 燈會亮起，電腦會多了一個 <b>COM</b> 連接埠。上傳程式時就要選這個連接埠。</div>`,
   ];
@@ -1763,6 +2008,11 @@ const HW = (() => {
     $('#hwIssues').innerHTML = h.done
       ? alertBox('ok', '認識硬件完成！下一步：寫你的第一個程式。') + `<button class="btn go" id="hwNext">下一步：編寫程式</button>`
       : (issues ? issues.html : '');
+    if (h.step >= 2 || h.done) {
+      const pq = h.pinQuiz || {};
+      $('#hwIssues').insertAdjacentHTML('beforeend', `<div class="pq-card">${alertBox(pq.done ? 'ok' : 'info', `<b>小練習（不計分）：分辨 Arduino 腳位和麵包板位置</b><br>${pq.done ? '已完成 ✓' : '4 題，在圖上點選。'} <button class="btn sm ${pq.done ? 'ghost' : 'teal'}" id="pqOpen">${pq.done ? '再做一次' : '開始'}</button>`)}</div>`);
+      $('#pqOpen').onclick = openPinQuiz;
+    }
     $('#hwStats').innerHTML = `<span class="pill ${h.errors ? 'err' : ''}">錯誤 ${h.errors} 次</span><span class="pill ${h.hints ? 'warn' : ''}">使用提示 ${h.hints} 次</span>`;
     const k = KNOW[h.done ? 2 : st];
     $('#hwKnow').innerHTML = typeof k === 'function' ? k() : k;
@@ -1770,6 +2020,7 @@ const HW = (() => {
     $$('[data-hint]', $('#hwPanel')).forEach(b => b.onclick = () => askHint(+b.dataset.hint));
     const nx = $('#hwNext'); if (nx) nx.onclick = () => { if (!S.t.code) S.t.code = now(); unlock('code'); goStage('code'); };
   }
+  function openPinQuiz() { const h = H(); h.pinQuiz = Object.assign(h.pinQuiz || {}, { right: 0 }); save(); WIRE.pinQuiz(h.pinQuiz, () => { save(); renderPanel(); }); }
   const say = (kind, html) => { issues = Object.assign(issues || {}, { html: alertBox(kind, html) }); };
 
   /* ---------- checking ---------- */
@@ -1814,8 +2065,8 @@ const HW = (() => {
         const tgt = HOLES[Q.target];
         if (wrong.some(id => id === Q.target)) msg = `${Q.target} 本身不用點。`;
         else if (wrong.some(id => HOLES[id].col === tgt.col && HOLES[id].row.length === 1)) msg = `中間的坑把上下兩半分開。${'abcde'.includes(tgt.row) ? 'a–e' : 'f–j'} 以外的孔，和 ${Q.target} <b>不相通</b>。`;
-        else if (wrong.some(id => HOLES[id].row === tgt.row)) msg = `同一<b>橫行</b>的孔（例如 ${tgt.row}${tgt.col + 1}）並不相通。相通的是<b>同一號碼</b>的直行。`;
-        else if (wrong.length) msg = `有些孔和 ${Q.target} 不在同一組。相通的是同一號碼、同一半的五個孔。`;
+        else if (wrong.some(id => HOLES[id].row === tgt.row)) msg = `同一<b>橫行</b>的孔（例如 ${tgt.row}${tgt.col + 1}）並不相通。相通的是<b>同一個直行</b>的孔。`;
+        else if (wrong.length) msg = `有些孔和 ${Q.target} 不在同一組。相通的是同一個直行、同一半的五個孔。`;
         if (!wrong.length && sel.length < Q.ans.length) { say('warn', `答對了 ${sel.length} 個，還有 ${Q.ans.length - sel.length} 個相通的孔未點。`); renderPanel(); return; }
       }
       if (wrong.length) {
@@ -1826,7 +2077,7 @@ const HW = (() => {
       }
       pushLog(h, `麵包板第 ${q + 1} 題正確`);
       h.quiz.q++; h.quiz.sel = []; quizMark = null; h.lastFailSig = '';
-      if (h.quiz.q >= QUIZ.length) { h.step = 2; say('ok', '麵包板小測全部正確！最後一步：用 USB 線把 UNO 接到電腦。'); }
+      if (h.quiz.q >= QUIZ.length) { h.step = 2; say('ok', '麵包板小測全部正確！最後一步：用 USB 線把 UNO 接到電腦。'); if (!h.pinQuiz) setTimeout(openPinQuiz, 500); }
       else say('ok', `正確！${Q.know}<br>下一題。`);
       save(); render(); renderPanel();
     }
@@ -1981,23 +2232,23 @@ stageInit.hw = () => HW.enter();
 HELP.setLesson(1);
 const CODE_TEMPLATE = [
   '// 我的第一個程式：閃動 L 燈',
-  '// L 燈在 UNO 板上，板內已經接到 13 號腳',
+  '// L 燈在 UNO 板上，板內已經接到 D13',
   '',
   'void setup() {',
   '  // setup() 的內容：開機時只做一次',
-  '  pinMode(13, {{b1}});        // 把 13 號腳設定為「輸出」',
+  '  pinMode(13, {{b1}});        // 把 D13設定為「輸出」',
   '}',
   '',
   'void loop() {',
   '  // loop() 的內容：做完之後由頭再做，不停重複',
-  '  {{b2}}(13, {{b3}});   // 開燈：13 號腳輸出高電位',
+  '  {{b2}}(13, {{b3}});   // 開燈：D13輸出高電位',
   '  delay({{b4}});              // 亮 1 秒',
-  '  digitalWrite(13, {{b5}});    // 關燈：13 號腳輸出低電位',
+  '  digitalWrite(13, {{b5}});    // 關燈：D13輸出低電位',
   '  delay({{b6}});              // 熄 1 秒',
   '}',
 ];
 const BLANKS = [
-  { id: 'b1', ans: 'OUTPUT', ctx: 'mode', ask: '13 號腳的模式', hint: 'Arduino 要「送出」信號去控制 L 燈，所以要設定為「輸出」。英文要<em>全部大寫</em>。' },
+  { id: 'b1', ans: 'OUTPUT', ctx: 'mode', ask: 'D13的模式', hint: 'Arduino 要「送出」信號去控制 L 燈，所以要設定為「輸出」。英文要<em>全部大寫</em>。' },
   { id: 'b2', ans: 'digitalWrite', ctx: 'func', argc: 2, ask: '控制腳位開關的指令', hint: '在第 13 行「關燈」那一行用的是<em>同一個指令</em>。注意大小寫：digital 小寫，W 大寫。' },
   { id: 'b3', ans: 'HIGH', ctx: 'level', ask: '開燈時輸出的狀態', hint: '開燈 = 輸出 5V 高電位，英文是「高」，要<em>全部大寫</em>。' },
   { id: 'b4', ans: '1000', ctx: 'delay', ask: '亮多久', hint: 'delay() 用<em>毫秒</em>計時：1 秒 = 1000 毫秒。' },
@@ -2716,7 +2967,7 @@ const IDE = (() => {
         if (st.text !== st.lastRunSig) { st.wrongRuns = (st.wrongRuns || 0) + 1; st.lastRunSig = st.text; logTo(st, `上傳後燈號不對：${r.kind}`); }
         save();
         const tip = r.kind === 'alwayson' ? `想一想：關燈之後，程式立即回到 <code>loop()</code> 第一行再開燈。熄燈的時間只有百萬分之幾秒，眼睛看不到。${st.runTries >= 2 ? '<br><b>提示：</b>在 <code>digitalWrite(13, LOW);</code> 之後加一行 <code>delay(1000);</code>。' : ''}`
-          : r.kind === 'nomode' ? '檢查 <code>setup()</code> 有沒有 <code>pinMode(13, OUTPUT);</code>。' : '檢查 <code>loop()</code> 內控制 13 號腳的指令。';
+          : r.kind === 'nomode' ? '檢查 <code>setup()</code> 有沒有 <code>pinMode(13, OUTPUT);</code>。' : '檢查 <code>loop()</code> 內控制 D13的指令。';
         explainMap.c2 = { kind: 'warn', html: `<b>上傳成功，但是……</b>${r.why}這是<b>邏輯錯誤</b>：文法沒有問題，所以編譯器找不到，但程式做的事不對。<br>${tip}` };
         setBusy(false); renderPanel(); EXT.showWrongRun(r); return;
       }
@@ -2744,7 +2995,7 @@ const IDE = (() => {
       wide: true,
       html: `<div class="sos-stage" id="resStage">${HW.circuitSVG()}</div>
         <div class="stack" style="margin-top:12px;gap:8px">
-          <p>你的程式令 13 號腳<b>每秒開關一次</b>，所以板上的 L 燈亮 1 秒、熄 1 秒，不停重複。</p>
+          <p>你的程式令 D13<b>每秒開關一次</b>，所以板上的 L 燈亮 1 秒、熄 1 秒，不停重複。</p>
           <div class="speed"><label for="spd"><b>試一試：</b>如果把兩個 <code id="spdCode">delay(1000);</code> 都改成這個數值……</label>
             <input type="range" id="spd" min="100" max="2000" step="100" value="1000" aria-label="delay 的數值（毫秒）"></div>
           <p class="small muted">數值愈細，閃得愈快。在實物挑戰中，你會在真的 UNO 上改一改這個數字，證明程式是你上傳的。</p>
@@ -3061,7 +3312,7 @@ const FULL_CODE = CODE_TEMPLATE.map(l => l.replace(/\{\{(b\d)\}\}/g, (_, id) => 
 /* ---------------- 實物挑戰 ---------------- */
 const REAL_ITEMS = [
   ['準備材料', 'Arduino UNO 和 USB 線（不用其他零件）。'],
-  ['認出板上的部件', '在真的 UNO 上找出：USB 插口、電源插口、RESET 掣、13 號腳、GND、5V、L 燈和主晶片。'],
+  ['認出板上的部件', '在真的 UNO 上找出：USB 插口、電源插口、RESET 掣、D13（D13）、GND、5V、L 燈和主晶片。'],
   ['插上 USB 線', 'UNO 板上綠色的 ON 燈會亮起。有些新板出廠時已經有閃燈程式，所以 L 燈可能已經在閃，不用理會。'],
   ['把程式貼到 Arduino IDE', '按右邊的「複製完整程式」，在 IDE 中全選原有內容（Ctrl+A），再貼上（Ctrl+V）。'],
   ['選擇 Board 和 Port', 'Tools → Board → Arduino AVR Boards → Arduino Uno；Tools → Port → 有 (Arduino Uno) 字樣的 COM。'],
@@ -3081,7 +3332,7 @@ stageInit.real = () => {
         <ul class="checklist">${REAL_ITEMS.map(([b, s], i) => `<li><label><input type="checkbox" id="rc${i}" data-i="${i}" ${S.real.checks[i] ? 'checked' : ''}><div><b>${i + 1}. ${b}</b><span>${s}</span></div></label></li>`).join('')}</ul>
       </div>
       <div class="card"><h3>UNO 板的各部分</h3><div class="sos-stage">${HW.circuitSVG({ labels: true })}</div>
-        <p class="small muted" style="margin-top:8px">L 燈在板內已經接到 13 號腳，所以今堂不用接任何零件。</p></div>
+        <p class="small muted" style="margin-top:8px">L 燈在板內已經接到 D13，所以今堂不用接任何零件。</p></div>
     </div>
     <div class="stack" style="gap:18px">
       <div class="card"><h3>老師確認</h3>

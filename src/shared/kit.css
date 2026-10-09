@@ -76,3 +76,36 @@ details.fold-card>summary h3{vertical-align:middle}
 .blist li .acts{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
 .dk-new{font-style:normal;font-family:var(--f-body,inherit);font-size:10.5px;font-weight:700;background:#E08A00;color:#fff;border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:1px}
 .pdict .dict{max-height:210px;overflow:auto;padding-right:4px}
+/* ---------- 接線輔助：腳位 / 麵包板標籤、分區、接線清單（共用） ---------- */
+.tag-pin,.tag-hole,.tag-col,.tag-rail,.tag-sv{display:inline-block;font-family:var(--f-mono);font-weight:700;font-size:.92em;line-height:1.35;padding:0 6px;border-radius:5px;white-space:nowrap;vertical-align:baseline}
+.tag-pin{background:#0B3D63;color:#fff}
+.tag-hole,.tag-col{background:#fff;color:#1F2B2C;border:1.5px solid #8C9A9C}
+.tag-col{border-style:dashed}
+.tag-rail{background:#fff;border:1.5px solid}
+.tag-rail.p{color:#C0392B;border-color:#D63A2F}
+.tag-rail.n{color:#1F5FBF;border-color:#2F6FD6}
+.tag-sv{background:#3A3F44;color:#FFD9A8}
+#tip .big{font-size:16px;padding:2px 8px;margin-right:8px}
+#tip .tag-pin.big{background:#1565A8}
+#tip .tip-sub{color:#CFE3DD;font-size:12.5px}
+.crowd-m{margin-top:4px}
+.wlist{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--surface-2)}
+.wl-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wl-head #wlPrint{margin-left:auto}
+.wl-legend{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 2px;color:var(--ink-2)}
+.wlist h4{margin:12px 0 4px;font-size:14px}
+ol.wl{margin:0;padding-left:1.6em;display:flex;flex-direction:column;gap:5px}
+ol.wl label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;line-height:1.7}
+ol.wl input{margin-top:6px;width:16px;height:16px;flex:none}
+.wl-sw{display:inline-block;width:18px;height:7px;border-radius:4px;box-shadow:0 0 0 1px rgba(0,0,0,.4);margin-right:6px;vertical-align:middle}
+@media print{
+  body.print-wl *{visibility:hidden}
+  body.print-wl #wireList,body.print-wl #wireList *{visibility:visible}
+  body.print-wl #wireList{position:absolute;left:0;top:0;width:100%;border:0;background:#fff}
+  body.print-wl #wlPrint{display:none}
+  .tag-pin{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+.pq-svg{width:100%;height:auto;display:block;border-radius:10px}
+.pq-q{margin:8px 0;font-size:15px}
+.pq-fb{min-height:44px;margin-top:8px}
+.pq-pt:hover rect:nth-child(2){fill:#FFD27A}
