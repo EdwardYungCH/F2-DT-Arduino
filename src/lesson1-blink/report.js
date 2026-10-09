@@ -91,7 +91,7 @@ function buildRecord() {
     status: sc.complete ? 'complete' : 'partial',
     progress: { hw: !!S.hw.done, hwStep: Math.min(S.hw.step, 3), code: !!S.code.done, blanksOk: BLANKS.filter(b => (S.code.blanks[b.id] || {}).status === 'ok').length, blanksOf: BLANKS.length, up: !!S.up.uploaded },
     hw: { errors: S.hw.errors, hints: S.hw.hints, log: S.hw.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
-    code: { checks: S.code.checks, blanks: !S.code.done ? [] : BLANKS.map(b => { const x = S.code.blanks[b.id] || {}; return { n: +b.id.slice(1), ask: b.ask, ans: b.ans, wrong: x.wrong || 0, revealed: !!x.revealed, pts: blankPts(x) }; }), log: S.code.log ? S.code.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) : [] },
+    code: { checks: S.code.checks, blanks: !S.code.done ? [] : BLANKS.map(b => { const x = S.code.blanks[b.id] || {}; return { n: +b.id.slice(1), ask: b.ask, ans: b.ans, wrong: x.wrong || 0, revealed: !!x.revealed, hinted: !!x.hinted, pts: blankPts(x) }; }), log: S.code.log ? S.code.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) : [] },
     up: { errors: S.up.errors, log: S.up.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
     real: { confirmed: !!S.real.confirmed, checked: REAL_ITEMS.filter((_, i) => S.real.checks[i]).length, of: REAL_ITEMS.length },
     ext: extRecord(),
@@ -102,7 +102,7 @@ function extRecord() {
   const e = S.ext, sc = extScores();
   const lg = o => (o.log || []).slice(0, 30).map(l => clockOf(l.t) + '  ' + l.msg);
   return {
-    c1: { done: !!e.c1.done, score: sc.c1, wrong: sc.c1 ? sc.c1.wrong : null, revealed: sc.c1 ? sc.c1.rev : null, flowErrors: e.c1.flow.errors || 0, confirmed: !!e.c1.confirmed,
+    c1: { done: !!e.c1.done, score: sc.c1, wrong: sc.c1 ? sc.c1.wrong : null, revealed: sc.c1 ? sc.c1.rev : null, codeHints: sc.c1 ? sc.c1.hn : null, flowErrors: e.c1.flow.errors || 0, confirmed: !!e.c1.confirmed,
           log: lg(e.c1.code).concat(lg(e.c1.flow)) },
     c2: { done: !!e.c2.done, score: sc.c2, compileFails: e.c2.code.compileFails || 0, wrongRuns: e.c2.code.wrongRuns || 0, revealed: !!e.c2.code.revealed, flowErrors: e.c2.flow.errors || 0, confirmed: !!e.c2.confirmed,
           log: lg(e.c2.code).concat(lg(e.c2.flow)) },
@@ -141,8 +141,8 @@ function renderReportBody(d, ok, sig, svg) {
   if (svg) h += '<div class="rsvg">' + svg + '</div>';
   if (part && !pg.code) h += '<h2>2. 程式填空（0 / 40）</h2><p><b>未完成</b>（0 分）。交報告時已答對 ' + pg.blanksOk + ' / ' + pg.blanksOf + ' 格。</p>';
   else {
-    h += '<h2>2. 程式填空（' + s.code + ' / 40）</h2><p>' + (d.code.blanks.length || 6) + ' 格，每格 5 分，每答錯一次 −1（最多 −3），顯示答案只得 1 分；總分按比例換算成 40 分。用時 ' + dur(d.dur.code) + '。</p>';
-  h += '<table class="rtbl"><thead><tr><th>空格</th><th>內容</th><th>答案</th><th>答錯</th><th>顯示答案</th><th>得分</th></tr></thead><tbody>' + d.code.blanks.map(function (b) { return '<tr><td>' + b.n + '</td><td>' + E(b.ask) + '</td><td class="rmono">' + E(b.ans) + '</td><td>' + b.wrong + '</td><td>' + (b.revealed ? '是' : '—') + '</td><td><b>' + b.pts + '</b> / 5</td></tr>'; }).join('') + '</tbody></table>';
+    h += '<h2>2. 程式填空（' + s.code + ' / 40）</h2><p>' + (d.code.blanks.length || 6) + ' 格，每格 5 分，每答錯一次 −1（最多 −3），使用提示 −1（每格最低 2 分），顯示答案只得 1 分；總分按比例換算成 40 分。用時 ' + dur(d.dur.code) + '。</p>';
+  h += '<table class="rtbl"><thead><tr><th>空格</th><th>內容</th><th>答案</th><th>答錯</th><th>提示</th><th>顯示答案</th><th>得分</th></tr></thead><tbody>' + d.code.blanks.map(function (b) { return '<tr><td>' + b.n + '</td><td>' + E(b.ask) + '</td><td class="rmono">' + E(b.ans) + '</td><td>' + b.wrong + '</td><td>' + (b.hinted ? '是' : '—') + '</td><td>' + (b.revealed ? '是' : '—') + '</td><td><b>' + b.pts + '</b> / 5</td></tr>'; }).join('') + '</tbody></table>';
   if (d.code.log && d.code.log.length) h += '<details><summary>填答記錄</summary>' + list(d.code.log, '') + '</details>';
   }
   if (part && !pg.up) h += '<h2>3. 上傳流程（0 / 20）</h2><p><b>未完成</b>（0 分）。</p>';
@@ -151,7 +151,7 @@ function renderReportBody(d, ok, sig, svg) {
     var x1 = d.ext.c1, x2 = d.ext.c2, ok1 = function (v) { return v ? '<b style="color:#1F8049">老師已確認 ✔</b>' : '未確認'; };
     h += '<h2>4. 延伸挑戰（選做，不計入 100 分總分）</h2>';
     h += '<table class="rtbl"><thead><tr><th>挑戰</th><th>狀態</th><th>得分</th><th>記錄</th><th>實物</th></tr></thead><tbody>';
-    h += '<tr><td>1. 心跳燈</td><td>' + (x1.done ? '完成' : '未完成') + '</td><td>' + (x1.done ? '<b>' + x1.score.total + '</b> / 10<br><span class="rmuted">程式 ' + x1.score.code + '/8 · 上傳 ' + x1.score.up + '/2</span>' : '—') + '</td><td class="rmuted">' + (x1.done ? '填錯 ' + x1.wrong + ' 次、顯示答案 ' + x1.revealed + ' 格、上傳錯誤 ' + x1.flowErrors + ' 次' : '—') + '</td><td>' + (x1.done ? ok1(x1.confirmed) : '—') + '</td></tr>';
+    h += '<tr><td>1. 心跳燈</td><td>' + (x1.done ? '完成' : '未完成') + '</td><td>' + (x1.done ? '<b>' + x1.score.total + '</b> / 10<br><span class="rmuted">程式 ' + x1.score.code + '/8 · 上傳 ' + x1.score.up + '/2</span>' : '—') + '</td><td class="rmuted">' + (x1.done ? '填錯 ' + x1.wrong + ' 次' + (x1.codeHints ? '、程式提示 ' + x1.codeHints + ' 格' : '') + '、顯示答案 ' + x1.revealed + ' 格、上傳錯誤 ' + x1.flowErrors + ' 次' : '—') + '</td><td>' + (x1.done ? ok1(x1.confirmed) : '—') + '</td></tr>';
     h += '<tr><td>2. 修好壞掉的程式</td><td>' + (x2.done ? '完成' : '未完成') + '</td><td>' + (x2.done ? '<b>' + x2.score.total + '</b> / 10<br><span class="rmuted">程式 ' + x2.score.code + '/8 · 上傳 ' + x2.score.up + '/2</span>' : '—') + '</td><td class="rmuted">' + (x2.done ? '編譯錯誤 ' + x2.compileFails + ' 次（不扣分）、上傳後燈號不對 ' + x2.wrongRuns + ' 次' + (x2.revealed ? '、曾顯示答案' : '') : '—') + '</td><td>' + (x2.done ? ok1(x2.confirmed) : '—') + '</td></tr>';
     h += '</tbody></table>';
     if ((x1.log && x1.log.length) || (x2.log && x2.log.length)) h += '<details><summary>延伸挑戰記錄</summary>' + list((x1.log || []).map(function (l) { return '挑戰1 ' + l; }).concat((x2.log || []).map(function (l) { return '挑戰2 ' + l; })), '') + '</details>';
@@ -366,12 +366,12 @@ function extCell(d, k) {
 }
 function exportCsv() {
   if (!vRows.length) { toast('請先放入成績報告檔案。'); return; }
-  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '認識硬件(40)', '程式填空(40)', '上傳流程(20)', '硬件答錯次數', '硬件提示次數', '程式填錯次數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '延伸1心跳燈(10)', '延伸1實物確認', '延伸2修好程式(10)', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
+  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '認識硬件(40)', '程式填空(40)', '上傳流程(20)', '硬件答錯次數', '硬件提示次數', '程式填錯次數', '程式提示格數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '延伸1心跳燈(10)', '延伸1實物確認', '延伸2修好程式(10)', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
   const q = v => { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
   const lines = [head.join(',')];
   vRows.filter(r => r.d).sort((a, b) => a.d.cls.localeCompare(b.d.cls) || (+a.d.no - +b.d.no)).forEach(r => {
     const d = r.d;
-    lines.push([d.cls, d.no, d.name, d.status === 'partial' ? '未完成（提早提交）' : '完成', d.score.total, d.score.grade, d.score.hw, d.score.code, d.score.up, d.hw.errors, d.hw.hints, d.code.blanks.reduce((a, b) => a + b.wrong, 0), d.code.blanks.filter(b => b.revealed).length, d.up.errors, d.real.confirmed ? '是' : '否', ...extCsv(d), d.attempt, d.dur.total != null ? (d.dur.total / 60).toFixed(1) : '', fmtTime(d.finished), d.teacherUsed ? '是' : '否', r.ok ? '有效' : '無效', r.code, r.fname].map(q).join(','));
+    lines.push([d.cls, d.no, d.name, d.status === 'partial' ? '未完成（提早提交）' : '完成', d.score.total, d.score.grade, d.score.hw, d.score.code, d.score.up, d.hw.errors, d.hw.hints, d.code.blanks.reduce((a, b) => a + b.wrong, 0), d.code.blanks.filter(b => b.hinted).length, d.code.blanks.filter(b => b.revealed).length, d.up.errors, d.real.confirmed ? '是' : '否', ...extCsv(d), d.attempt, d.dur.total != null ? (d.dur.total / 60).toFixed(1) : '', fmtTime(d.finished), d.teacherUsed ? '是' : '否', r.ok ? '有效' : '無效', r.code, r.fname].map(q).join(','));
   });
   vRows.filter(r => !r.d).forEach(r => lines.push(head.map((h, i) => i === head.length - 3 ? '無效' : i === head.length - 1 ? r.fname : '').map(q).join(',')));
   saveFile(`Arduino初體驗_成績_${fmtTime(Date.now()).slice(0, 10)}.csv`, '﻿' + lines.join('\r\n'), 'text/csv').then(r => { if (r === 'saved') toast('已匯出 CSV', 'ok'); });

@@ -124,7 +124,7 @@ function buildRecord() {
     status: sc.complete ? 'complete' : 'partial',
     progress: { hw: !!S.hw.done, code: !!S.code.done, blanksOk: BLANKS.filter(b => (S.code.blanks[b.id] || {}).status === 'ok').length, blanksOf: BLANKS.length, up: !!S.up.uploaded },
     hw: { errors: S.hw.errors, hints: S.hw.hints, log: S.hw.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
-    code: { checks: S.code.checks, blanks: !S.code.done ? [] : BLANKS.map(b => { const x = S.code.blanks[b.id] || {}; return { n: +b.id.slice(1), ask: b.ask, ans: b.id === 'b1' && !x.revealed && x.val ? String(x.val).trim() : b.ans, wrong: x.wrong || 0, revealed: !!x.revealed, pts: x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)) }; }), log: S.code.log ? S.code.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) : [] },
+    code: { checks: S.code.checks, blanks: !S.code.done ? [] : BLANKS.map(b => { const x = S.code.blanks[b.id] || {}; return { n: +b.id.slice(1), ask: b.ask, ans: b.id === 'b1' && !x.revealed && x.val ? String(x.val).trim() : b.ans, wrong: x.wrong || 0, revealed: !!x.revealed, hinted: !!x.hinted, pts: x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0) - (x.hinted ? 1 : 0)) }; }), log: S.code.log ? S.code.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) : [] },
     up: { errors: S.up.errors, monitorOk: !!S.up.monitorOk, log: S.up.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
     real: { confirmed: !!S.real.confirmed, checked: REAL_ITEMS.filter((_, i) => S.real.checks[i]).length, of: REAL_ITEMS.length, readings: { torch: S.real.readings.torch ?? '', room: S.real.readings.room ?? '', dark: S.real.readings.dark ?? '' } },
     ext: extRecord(),
@@ -134,7 +134,7 @@ function buildRecord() {
 function extRecord() {
   const e = S.ext, sc = extScores();
   const lg = o => (o.log || []).slice(0, 30).map(l => clockOf(l.t) + '  ' + l.msg);
-  const one = k => ({ done: !!e[k].done, score: sc[k], hwErrors: e[k].hw.errors, hints: e[k].hw.hints, wrong: sc[k] ? sc[k].wrong : null, revealed: sc[k] ? sc[k].rev : null, flowErrors: e[k].flow.errors || 0, confirmed: !!e[k].confirmed, log: lg(e[k].hw).concat(lg(e[k].code), lg(e[k].flow)) });
+  const one = k => ({ done: !!e[k].done, score: sc[k], hwErrors: e[k].hw.errors, hints: e[k].hw.hints, wrong: sc[k] ? sc[k].wrong : null, revealed: sc[k] ? sc[k].rev : null, codeHints: sc[k] ? sc[k].hn : null, flowErrors: e[k].flow.errors || 0, confirmed: !!e[k].confirmed, log: lg(e[k].hw).concat(lg(e[k].code), lg(e[k].flow)) });
   return { c1: one('c1'), c2: one('c2') };
 }
 const extSVG = () => HW.circuitSVG(S.hw);
@@ -170,8 +170,8 @@ function renderReportBody(d, ok, sig, svg) {
   if (svg) h += '<div class="rsvg">' + svg + '</div>';
   if (part && !pg.code) h += '<h2>2. 程式填空（0 / 40）</h2><p><b>未完成</b>（0 分）。交報告時已答對 ' + pg.blanksOk + ' / ' + pg.blanksOf + ' 格。</p>';
   else {
-    h += '<h2>2. 程式填空（' + s.code + ' / 40）</h2><p>每格 5 分，每答錯一次 −1（最多 −3），顯示答案只得 1 分。空格 1 的門檻值由學生按讀數決定，表內是學生的答案。用時 ' + dur(d.dur.code) + '。</p>';
-  h += '<table class="rtbl"><thead><tr><th>空格</th><th>內容</th><th>答案</th><th>答錯</th><th>顯示答案</th><th>得分</th></tr></thead><tbody>' + d.code.blanks.map(function (b) { return '<tr><td>' + b.n + '</td><td>' + E(b.ask) + '</td><td class="rmono">' + E(b.ans) + '</td><td>' + b.wrong + '</td><td>' + (b.revealed ? '是' : '—') + '</td><td><b>' + b.pts + '</b> / 5</td></tr>'; }).join('') + '</tbody></table>';
+    h += '<h2>2. 程式填空（' + s.code + ' / 40）</h2><p>每格 5 分，每答錯一次 −1（最多 −3），使用提示 −1（每格最低 2 分），顯示答案只得 1 分。空格 1 的門檻值由學生按讀數決定，表內是學生的答案。用時 ' + dur(d.dur.code) + '。</p>';
+  h += '<table class="rtbl"><thead><tr><th>空格</th><th>內容</th><th>答案</th><th>答錯</th><th>提示</th><th>顯示答案</th><th>得分</th></tr></thead><tbody>' + d.code.blanks.map(function (b) { return '<tr><td>' + b.n + '</td><td>' + E(b.ask) + '</td><td class="rmono">' + E(b.ans) + '</td><td>' + b.wrong + '</td><td>' + (b.hinted ? '是' : '—') + '</td><td>' + (b.revealed ? '是' : '—') + '</td><td><b>' + b.pts + '</b> / 5</td></tr>'; }).join('') + '</tbody></table>';
   if (d.code.log && d.code.log.length) h += '<details><summary>填答記錄</summary>' + list(d.code.log, '') + '</details>';
   }
   if (part && !pg.up) h += '<h2>3. 上傳流程（0 / 20）</h2><p><b>未完成</b>（0 分）。</p>';
@@ -182,7 +182,7 @@ function renderReportBody(d, ok, sig, svg) {
     var x1 = d.ext.c1, x2 = d.ext.c2, ok1 = function (v) { return v ? '<b style="color:#1F8049">老師已確認 ✔</b>' : '未確認'; };
     h += '<h2>4. 延伸挑戰（選做，不計入 100 分總分）</h2>';
     h += '<table class="rtbl"><thead><tr><th>挑戰</th><th>狀態</th><th>得分</th><th>記錄</th><th>實物</th></tr></thead><tbody>';
-    var row = function (label, x) { var hw = x.score && x.score.hw != null; return '<tr><td>' + label + '</td><td>' + (x.done ? '完成' : '未完成') + '</td><td>' + (x.done ? '<b>' + x.score.total + '</b> / 10<br><span class="rmuted">' + (hw ? '接線 ' + x.score.hw + '/4 · 程式 ' + x.score.code + '/4' : '程式 ' + x.score.code + '/8') + ' · 上傳 ' + x.score.up + '/2</span>' : '—') + '</td><td class="rmuted">' + (x.done ? (hw ? '接線錯誤 ' + x.hwErrors + ' 次、提示 ' + x.hints + ' 次、' : '') + '填錯 ' + x.wrong + ' 次、顯示答案 ' + x.revealed + ' 格、上傳錯誤 ' + x.flowErrors + ' 次' : '—') + '</td><td>' + (x.done ? ok1(x.confirmed) : '—') + '</td></tr>'; };
+    var row = function (label, x) { var hw = x.score && x.score.hw != null; return '<tr><td>' + label + '</td><td>' + (x.done ? '完成' : '未完成') + '</td><td>' + (x.done ? '<b>' + x.score.total + '</b> / 10<br><span class="rmuted">' + (hw ? '接線 ' + x.score.hw + '/4 · 程式 ' + x.score.code + '/4' : '程式 ' + x.score.code + '/8') + ' · 上傳 ' + x.score.up + '/2</span>' : '—') + '</td><td class="rmuted">' + (x.done ? (hw ? '接線錯誤 ' + x.hwErrors + ' 次、提示 ' + x.hints + ' 次、' : '') + '填錯 ' + x.wrong + ' 次' + (x.codeHints ? '、程式提示 ' + x.codeHints + ' 格' : '') + '、顯示答案 ' + x.revealed + ' 格、上傳錯誤 ' + x.flowErrors + ' 次' : '—') + '</td><td>' + (x.done ? ok1(x.confirmed) : '—') + '</td></tr>'; };
     h += row('1. 調校靈敏度（電位器）', x1) + row('2. 越暗越亮（analogWrite）', x2);
     h += '</tbody></table>';
     if ((x1.log && x1.log.length) || (x2.log && x2.log.length)) h += '<details><summary>延伸挑戰記錄</summary>' + list((x1.log || []).map(function (l) { return '挑戰1 ' + l; }).concat((x2.log || []).map(function (l) { return '挑戰2 ' + l; })), '') + '</details>';
@@ -399,12 +399,12 @@ function extCell(d, k) {
 }
 function exportCsv() {
   if (!vRows.length) { toast('請先放入成績報告檔案。'); return; }
-  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '硬件接線(40)', '程式填空(40)', '上傳流程(20)', '接線錯誤次數', '接線提示次數', '程式填錯次數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '讀數:電筒', '讀數:課室燈光', '讀數:遮住', '延伸1調校靈敏度(10)', '延伸1實物確認', '延伸2越暗越亮(10)', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
+  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '硬件接線(40)', '程式填空(40)', '上傳流程(20)', '接線錯誤次數', '接線提示次數', '程式填錯次數', '程式提示格數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '讀數:電筒', '讀數:課室燈光', '讀數:遮住', '延伸1調校靈敏度(10)', '延伸1實物確認', '延伸2越暗越亮(10)', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
   const q = v => { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
   const lines = [head.join(',')];
   vRows.filter(r => r.d).sort((a, b) => a.d.cls.localeCompare(b.d.cls) || (+a.d.no - +b.d.no)).forEach(r => {
     const d = r.d;
-    lines.push([d.cls, d.no, d.name, d.status === 'partial' ? '未完成（提早提交）' : '完成', d.score.total, d.score.grade, d.score.hw, d.score.code, d.score.up, d.hw.errors, d.hw.hints, d.code.blanks.reduce((a, b) => a + b.wrong, 0), d.code.blanks.filter(b => b.revealed).length, d.up.errors, d.real.confirmed ? '是' : '否', ...rdCsv(d), ...extCsv(d), d.attempt, d.dur.total != null ? (d.dur.total / 60).toFixed(1) : '', fmtTime(d.finished), d.teacherUsed ? '是' : '否', r.ok ? '有效' : '無效', r.code, r.fname].map(q).join(','));
+    lines.push([d.cls, d.no, d.name, d.status === 'partial' ? '未完成（提早提交）' : '完成', d.score.total, d.score.grade, d.score.hw, d.score.code, d.score.up, d.hw.errors, d.hw.hints, d.code.blanks.reduce((a, b) => a + b.wrong, 0), d.code.blanks.filter(b => b.hinted).length, d.code.blanks.filter(b => b.revealed).length, d.up.errors, d.real.confirmed ? '是' : '否', ...rdCsv(d), ...extCsv(d), d.attempt, d.dur.total != null ? (d.dur.total / 60).toFixed(1) : '', fmtTime(d.finished), d.teacherUsed ? '是' : '否', r.ok ? '有效' : '無效', r.code, r.fname].map(q).join(','));
   });
   vRows.filter(r => !r.d).forEach(r => lines.push(head.map((h, i) => i === head.length - 3 ? '無效' : i === head.length - 1 ? r.fname : '').map(q).join(',')));
   saveFile(`自動夜燈_成績_${fmtTime(Date.now()).slice(0, 10)}.csv`, '﻿' + lines.join('\r\n'), 'text/csv').then(r => { if (r === 'saved') toast('已匯出 CSV', 'ok'); });

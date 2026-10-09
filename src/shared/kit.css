@@ -27,3 +27,52 @@ details.fold-card>summary h3{vertical-align:middle}
 /* ---------- 未完成報告（共用） ---------- */
 .partial-top{max-width:1180px;margin:0 auto 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .partial-top .alert{flex:1;min-width:260px}
+/* ---------- 編程輔助：字典、指令解釋、空格說明卡（共用） ---------- */
+.k-op{color:#7A3E9D;font-weight:700}
+#editor [data-k]{text-decoration:underline dotted rgba(0,120,125,.55);text-underline-offset:3px;cursor:help}
+.side-dict{display:flex;flex-direction:column;align-items:center;gap:1px;border:0;background:none;color:#00979C;cursor:pointer;padding:4px 2px;border-radius:6px;font:inherit;font-size:10.5px;font-weight:700;width:40px}
+.side-dict svg{width:22px;height:22px}
+.side-dict:hover,.side-dict.on{background:rgba(0,151,156,.14)}
+.side-dict.pulse{animation:dkpulse 1.6s ease-in-out infinite}
+@keyframes dkpulse{0%,100%{box-shadow:0 0 0 0 rgba(0,151,156,0)}50%{box-shadow:0 0 0 4px rgba(0,151,156,.35)}}
+.ide-dict{width:300px;flex:none;border-right:1px solid var(--ide-line,#dfe5e6);background:#F7FBFB;display:flex;flex-direction:column;max-height:100%;min-height:0;overflow:hidden;font-size:13px}
+.ide-dict[hidden]{display:none}
+.dk-head{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #dfe5e6;background:#EAF5F5;color:#0B5A5D}
+.dk-x,.bc-x{border:0;background:none;cursor:pointer;color:#5B6B6C;font-size:14px;padding:2px 6px;border-radius:4px}
+.dk-x:hover,.bc-x:hover{background:rgba(0,0,0,.07)}
+.dk-body{position:relative;overflow:auto;padding:8px 12px 14px;flex:1;min-height:0;max-height:640px}
+.dk-h{font-weight:700;font-size:12px;color:#0B5A5D;margin:10px 0 4px;letter-spacing:.02em}
+.dk-item{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border-radius:6px;margin-bottom:4px;background:#fff;border:1px solid #E1EAEA}
+.dk-item code{font-family:var(--f-mono);font-weight:700;color:#00777B;font-size:12.5px;white-space:pre-wrap}
+.dk-item em{font-style:normal;font-size:12px;color:#5B6B6C}
+.dk-item em code{font-weight:400;color:#1F2B2C}
+.dk-item.flash{animation:dkflash 1.8s ease-out 2}
+@keyframes dkflash{0%{background:#FFE9A8;border-color:#E0A800}100%{background:#fff;border-color:#E1EAEA}}
+.dk-old{margin-top:8px}
+.dk-old>summary{cursor:pointer;font-weight:700;color:#0B5A5D;padding:4px 0}
+.dk-tip{font-size:12px;color:#5B6B6C;margin:10px 0 0}
+.dk-tipbox{position:fixed;z-index:80;max-width:320px;background:#16282A;color:#EAF4F4;border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.5;box-shadow:0 6px 18px rgba(0,0,0,.25);display:none;pointer-events:none}
+.dk-tipbox code{font-family:var(--f-mono);color:#7FE3E6;font-weight:700;display:block}
+.dk-tipbox span{display:block}
+.dk-tipbox em{display:block;font-style:normal;color:#B9CDCE;margin-top:2px}
+.dk-tipbox em code{display:inline;color:#fff;font-weight:400}
+.pdict{border:1px solid #CFE6E6;background:#F3FAFA;border-radius:8px;padding:8px 10px}
+.pdict-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.linkbtn{border:0;background:none;color:var(--teal,#00979C);text-decoration:underline;cursor:pointer;font:inherit;font-size:12.5px;padding:0}
+.bcard-row{padding:2px 20px 6px 46px;white-space:normal;font-family:var(--f-body,inherit)}
+.bcard{border:2px solid #E08A00;background:#FFFBF0;border-radius:8px;padding:8px 10px;font-size:13px;line-height:1.55;color:#1F2B2C;max-width:560px;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.bc-top{display:flex;align-items:center;gap:8px}
+.bc-top b{flex:1}
+.bc-n{font-family:var(--f-disp,inherit);font-weight:700;font-size:11px;background:#E08A00;color:#fff;border-radius:4px;padding:0 6px;line-height:18px}
+.bc-n.ok{background:#1F8049}
+.bc-type{margin-top:4px}
+.bc-type b{color:#9A5B00}
+.bc-fb{color:#C4301F;margin-top:4px}
+.bc-hint{margin-top:4px;background:#FFF1CC;border-radius:6px;padding:4px 8px}
+.bc-hint em{font-style:normal;color:#9A5B00;font-weight:700}
+.bc-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.bc-hb.pulse,.blist .pulse{animation:hbpulse 1.4s ease-in-out infinite}
+@keyframes hbpulse{0%,100%{box-shadow:0 0 0 0 rgba(224,138,0,0)}50%{box-shadow:0 0 0 4px rgba(224,138,0,.4)}}
+.blist li .acts{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.dk-new{font-style:normal;font-family:var(--f-body,inherit);font-size:10.5px;font-weight:700;background:#E08A00;color:#fff;border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:1px}
+.pdict .dict{max-height:210px;overflow:auto;padding-right:4px}

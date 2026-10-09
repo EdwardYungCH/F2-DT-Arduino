@@ -2,6 +2,7 @@
    Arduino IDE 模擬器：程式填空 / 修正程式、選板、選 Port、編譯、上傳
    三個情境：main（主任務：閃動 L 燈）、c1（延伸 1 心跳燈）、c2（延伸 2 修好壞掉的程式）
    ===================================================================== */
+HELP.setLesson(1);
 const CODE_TEMPLATE = [
   '// 我的第一個程式：閃動 L 燈',
   '// L 燈在 UNO 板上，板內已經接到 13 號腳',
@@ -234,7 +235,7 @@ const IDE = (() => {
       intro: `這是你的第一個程式。先讀灰色的註解，它會告訴你那一行做甚麼，然後完成 <b>6 個橙色空格</b>。可以直接打字，或者先點空格，再點下面的字詞。`,
       revealNote: '顯示答案後，這一格只會得 1 分（滿分 5 分）。建議先再試一次。',
       next: { label: '下一步：實物挑戰', stage: 'real' },
-      dict: [['void setup() { … }', '開機時只做一次，用來做設定'], ['void loop() { … }', '做完最後一行，就由頭再做，不停重複'], ['pinMode(腳, 模式)', '設定腳位是 OUTPUT（輸出）還是 INPUT（輸入）'], ['digitalWrite(腳, 狀態)', 'HIGH = 輸出 5V（開），LOW = 輸出 0V（關）'], ['delay(毫秒)', '暫停一段時間，1000 毫秒 = 1 秒'], [';', '每個指令最後都要有分號（半形）'], ['// 註解', '雙斜線後面的灰色文字是寫給人看的說明，Arduino 不會執行']],
+      dict: ['setup', 'loop', 'pinMode', 'OUTPUT', 'digitalWrite', 'HIGH', 'LOW', 'delay', 'semi', 'comment'],
     },
     c1: {
       name: 'c1', file: 'Heartbeat', eyebrow: '延伸挑戰 1 · 心跳燈', title: '編程及上傳', full: false,
@@ -243,14 +244,14 @@ const IDE = (() => {
       intro: `令 L 燈像心跳一樣「噗噗——停」。完成 <b>5 個橙色空格</b>，留意每一行的註解寫着多少秒。`,
       revealNote: '顯示答案會令這個挑戰扣 2 分。建議先再試一次。',
       next: { label: '返回延伸挑戰', stage: 'ext' },
-      dict: [['delay(100)', '等 0.1 秒（100 毫秒）'], ['delay(800)', '等 0.8 秒（800 毫秒）'], ['digitalWrite(13, HIGH)', '開燈'], ['digitalWrite(13, LOW)', '關燈']],
+      dict: ['delay', 'digitalWrite', 'HIGH', 'LOW'],
     },
     c2: {
       name: 'c2', file: 'Fix_Me', eyebrow: '延伸挑戰 2 · 修好壞掉的程式', title: '找錯處及上傳', full: false, debug: true,
       tpl: [], blanks: [], bank: [],
       st: () => S.ext.c2.code, flow: () => S.ext.c2.flow,
       next: { label: '返回延伸挑戰', stage: 'ext' },
-      dict: [['was not declared in this scope', '編譯器不認識這個字：多數是串錯字或大小寫不對'], ['suggested alternative', '編譯器估你想寫的字'], ["expected ';' before …", '上一句的句尾少了分號 ;'], ["stray '\\357' in program", '程式裏有中文或全形字，例如全形分號 ；'], ['第 10:27 行', '冒號前是行號，後面是第幾個字（列）']],
+      dict: ['e-undecl', 'e-sugg', 'e-semi', 'e-stray', 'e-pos'],
     },
   };
   const B = id => { const st = C.st(); if (!st.blanks[id]) st.blanks[id] = { val: '', wrong: 0, lastWrong: null, status: '', revealed: false, fb: '' }; return st.blanks[id]; };
@@ -259,23 +260,7 @@ const IDE = (() => {
   const logTo = (obj, msg) => pushLog(obj, msg);
 
   /* ---------- editor ---------- */
-  const TIP = { pinMode: '設定腳位模式：pinMode(腳, OUTPUT/INPUT)', digitalWrite: '令腳位輸出 HIGH（開）或 LOW（關）', delay: '暫停，單位是毫秒（1000 = 1 秒）', HIGH: '高電位 5V（開）', LOW: '低電位 0V（關）', OUTPUT: '輸出模式', setup: '開機時執行一次', loop: '不停重複執行', tone: '發聲：tone(腳, 頻率)', noTone: '停聲：noTone(腳)', dot: '短閃', dash: '長閃', letterGap: '字母之間的停頓' };
-  function hl(text) {
-    let out = '', i = 0;
-    const ci = text.indexOf('//');
-    const codePart = ci >= 0 ? text.slice(0, ci) : text, com = ci >= 0 ? text.slice(ci) : '';
-    const re = /\b(void|int)\b|\b(pinMode|digitalWrite|delay|tone|noTone)\b|\b(HIGH|LOW|OUTPUT)\b|\b(setup|loop)\b|\b(\d+)\b/g;
-    let m;
-    while ((m = re.exec(codePart))) {
-      out += esc(codePart.slice(i, m.index));
-      const cls = m[1] ? 'k-type' : m[2] ? 'k-fn' : m[3] ? 'k-const' : m[4] ? 'k-struct' : 'k-num';
-      out += `<span class="${cls}"${TIP[m[0]] ? ` title="${TIP[m[0]]}"` : ''}>${esc(m[0])}</span>`;
-      i = m.index + m[0].length;
-    }
-    out += esc(codePart.slice(i));
-    if (com) out += `<span class="k-com">${esc(com)}</span>`;
-    return out;
-  }
+  const hl = text => HELP.hl(text);
   function renderEditor() {
     const ed = $('#editor');
     if (C.debug) return renderDebugEditor();
@@ -293,7 +278,8 @@ const IDE = (() => {
       return `<div class="cl" data-ln="${idx + 1}"><span class="ln">${idx + 1}</span><span class="tx">${html || ' '}</span></div>`;
     }).join('');
     $$('.blank', ed).forEach(inp => {
-      inp.addEventListener('focus', () => { lastFocus = inp.dataset.b; markLine(inp); });
+      inp.addEventListener('focus', () => { lastFocus = inp.dataset.b; markLine(inp); openCard(inp.dataset.b); });
+      inp.addEventListener('click', () => { if (!$('.bcard-row')) openCard(inp.dataset.b); });
       inp.addEventListener('input', () => {
         const st = B(inp.dataset.b); st.val = inp.value;
         if (st.status === 'bad') { st.status = ''; inp.classList.remove('bad'); inp.previousElementSibling.classList.remove('bad'); }
@@ -363,6 +349,28 @@ const IDE = (() => {
     if (b.ctx === 'func' && lc === 'delay') return 'delay 是等待。開燈要用令腳位輸出 HIGH 的指令。';
     if (b.ctx === 'func' && lc === 'digitalread') return 'digitalRead 是「讀取」輸入；控制燈要「寫」出信號。';
     return '';
+  }
+  /* ---------- 說明卡及提示（共用 HELP） ---------- */
+  function openCard(id) {
+    const b = C.blanks.find(x => x.id === id), inp = $('#blank-' + id);
+    if (!b || !inp) return;
+    const st = B(id); if (st.status === 'ok' || st.revealed) { HELP.hideCard(); return; }
+    const row = HELP.showCard(inp, b, st, C, { cost: C.name === 'main' ? '扣 1 分' : '挑戰扣 1 分' });
+    if (!row) return;
+    $$('[data-hint]', row).forEach(x => x.onclick = e => { e.stopPropagation(); useHint(x.dataset.hint); });
+    $$('[data-rev]', row).forEach(x => x.onclick = e => { e.stopPropagation(); reveal(x.dataset.rev); });
+  }
+  function useHint(id) {
+    const b = C.blanks.find(x => x.id === id), st = B(id);
+    if (!b || st.hinted || st.status === 'ok' || st.revealed) return;
+    modal({
+      title: `使用空格 ${id.slice(1)} 的提示？`,
+      html: `<p>${C.name === 'main' ? '使用提示後，這一格會<b>扣 1 分</b>（滿分 5 分）。' : '使用提示會令這個挑戰<b>扣 1 分</b>。'}</p><p class="small muted">先看看說明卡寫的「要填甚麼」，或者打開指令小字典找找看。</p>`,
+      actions: [{ label: '再想想', kind: 'ghost' }, { label: '使用提示', kind: 'primary', onClick: () => {
+        st.hinted = true; logTo(C.st(), `使用提示：空格 ${id.slice(1)}（${b.ask}）`); save(); renderPanel();
+        const el = $('#blank-' + id); if (el) { el.focus(); openCard(id); }
+      } }],
+    });
   }
   function checkAnswers() {
     const st = C.st(), bl = C.blanks;
@@ -812,6 +820,7 @@ const IDE = (() => {
     const bl = C.blanks;
     const nOk = bl.filter(b => B(b.id).status === 'ok' || B(b.id).revealed).length;
     return `<p>${C.intro}</p>
+      ${HELP.panelDict(C)}
       <div class="row"><button class="btn primary sm" id="btnCheck">檢查答案</button><span class="pill ${nOk === bl.length ? 'ok' : ''}">${nOk} / ${bl.length} 格正確</span></div>
       <div><div class="small muted" style="margin-bottom:4px">字詞庫（先點空格，再點字詞）</div><div class="bank">${C.bank.map(w => `<button class="chip" data-w="${w}">${w}</button>`).join('')}</div></div>
       <ul class="blist">${bl.map(b => {
@@ -819,10 +828,10 @@ const IDE = (() => {
         let extra = '';
         if (st.status === 'ok') extra = '<span class="pill ok">正確</span>';
         else if (st.revealed) extra = '<span class="pill warn">已顯示答案</span>';
-        else if (st.wrong >= 3) extra = `<button class="btn sm ghost" data-rev="${b.id}">顯示答案</button>`;
+        else extra = `<div class="acts">${st.hinted ? '' : `<button class="btn sm ghost${st.wrong >= 2 ? ' pulse' : ''}" data-hint="${b.id}" title="使用提示會扣 1 分">💡 提示 −1</button>`}${st.wrong >= 3 ? `<button class="btn sm ghost" data-rev="${b.id}">顯示答案</button>` : ''}</div>`;
         let h = '';
         if (st.status === 'bad' && st.fb) h += `<div class="fb">${st.fb}</div>`;
-        if (st.wrong >= 2 && st.status !== 'ok' && !st.revealed) h += `<div class="h">提示：${b.hint}</div>`;
+        if (st.hinted && st.status !== 'ok' && !st.revealed) { const dk = HELP.dkOf(b, C.tpl); h += `<div class="h">💡 提示：${b.hint}${dk ? ` <button class="linkbtn" data-dk="${dk}">看字典</button>` : ''}</div>`; }
         return `<li class="${cls}"><span class="n">${b.id.slice(1)}</span><div><div>${b.ask}<span class="muted small">（第 ${b.line} 行）</span></div>${h}${st.wrong ? `<div class="small muted">答錯 ${st.wrong} 次</div>` : ''}</div>${extra}</li>`;
       }).join('')}</ul>`;
   }
@@ -853,8 +862,8 @@ const IDE = (() => {
   function statsHTML() {
     const fl = C.flow(), st = C.st();
     if (C.debug) return `<span class="pill">編譯錯誤 ${st.compileFails || 0} 次（不扣分）</span><span class="pill ${st.wrongRuns ? 'err' : ''}">上傳後燈號不對 ${st.wrongRuns || 0} 次</span>`;
-    const nWrong = C.blanks.reduce((a, b) => a + (B(b.id).wrong || 0), 0), nRev = C.blanks.filter(b => B(b.id).revealed).length;
-    return `<span class="pill ${nWrong ? 'err' : ''}">填錯 ${nWrong} 次</span><span class="pill ${nRev ? 'warn' : ''}">顯示答案 ${nRev} 格</span><span class="pill ${fl.errors ? 'err' : ''}">上傳流程錯誤 ${fl.errors || 0} 次</span>`;
+    const nWrong = C.blanks.reduce((a, b) => a + (B(b.id).wrong || 0), 0), nRev = C.blanks.filter(b => B(b.id).revealed).length, nHint = C.blanks.filter(b => B(b.id).hinted).length;
+    return `<span class="pill ${nWrong ? 'err' : ''}">填錯 ${nWrong} 次</span><span class="pill ${nHint ? 'warn' : ''}">使用提示 ${nHint} 格</span><span class="pill ${nRev ? 'warn' : ''}">顯示答案 ${nRev} 格</span><span class="pill ${fl.errors ? 'err' : ''}">上傳流程錯誤 ${fl.errors || 0} 次</span>`;
   }
   function renderPanel() {
     const steps = flowSteps();
@@ -872,12 +881,13 @@ const IDE = (() => {
       <div id="codeExplain">${ex ? alertBox(ex.kind, ex.html) : ''}</div>
       ${C.flow().uploaded ? `<button class="btn go" id="codeNext">${C.next.label}</button>` : (C.name !== 'main' ? `<button class="btn sm ghost" id="codeBack">返回延伸挑戰</button>` : '')}
       <div class="statline">${statsHTML()}</div>
-      <details class="fold know"><summary>指令小字典</summary><div class="dict">${C.dict.map(([c, t]) => `<div><code>${esc(c)}</code><span>${t}</span></div>`).join('')}</div></details>`;
+      ${C.free || C.debug ? HELP.panelDict(C) : ''}`;
     const bc = $('#btnCheck'); if (bc) bc.onclick = checkAnswers;
     const bu = $('#btnUsb'); if (bu) bu.onclick = plugUsb;
     const cn = $('#codeNext'); if (cn) cn.onclick = () => goStage(C.next.stage);
     const cb = $('#codeBack'); if (cb) cb.onclick = () => goStage('ext');
     $$('[data-rev]', panel).forEach(b => b.onclick = () => reveal(b.dataset.rev));
+    $$('[data-hint]', panel).forEach(b => b.onclick = () => useHint(b.dataset.hint));
     $$('.chip[data-w]', panel).forEach(c => c.onclick = () => {
       let id = lastFocus;
       const st = id && C.blanks.some(b => b.id === id) && B(id);
@@ -916,6 +926,7 @@ const IDE = (() => {
     if (!built) build();
     const switched = !C || C.name !== name;
     C = CTX[name];
+    HELP.setCtx(C);
     $('#ideMenubar .title').textContent = `${C.file} | Arduino IDE`;
     $('.ide-tab').textContent = `${C.file}.ino`;
     C.blanks.forEach(b => B(b.id));

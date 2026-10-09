@@ -157,7 +157,7 @@ function logEv(sec, msg, counted = true) {
 }
 
 /* ---------------- scoring ---------------- */
-const blankPts = x => { x = x || {}; return x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)); };
+const blankPts = x => { x = x || {}; return x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0) - (x.hinted ? 1 : 0)); };
 /* only finished parts score: an early (unfinished) report gets 0 for the parts not yet done */
 function scores(st = S) {
   const done = { hw: !!st.hw.done, code: !!st.code.done, up: !!st.up.uploaded };
@@ -193,9 +193,9 @@ function extScores(st = S) {
   if (!e) return res;
   if (e.c1.done) {
     const bl = C1_BLANKS.map(b => e.c1.code.blanks[b.id] || {});
-    const wrong = bl.reduce((a, x) => a + (x.wrong || 0), 0), rev = bl.filter(x => x.revealed).length;
-    const code = Math.max(3, 8 - wrong - 2 * rev), up = Math.max(0, 2 - (e.c1.flow.errors || 0));
-    res.c1 = { code, up, total: code + up, wrong, rev };
+    const wrong = bl.reduce((a, x) => a + (x.wrong || 0), 0), rev = bl.filter(x => x.revealed).length, hn = bl.filter(x => x.hinted).length;
+    const code = Math.max(3, 8 - wrong - 2 * rev - hn), up = Math.max(0, 2 - (e.c1.flow.errors || 0));
+    res.c1 = { code, up, total: code + up, wrong, rev, hn };
   }
   if (e.c2.done) {
     const c = e.c2.code;

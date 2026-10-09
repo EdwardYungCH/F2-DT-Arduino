@@ -161,7 +161,7 @@ function scores(st = S) {
   const done = { hw: !!st.hw.done, code: !!st.code.done, up: !!st.up.uploaded };
   const hw = done.hw ? Math.max(16, 40 - 4 * st.hw.errors - 2 * st.hw.hints) : 0;
   let code = 0;
-  if (done.code) BLANKS.forEach(b => { const x = st.code.blanks[b.id] || {}; code += x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0)); });
+  if (done.code) BLANKS.forEach(b => { const x = st.code.blanks[b.id] || {}; code += x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0) - (x.hinted ? 1 : 0)); });
   const up = done.up ? Math.max(8, 20 - 3 * st.up.errors) : 0;
   const total = hw + code + up;
   const grade = total >= 85 ? '優異' : total >= 70 ? '良好' : total >= 50 ? '合格' : '仍需努力';
@@ -192,9 +192,9 @@ function extScores(st = S) {
   [['c1', C1_BLANKS], ['c2', C2_BLANKS]].forEach(([k, bls]) => {
     const x = e[k]; if (!x.done) return;
     const bl = bls.map(b => x.code.blanks[b.id] || {});
-    const wrong = bl.reduce((a, y) => a + (y.wrong || 0), 0), rev = bl.filter(y => y.revealed).length;
-    const hw = Math.max(1, 4 - x.hw.errors - x.hw.hints), code = Math.max(1, 4 - wrong - 2 * rev), up = Math.max(0, 2 - (x.flow.errors || 0));
-    res[k] = { hw, code, up, total: hw + code + up, wrong, rev };
+    const wrong = bl.reduce((a, y) => a + (y.wrong || 0), 0), rev = bl.filter(y => y.revealed).length, hn = bl.filter(y => y.hinted).length;
+    const hw = Math.max(1, 4 - x.hw.errors - x.hw.hints), code = Math.max(1, 4 - wrong - 2 * rev - hn), up = Math.max(0, 2 - (x.flow.errors || 0));
+    res[k] = { hw, code, up, total: hw + code + up, wrong, rev, hn };
   });
   return res;
 }
