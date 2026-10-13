@@ -61,21 +61,21 @@
         <div id="introSceneWrap"></div>
         <div class="stack" style="gap:10px;flex:1;min-width:230px">
           <label class="small" for="introSlider">拉動滑桿，把環境變暗：<b id="introLabel"></b></label>
-          <input type="range" id="introSlider" min="0" max="100" value="40" class="dark-slider">
+          <input type="range" id="introSlider" min="0" max="100" value="60" class="dark-slider">
           <div class="readout">A0 讀數 <b id="introVal">0</b></div>
           <div id="introGauge"></div>
           <div class="phase small" id="introLamp"></div>
         </div>
       </div>
       <table class="timing" style="margin-top:14px">
-        <thead><tr><th>環境</th><th>A0 讀數（大約）</th><th>夜燈（門檻 700）</th></tr></thead>
+        <thead><tr><th>環境</th><th>A0 讀數（大約）</th><th>夜燈（門檻 1000）</th></tr></thead>
         <tbody>
-          <tr><td>電筒照住</td><td class="num">80</td><td>關燈</td></tr>
-          <tr><td>課室燈光</td><td class="num">450</td><td>關燈</td></tr>
-          <tr><td>用手遮住</td><td class="num">980</td><td><b>開燈</b></td></tr>
+          <tr><td>手機電筒照住</td><td class="num">940（9 百幾）</td><td>關燈（當作白天）</td></tr>
+          <tr><td>課室燈光</td><td class="num">1015（1 千零十幾）</td><td><b>開燈</b></td></tr>
+          <tr><td>用手遮住</td><td class="num">1022</td><td><b>開燈</b></td></tr>
         </tbody>
       </table>
-      <p class="small muted" style="margin-top:8px">記住：這個電路是<b>越暗，讀數越大</b>。真的讀數每塊板、每個課室都不同，做實物時你要自己量度，再決定門檻值。</p>
+      <p class="small muted" style="margin-top:8px">記住：這個電路是<b>越暗，讀數越大</b>。這個光感應器很敏感，課室燈光對它來說已經算「暗」，讀數接近 1023；要用<b>手機電筒照住</b>，讀數才會跌到 9 百幾。所以今堂用「電筒照住」代表白天。真的讀數每塊板、每個課室都不同，做實物時你要自己量度，再決定門檻值。</p>
     </div>
 
     <div class="card span-5">

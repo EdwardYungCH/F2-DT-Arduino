@@ -30,7 +30,7 @@ const CODE_TEMPLATE = [
 ];
 const thrOk = v => /^\d+$/.test(v) && +v >= LIGHT.THR_MIN && +v <= LIGHT.THR_MAX;
 const BLANKS = [
-  { id: 'b1', ans: '700', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：課室燈光時讀數約 450，用手遮住時約 980。門檻值要在兩者<em>中間</em>，例如 700。' },
+  { id: 'b1', ans: '1000', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：電筒照住時讀數約 940，課室燈光時約 1015。門檻值要在兩者<em>中間</em>，例如 1000。' },
   { id: 'b2', ans: '9600', ctx: 'baud', ask: '通訊速度', hint: '看看這一行的註解（灰色文字）：速度是幾多？' },
   { id: 'b3', ans: 'analogRead', ctx: 'func', argc: 1, ask: '讀取類比讀數的指令', hint: '讀按鈕用 digitalRead；讀 0 至 1023 的<em>類比</em>讀數用 <em>analogRead</em>，注意 R 大寫。' },
   { id: 'b4', ans: 'A0', ctx: 'arg', accept: v => v === 'A0' || v === '0', ask: '光感應器接在哪一支腳', hint: '藍色線接在 Arduino 下方 ANALOG IN 的哪一支腳？要寫英文字母加數字，A 大寫。' },
@@ -94,8 +94,9 @@ const C2_TEMPLATE = [
   '}',
   '',
   'void loop() {',
-  '  val = analogRead(A0);             // 0（很光）至 1023（很暗）',
-  '  level = {{e1}}(val, 0, {{e2}}, 0, {{e3}});   // 把 0–1023 轉換成 0–255',
+  '  val = analogRead(A0);             // 電筒照住約 9 百幾，課室燈光約 1015',
+  '  level = {{e1}}(val, 900, {{e2}}, 0, {{e3}}); // 把 900–1023 轉換成 0–255',
+  '  level = constrain(level, 0, 255); // 讀數細過 900 時，不會變成負數',
   '  {{e4}}(ledPin, {{e5}});           // 用 level 控制 LED 的亮度',
   '  delay(100);',
   '}',
@@ -151,7 +152,7 @@ const IDE = (() => {
       name: 'c2', file: 'Night_Light_Dimmer', eyebrow: '延伸挑戰 2 · 越暗越亮', title: '編程及上傳', full: false,
       tpl: C2_TEMPLATE, blanks: C2_BLANKS, bank: C2_BANK,
       st: () => S.ext.c2.code, flow: () => S.ext.c2.flow,
-      intro: `不用接新零件。你要完成 <b>5 個空格</b>：用 <code>map</code> 把讀數（0 至 1023）轉換成亮度（0 至 255），再用 <code>analogWrite</code> 調校 LED 的亮度。`,
+      intro: `不用接新零件。你要完成 <b>5 個空格</b>：用 <code>map</code> 把讀數（900 至 1023）轉換成亮度（0 至 255），再用 <code>analogWrite</code> 調校 LED 的亮度。`,
       revealNote: '顯示答案會令這個挑戰扣 2 分。建議先再試一次。',
       next: { label: '返回延伸挑戰', stage: 'ext' },
       dict: ['map', 'analogWrite', 'digitalWrite'],
@@ -255,10 +256,10 @@ const IDE = (() => {
     const cn = ctxName();
     if (cn === 'main') {
       if (b.id === 'b1') {
-        if (!/^\d+$/.test(v)) return '門檻值要填一個整數，例如 600（不用寫單位）。';
+        if (!/^\d+$/.test(v)) return '門檻值要填一個整數，例如 990（不用寫單位）。';
         if (+v > 1023) return 'analogRead 的讀數最大只有 1023，門檻值大過 1023 的話，燈永遠不會亮。';
-        if (+v < LIGHT.THR_MIN) return `門檻值太低了。課室燈光時讀數大約 ${LIGHT.base(LIGHT.ROOM_AT)}，大過 ${v}，所以白天燈也會亮。門檻值要大過課室燈光時的讀數。`;
-        return `門檻值太高了。用手遮住時讀數大約 ${LIGHT.base(100)}，未必大過 ${v}，所以天黑時燈可能不會亮。門檻值要細過遮住時的讀數。`;
+        if (+v < LIGHT.THR_MIN) return `門檻值太低了。電筒照住時讀數大約 ${LIGHT.base(0)}，已經大過 ${v}，所以有電筒照住（白天）燈也會亮。門檻值要大過電筒照住時的讀數。`;
+        return `門檻值太高了。課室燈光時讀數大約 ${LIGHT.base(LIGHT.ROOM_AT)}，未必大過 ${v}，所以移開電筒後燈可能不會亮。門檻值要細過課室燈光時的讀數。`;
       }
       if (b.id === 'b2') return /^\d+$/.test(v) ? '這個速度程式可以用，但今堂統一用註解寫的速度。記住：Serial Monitor 要選<b>同一個</b>速度，否則會出亂碼。' : '這裏要填一個數字（通訊速度）。';
       if (b.id === 'b3' && lc === 'digitalread') return 'digitalRead 只會讀到 HIGH 或 LOW。光暗有很多程度，要用讀取<b>類比</b>讀數的指令。';
@@ -266,7 +267,7 @@ const IDE = (() => {
       if (b.id === 'b4' && lc === 'a0' && v !== 'A0') return 'A 要大寫：<code>A0</code>。';
       if (b.id === 'b4' && /^a?\d$/i.test(v)) return '藍色線接在 ANALOG IN 的哪一支腳？看清楚接線圖。';
       if (b.id === 'b4' && /^D?\d+$/i.test(v)) return '光感應器接在 ANALOG IN（類比輸入）那一排，不是數位腳。';
-      if (b.id === 'b5' && v === 'print') return '<code>print</code> 不會換行，讀數會全部擠在同一行：450451449…。要用印完會<b>換行</b>的指令。';
+      if (b.id === 'b5' && v === 'print') return '<code>print</code> 不會換行，讀數會全部擠在同一行：101510141016…。要用印完會<b>換行</b>的指令。';
       if (b.id === 'b5' && lc === 'printin') return '最後兩個字母是小寫的 <b>L</b> 和 <b>N</b>（line 的意思），不是 I。';
       if (b.id === 'b6' && (v === '<' || v === '<=')) return '用 <code>&lt;</code> 的話，讀數<b>細</b>過門檻值（天光）時才開燈，剛好相反。記住：越暗，讀數越<b>大</b>。';
       if (b.id === 'b6' && v === '=') return '一個 <code>=</code> 是「設定」，不是比較。這裏要比較讀數是否<b>大過</b>門檻值。';
@@ -801,14 +802,14 @@ const IDE = (() => {
       <div class="row small" style="gap:6px"><button class="chip" data-lab="0">電筒照住</button><button class="chip" data-lab="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-lab="100">用手遮住</button></div>
       <div class="readout"><span id="labLabel"></span>：A0 讀數 <b id="labVal"></b></div>
       <div id="labGauge">${gaugeHTML(LIGHT.base(labDark), 512)}</div>
-      <p class="small muted">記下「課室燈光」和「用手遮住」的讀數，門檻值（空格 1）要在兩者<b>中間</b>。黃色線是你填的門檻值。</p></div>`;
+      <p class="small muted">記下「電筒照住」和「課室燈光」的讀數，門檻值（空格 1）要在兩者<b>中間</b>。黃色線是你填的門檻值（刻度只顯示 850 至 1023 一段）。</p></div>`;
   }
   function labTick() {
     const el = $('#labGauge'); if (!el || !C || C.name !== 'main') return;
     const v = LIGHT.read(labDark); setGauge(el, v);
     $('#labVal').textContent = v; $('#labLabel').textContent = LIGHT.label(labDark);
     const t = (B('b1').val || '').trim(), th = $('.gthr', el);
-    if (th) { const ok = /^\d+$/.test(t) && +t <= 1023; th.style.display = ok ? '' : 'none'; if (ok) { th.style.left = (+t / 1023 * 100) + '%'; $('span', th).textContent = '門檻 ' + t; } }
+    if (th) { const ok = /^\d+$/.test(t) && +t <= 1023; th.style.display = ok ? '' : 'none'; if (ok) { th.style.left = LIGHT.pos(+t) + '%'; $('span', th).textContent = '門檻 ' + t; } }
   }
   function bindLab(panel) {
     const sl = $('#labSlider', panel); if (!sl) return;

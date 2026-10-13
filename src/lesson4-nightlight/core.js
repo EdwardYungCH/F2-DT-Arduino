@@ -234,18 +234,21 @@ $$('#stepper button').forEach(b => b.addEventListener('click', () => goStage(b.d
 /* darkness d: 0 = torch shining on it, 40 = classroom light, 100 = covered by a hand.
    With 5V → 10kΩ → A0 → light sensor → GND, the darker it is, the bigger the reading. */
 const LIGHT = {
-  ROOM_AT: 40, THR_MIN: 500, THR_MAX: 950, DEMO_THR: 700,
-  base: d => Math.round(80 + (985 - 80) * Math.max(0, Math.min(100, d)) / 100),
-  read: d => Math.max(0, Math.min(1023, LIGHT.base(d) + Math.round((Math.random() - 0.5) * 12))),
-  label: d => d < 15 ? '電筒照住' : d < 55 ? '課室燈光' : d < 85 ? '有點暗' : '用手遮住',
+  /* 按老師用實物量度的讀數（10 月 13 日）：手機電筒照住約 9xx，課室燈光約 101x，用手遮住接近 1023。
+     這個光感應器很敏感，課室燈光對它來說已經算「暗」，所以用「電筒照住」代表白天。 */
+  ROOM_AT: 60, THR_MIN: 960, THR_MAX: 1010, DEMO_THR: 1000, GMIN: 850,
+  base: d => { d = Math.max(0, Math.min(100, d)); return Math.round(d <= 60 ? 940 + (1015 - 940) * d / 60 : 1015 + (1022 - 1015) * (d - 60) / 40); },
+  read: d => Math.max(0, Math.min(1023, LIGHT.base(d) + Math.round((Math.random() - 0.5) * 6))),
+  label: d => d < 20 ? '電筒照住' : d < 45 ? '電筒移遠一點' : d < 80 ? '課室燈光' : '用手遮住',
+  pos: v => Math.max(0, Math.min(100, (v - LIGHT.GMIN) / (1023 - LIGHT.GMIN) * 100)),
 };
 /* a 0–1023 scale with the reading and the threshold */
 function gaugeHTML(val, thr) {
-  return `<div class="gauge" aria-hidden="true"><div class="gtrack">${thr != null ? `<i class="gthr" style="left:${thr / 1023 * 100}%"><span>門檻 ${thr}</span></i>` : ''}<i class="gval" style="left:${val / 1023 * 100}%"><span>${val}</span></i></div><div class="gends"><span>0（很光）</span><span>1023（很暗）</span></div></div>`;
+  return `<div class="gauge" aria-hidden="true"><div class="gtrack">${thr != null ? `<i class="gthr" style="left:${LIGHT.pos(thr)}%"><span>門檻 ${thr}</span></i>` : ''}<i class="gval" style="left:${LIGHT.pos(val)}%"><span>${val}</span></i></div><div class="gends"><span>${LIGHT.GMIN}（較光）</span><span>1023（很暗）</span></div></div>`;
 }
 function setGauge(el, val) {
   const v = el && $('.gval', el); if (!v) return;
-  v.style.left = (val / 1023 * 100) + '%'; $('span', v).textContent = val;
+  v.style.left = LIGHT.pos(val) + '%'; $('span', v).textContent = val;
 }
 /* a small room: the sky darkens, the night light turns on (level 0–1) */
 function sceneSVG(id) {
@@ -283,7 +286,7 @@ function heroLoop() {
     const d = Math.round(50 - 50 * Math.cos(t / 40 * Math.PI)); t = (t + 1) % 80;
     const v = LIGHT.read(d), on = v > LIGHT.DEMO_THR;
     setScene($('#heroScene'), d, on ? 1 : 0);
-    const r = $('#heroRead'); if (r) r.innerHTML = `A0 讀數 <b>${v}</b> · ${on ? '大過 700：<b style="color:#FFE07A">開燈</b>' : '細過 700：關燈'}`;
+    const r = $('#heroRead'); if (r) r.innerHTML = `A0 讀數 <b>${v}</b> · ${on ? `大過 ${LIGHT.DEMO_THR}：<b style="color:#FFE07A">開燈</b>` : `不大過 ${LIGHT.DEMO_THR}：關燈`}`;
     timer = setTimeout(tick, 110);
   };
   tick();
@@ -376,7 +379,7 @@ function drawIntro() {
   setScene($('#introScene'), introDark, on ? 1 : 0);
   $('#introLabel').textContent = LIGHT.label(introDark);
   $('#introVal').textContent = v;
-  $('#introLamp').innerHTML = on ? '<b style="color:var(--amber)">開燈</b>（讀數大過門檻 700）' : '關燈（讀數細過門檻 700）';
+  $('#introLamp').innerHTML = on ? `<b style="color:var(--amber)">開燈</b>（讀數大過門檻 ${LIGHT.DEMO_THR}）` : `關燈（讀數不大過門檻 ${LIGHT.DEMO_THR}）`;
   const g = $('#introGauge'); if (!g.children.length) g.innerHTML = gaugeHTML(v, LIGHT.DEMO_THR); else setGauge(g, v);
 }
 stageLeave.intro = () => clearInterval(introTimer);

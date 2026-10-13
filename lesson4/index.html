@@ -667,21 +667,21 @@ ol.wl input{margin-top:6px;width:16px;height:16px;flex:none}
         <div id="introSceneWrap"></div>
         <div class="stack" style="gap:10px;flex:1;min-width:230px">
           <label class="small" for="introSlider">拉動滑桿，把環境變暗：<b id="introLabel"></b></label>
-          <input type="range" id="introSlider" min="0" max="100" value="40" class="dark-slider">
+          <input type="range" id="introSlider" min="0" max="100" value="60" class="dark-slider">
           <div class="readout">A0 讀數 <b id="introVal">0</b></div>
           <div id="introGauge"></div>
           <div class="phase small" id="introLamp"></div>
         </div>
       </div>
       <table class="timing" style="margin-top:14px">
-        <thead><tr><th>環境</th><th>A0 讀數（大約）</th><th>夜燈（門檻 700）</th></tr></thead>
+        <thead><tr><th>環境</th><th>A0 讀數（大約）</th><th>夜燈（門檻 1000）</th></tr></thead>
         <tbody>
-          <tr><td>電筒照住</td><td class="num">80</td><td>關燈</td></tr>
-          <tr><td>課室燈光</td><td class="num">450</td><td>關燈</td></tr>
-          <tr><td>用手遮住</td><td class="num">980</td><td><b>開燈</b></td></tr>
+          <tr><td>手機電筒照住</td><td class="num">940（9 百幾）</td><td>關燈（當作白天）</td></tr>
+          <tr><td>課室燈光</td><td class="num">1015（1 千零十幾）</td><td><b>開燈</b></td></tr>
+          <tr><td>用手遮住</td><td class="num">1022</td><td><b>開燈</b></td></tr>
         </tbody>
       </table>
-      <p class="small muted" style="margin-top:8px">記住：這個電路是<b>越暗，讀數越大</b>。真的讀數每塊板、每個課室都不同，做實物時你要自己量度，再決定門檻值。</p>
+      <p class="small muted" style="margin-top:8px">記住：這個電路是<b>越暗，讀數越大</b>。這個光感應器很敏感，課室燈光對它來說已經算「暗」，讀數接近 1023；要用<b>手機電筒照住</b>，讀數才會跌到 9 百幾。所以今堂用「電筒照住」代表白天。真的讀數每塊板、每個課室都不同，做實物時你要自己量度，再決定門檻值。</p>
     </div>
 
     <div class="card span-5">
@@ -1661,18 +1661,21 @@ $$('#stepper button').forEach(b => b.addEventListener('click', () => goStage(b.d
 /* darkness d: 0 = torch shining on it, 40 = classroom light, 100 = covered by a hand.
    With 5V → 10kΩ → A0 → light sensor → GND, the darker it is, the bigger the reading. */
 const LIGHT = {
-  ROOM_AT: 40, THR_MIN: 500, THR_MAX: 950, DEMO_THR: 700,
-  base: d => Math.round(80 + (985 - 80) * Math.max(0, Math.min(100, d)) / 100),
-  read: d => Math.max(0, Math.min(1023, LIGHT.base(d) + Math.round((Math.random() - 0.5) * 12))),
-  label: d => d < 15 ? '電筒照住' : d < 55 ? '課室燈光' : d < 85 ? '有點暗' : '用手遮住',
+  /* 按老師用實物量度的讀數（10 月 13 日）：手機電筒照住約 9xx，課室燈光約 101x，用手遮住接近 1023。
+     這個光感應器很敏感，課室燈光對它來說已經算「暗」，所以用「電筒照住」代表白天。 */
+  ROOM_AT: 60, THR_MIN: 960, THR_MAX: 1010, DEMO_THR: 1000, GMIN: 850,
+  base: d => { d = Math.max(0, Math.min(100, d)); return Math.round(d <= 60 ? 940 + (1015 - 940) * d / 60 : 1015 + (1022 - 1015) * (d - 60) / 40); },
+  read: d => Math.max(0, Math.min(1023, LIGHT.base(d) + Math.round((Math.random() - 0.5) * 6))),
+  label: d => d < 20 ? '電筒照住' : d < 45 ? '電筒移遠一點' : d < 80 ? '課室燈光' : '用手遮住',
+  pos: v => Math.max(0, Math.min(100, (v - LIGHT.GMIN) / (1023 - LIGHT.GMIN) * 100)),
 };
 /* a 0–1023 scale with the reading and the threshold */
 function gaugeHTML(val, thr) {
-  return `<div class="gauge" aria-hidden="true"><div class="gtrack">${thr != null ? `<i class="gthr" style="left:${thr / 1023 * 100}%"><span>門檻 ${thr}</span></i>` : ''}<i class="gval" style="left:${val / 1023 * 100}%"><span>${val}</span></i></div><div class="gends"><span>0（很光）</span><span>1023（很暗）</span></div></div>`;
+  return `<div class="gauge" aria-hidden="true"><div class="gtrack">${thr != null ? `<i class="gthr" style="left:${LIGHT.pos(thr)}%"><span>門檻 ${thr}</span></i>` : ''}<i class="gval" style="left:${LIGHT.pos(val)}%"><span>${val}</span></i></div><div class="gends"><span>${LIGHT.GMIN}（較光）</span><span>1023（很暗）</span></div></div>`;
 }
 function setGauge(el, val) {
   const v = el && $('.gval', el); if (!v) return;
-  v.style.left = (val / 1023 * 100) + '%'; $('span', v).textContent = val;
+  v.style.left = LIGHT.pos(val) + '%'; $('span', v).textContent = val;
 }
 /* a small room: the sky darkens, the night light turns on (level 0–1) */
 function sceneSVG(id) {
@@ -1710,7 +1713,7 @@ function heroLoop() {
     const d = Math.round(50 - 50 * Math.cos(t / 40 * Math.PI)); t = (t + 1) % 80;
     const v = LIGHT.read(d), on = v > LIGHT.DEMO_THR;
     setScene($('#heroScene'), d, on ? 1 : 0);
-    const r = $('#heroRead'); if (r) r.innerHTML = `A0 讀數 <b>${v}</b> · ${on ? '大過 700：<b style="color:#FFE07A">開燈</b>' : '細過 700：關燈'}`;
+    const r = $('#heroRead'); if (r) r.innerHTML = `A0 讀數 <b>${v}</b> · ${on ? `大過 ${LIGHT.DEMO_THR}：<b style="color:#FFE07A">開燈</b>` : `不大過 ${LIGHT.DEMO_THR}：關燈`}`;
     timer = setTimeout(tick, 110);
   };
   tick();
@@ -1803,7 +1806,7 @@ function drawIntro() {
   setScene($('#introScene'), introDark, on ? 1 : 0);
   $('#introLabel').textContent = LIGHT.label(introDark);
   $('#introVal').textContent = v;
-  $('#introLamp').innerHTML = on ? '<b style="color:var(--amber)">開燈</b>（讀數大過門檻 700）' : '關燈（讀數細過門檻 700）';
+  $('#introLamp').innerHTML = on ? `<b style="color:var(--amber)">開燈</b>（讀數大過門檻 ${LIGHT.DEMO_THR}）` : `關燈（讀數不大過門檻 ${LIGHT.DEMO_THR}）`;
   const g = $('#introGauge'); if (!g.children.length) g.innerHTML = gaugeHTML(v, LIGHT.DEMO_THR); else setGauge(g, v);
 }
 stageLeave.intro = () => clearInterval(introTimer);
@@ -2810,7 +2813,7 @@ const CODE_TEMPLATE = [
 ];
 const thrOk = v => /^\d+$/.test(v) && +v >= LIGHT.THR_MIN && +v <= LIGHT.THR_MAX;
 const BLANKS = [
-  { id: 'b1', ans: '700', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：課室燈光時讀數約 450，用手遮住時約 980。門檻值要在兩者<em>中間</em>，例如 700。' },
+  { id: 'b1', ans: '1000', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：電筒照住時讀數約 940，課室燈光時約 1015。門檻值要在兩者<em>中間</em>，例如 1000。' },
   { id: 'b2', ans: '9600', ctx: 'baud', ask: '通訊速度', hint: '看看這一行的註解（灰色文字）：速度是幾多？' },
   { id: 'b3', ans: 'analogRead', ctx: 'func', argc: 1, ask: '讀取類比讀數的指令', hint: '讀按鈕用 digitalRead；讀 0 至 1023 的<em>類比</em>讀數用 <em>analogRead</em>，注意 R 大寫。' },
   { id: 'b4', ans: 'A0', ctx: 'arg', accept: v => v === 'A0' || v === '0', ask: '光感應器接在哪一支腳', hint: '藍色線接在 Arduino 下方 ANALOG IN 的哪一支腳？要寫英文字母加數字，A 大寫。' },
@@ -2874,8 +2877,9 @@ const C2_TEMPLATE = [
   '}',
   '',
   'void loop() {',
-  '  val = analogRead(A0);             // 0（很光）至 1023（很暗）',
-  '  level = {{e1}}(val, 0, {{e2}}, 0, {{e3}});   // 把 0–1023 轉換成 0–255',
+  '  val = analogRead(A0);             // 電筒照住約 9 百幾，課室燈光約 1015',
+  '  level = {{e1}}(val, 900, {{e2}}, 0, {{e3}}); // 把 900–1023 轉換成 0–255',
+  '  level = constrain(level, 0, 255); // 讀數細過 900 時，不會變成負數',
   '  {{e4}}(ledPin, {{e5}});           // 用 level 控制 LED 的亮度',
   '  delay(100);',
   '}',
@@ -2931,7 +2935,7 @@ const IDE = (() => {
       name: 'c2', file: 'Night_Light_Dimmer', eyebrow: '延伸挑戰 2 · 越暗越亮', title: '編程及上傳', full: false,
       tpl: C2_TEMPLATE, blanks: C2_BLANKS, bank: C2_BANK,
       st: () => S.ext.c2.code, flow: () => S.ext.c2.flow,
-      intro: `不用接新零件。你要完成 <b>5 個空格</b>：用 <code>map</code> 把讀數（0 至 1023）轉換成亮度（0 至 255），再用 <code>analogWrite</code> 調校 LED 的亮度。`,
+      intro: `不用接新零件。你要完成 <b>5 個空格</b>：用 <code>map</code> 把讀數（900 至 1023）轉換成亮度（0 至 255），再用 <code>analogWrite</code> 調校 LED 的亮度。`,
       revealNote: '顯示答案會令這個挑戰扣 2 分。建議先再試一次。',
       next: { label: '返回延伸挑戰', stage: 'ext' },
       dict: ['map', 'analogWrite', 'digitalWrite'],
@@ -3035,10 +3039,10 @@ const IDE = (() => {
     const cn = ctxName();
     if (cn === 'main') {
       if (b.id === 'b1') {
-        if (!/^\d+$/.test(v)) return '門檻值要填一個整數，例如 600（不用寫單位）。';
+        if (!/^\d+$/.test(v)) return '門檻值要填一個整數，例如 990（不用寫單位）。';
         if (+v > 1023) return 'analogRead 的讀數最大只有 1023，門檻值大過 1023 的話，燈永遠不會亮。';
-        if (+v < LIGHT.THR_MIN) return `門檻值太低了。課室燈光時讀數大約 ${LIGHT.base(LIGHT.ROOM_AT)}，大過 ${v}，所以白天燈也會亮。門檻值要大過課室燈光時的讀數。`;
-        return `門檻值太高了。用手遮住時讀數大約 ${LIGHT.base(100)}，未必大過 ${v}，所以天黑時燈可能不會亮。門檻值要細過遮住時的讀數。`;
+        if (+v < LIGHT.THR_MIN) return `門檻值太低了。電筒照住時讀數大約 ${LIGHT.base(0)}，已經大過 ${v}，所以有電筒照住（白天）燈也會亮。門檻值要大過電筒照住時的讀數。`;
+        return `門檻值太高了。課室燈光時讀數大約 ${LIGHT.base(LIGHT.ROOM_AT)}，未必大過 ${v}，所以移開電筒後燈可能不會亮。門檻值要細過課室燈光時的讀數。`;
       }
       if (b.id === 'b2') return /^\d+$/.test(v) ? '這個速度程式可以用，但今堂統一用註解寫的速度。記住：Serial Monitor 要選<b>同一個</b>速度，否則會出亂碼。' : '這裏要填一個數字（通訊速度）。';
       if (b.id === 'b3' && lc === 'digitalread') return 'digitalRead 只會讀到 HIGH 或 LOW。光暗有很多程度，要用讀取<b>類比</b>讀數的指令。';
@@ -3046,7 +3050,7 @@ const IDE = (() => {
       if (b.id === 'b4' && lc === 'a0' && v !== 'A0') return 'A 要大寫：<code>A0</code>。';
       if (b.id === 'b4' && /^a?\d$/i.test(v)) return '藍色線接在 ANALOG IN 的哪一支腳？看清楚接線圖。';
       if (b.id === 'b4' && /^D?\d+$/i.test(v)) return '光感應器接在 ANALOG IN（類比輸入）那一排，不是數位腳。';
-      if (b.id === 'b5' && v === 'print') return '<code>print</code> 不會換行，讀數會全部擠在同一行：450451449…。要用印完會<b>換行</b>的指令。';
+      if (b.id === 'b5' && v === 'print') return '<code>print</code> 不會換行，讀數會全部擠在同一行：101510141016…。要用印完會<b>換行</b>的指令。';
       if (b.id === 'b5' && lc === 'printin') return '最後兩個字母是小寫的 <b>L</b> 和 <b>N</b>（line 的意思），不是 I。';
       if (b.id === 'b6' && (v === '<' || v === '<=')) return '用 <code>&lt;</code> 的話，讀數<b>細</b>過門檻值（天光）時才開燈，剛好相反。記住：越暗，讀數越<b>大</b>。';
       if (b.id === 'b6' && v === '=') return '一個 <code>=</code> 是「設定」，不是比較。這裏要比較讀數是否<b>大過</b>門檻值。';
@@ -3581,14 +3585,14 @@ const IDE = (() => {
       <div class="row small" style="gap:6px"><button class="chip" data-lab="0">電筒照住</button><button class="chip" data-lab="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-lab="100">用手遮住</button></div>
       <div class="readout"><span id="labLabel"></span>：A0 讀數 <b id="labVal"></b></div>
       <div id="labGauge">${gaugeHTML(LIGHT.base(labDark), 512)}</div>
-      <p class="small muted">記下「課室燈光」和「用手遮住」的讀數，門檻值（空格 1）要在兩者<b>中間</b>。黃色線是你填的門檻值。</p></div>`;
+      <p class="small muted">記下「電筒照住」和「課室燈光」的讀數，門檻值（空格 1）要在兩者<b>中間</b>。黃色線是你填的門檻值（刻度只顯示 850 至 1023 一段）。</p></div>`;
   }
   function labTick() {
     const el = $('#labGauge'); if (!el || !C || C.name !== 'main') return;
     const v = LIGHT.read(labDark); setGauge(el, v);
     $('#labVal').textContent = v; $('#labLabel').textContent = LIGHT.label(labDark);
     const t = (B('b1').val || '').trim(), th = $('.gthr', el);
-    if (th) { const ok = /^\d+$/.test(t) && +t <= 1023; th.style.display = ok ? '' : 'none'; if (ok) { th.style.left = (+t / 1023 * 100) + '%'; $('span', th).textContent = '門檻 ' + t; } }
+    if (th) { const ok = /^\d+$/.test(t) && +t <= 1023; th.style.display = ok ? '' : 'none'; if (ok) { th.style.left = LIGHT.pos(+t) + '%'; $('span', th).textContent = '門檻 ' + t; } }
   }
   function bindLab(panel) {
     const sl = $('#labSlider', panel); if (!sl) return;
@@ -3814,9 +3818,9 @@ function nightPanelHTML(mode) {
       <label class="small">環境：<b class="np-label"></b></label>
       <input type="range" class="dark-slider np-dark" min="0" max="100" value="${LIGHT.ROOM_AT}" aria-label="環境光暗">
       <div class="row small" style="gap:6px"><button class="chip" data-dk="0">電筒照住</button><button class="chip" data-dk="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-dk="100">用手遮住</button></div>
-      ${mode === 'c1' ? `<label class="small" style="margin-top:6px">電位器旋鈕（門檻值 <b class="np-thrv"></b>）</label><input type="range" class="knob-slider np-knob" min="0" max="100" value="60" aria-label="電位器旋鈕">` : ''}
+      ${mode === 'c1' ? `<label class="small" style="margin-top:6px">電位器旋鈕（門檻值 <b class="np-thrv"></b>）</label><input type="range" class="knob-slider np-knob" min="0" max="100" value="98" aria-label="電位器旋鈕">` : ''}
       <div class="readout">A0 讀數 <b class="np-val"></b>${mode === 'c2' ? ' → 亮度 <b class="np-level"></b> / 255' : ''}</div>
-      <div class="np-gauge">${gaugeHTML(LIGHT.base(LIGHT.ROOM_AT), mode === 'c2' ? null : 700)}</div>
+      <div class="np-gauge">${gaugeHTML(LIGHT.base(LIGHT.ROOM_AT), mode === 'c2' ? null : LIGHT.DEMO_THR)}</div>
       <div class="phase np-state"></div>
     </div>
     ${mode === 'c2' ? '' : monitorHTML()}
@@ -3826,7 +3830,7 @@ const GARBLE = '⸮⸮⸮⸮⸮xf~àÿ⸮';
 const garble = () => Array.from({ length: 3 + Math.floor(Math.random() * 6) }, () => GARBLE[Math.floor(Math.random() * GARBLE.length)]).join('');
 /* the finished program running on the simulated board */
 function nightSim(root, o = {}) {
-  let dark = LIGHT.ROOM_AT, knob = 60, n = 0, stopped = false;
+  let dark = LIGHT.ROOM_AT, knob = 98, n = 0, stopped = false;
   const q = s => $(s, root);
   const thrOf = () => o.mode === 'c1' ? Math.round(knob * 1023 / 100) : o.thr;
   const outEl = q('.smon-out'), baudSel = q('.smon-baud'), lines = [];
@@ -3852,21 +3856,21 @@ function nightSim(root, o = {}) {
   function tick() {
     if (stopped) return;
     const val = LIGHT.read(dark), thr = thrOf();
-    $$('.lsshade', root).forEach(g => g.setAttribute('opacity', Math.max(0, (dark - 45) / 55 * 0.95).toFixed(2)));
+    $$('.lsshade', root).forEach(g => g.setAttribute('opacity', Math.max(0, (dark - 70) / 30 * 0.95).toFixed(2)));
     $$('.potknob', root).forEach(g => g.setAttribute('transform', `rotate(${-135 + 270 * knob / 100} ${g.dataset.cx} ${g.dataset.cy})`));
     q('.np-label').textContent = LIGHT.label(dark);
     q('.np-val').textContent = val;
     const g = q('.np-gauge'); setGauge(g, val);
     let state = '';
     if (o.mode === 'c2') {
-      const level = Math.round(val * 255 / 1023);
+      const level = Math.max(0, Math.min(255, Math.round((val - 900) * 255 / 123)));
       setLedLevel(root, 'yellow', 0.08 + 0.92 * level / 255);
       q('.np-level').textContent = level;
-      state = `map(${val}, 0, 1023, 0, 255) = ${level}：${level < 80 ? 'LED 很暗' : level < 180 ? 'LED 半亮' : 'LED 很亮'}`;
+      state = `map(${val}, 900, 1023, 0, 255) = ${level}：${level < 80 ? 'LED 很暗' : level < 180 ? 'LED 半亮' : 'LED 很亮'}`;
     } else {
       const on = val > thr;
       setLedIn(root, 'yellow', on);
-      const th = $('.gthr', g); if (th) { th.style.left = (thr / 1023 * 100) + '%'; $('span', th).textContent = '門檻 ' + thr; }
+      const th = $('.gthr', g); if (th) { th.style.left = LIGHT.pos(thr) + '%'; $('span', th).textContent = '門檻 ' + thr; }
       if (q('.np-thrv')) q('.np-thrv').textContent = thr;
       state = on ? `${val} > ${thr}：天黑，<span style="color:var(--amber)">開燈</span>` : `${val} 不大過 ${thr}：關燈`;
     }
@@ -3951,7 +3955,7 @@ const EXT = (() => {
       title: c1 ? (fresh ? '上傳成功！轉動電位器試試' : '調校靈敏度') : (fresh ? '上傳成功！試試把環境變暗' : '越暗越亮'),
       wide: true, dismissable: false,
       html: `<div class="sos-stage">${c1 ? HW.circuitSVG(S.hw, S.ext.c1.hw) : HW.circuitSVG(S.hw)}</div>${nightPanelHTML(which)}
-        <p class="small muted" style="margin-top:8px">${c1 ? '電位器的讀數（0 至 1023）就是門檻值。旋鈕轉得越大，要越暗才會開燈。' : 'analogWrite 令 D9極快地開關，開的時間越長，LED 看起來越亮。'}</p>`,
+        <p class="small muted" style="margin-top:8px">${c1 ? '電位器的讀數（0 至 1023）就是門檻值。旋鈕轉得越大，要越暗才會開燈。光感應器的讀數只在 9 百幾至 1023 之間變化，所以旋鈕要轉到接近盡頭（門檻約 1000）才看到分別。' : 'analogWrite 令 D9極快地開關，開的時間越長，LED 看起來越亮。'}</p>`,
       actions: [toExt],
       onOpen: back => { const ON = $('.uLedON', back); ON && ON.setAttribute('fill', '#3CFF7A'); sim = nightSim(back, { mode: which }); },
     });
@@ -3975,24 +3979,24 @@ const REAL_ITEMS = [
   ['接駁 LED 部分', 'D9（綠色線）→ 220Ω → LED 長腳；LED 短腳 → 「−」電源軌。'],
   ['插 USB、貼程式、上傳', '按右邊的「複製完整程式」，貼到 Arduino IDE；Tools → Board → Arduino Uno；Tools → Port；按 Upload。'],
   ['打開 Serial Monitor', '按 IDE 右上角的放大鏡；右下角速度選 <b>9600 baud</b>，應該看到一行行的讀數。'],
-  ['量度讀數', '分別用電筒照住、課室燈光、用手遮住光感應器，把讀數填在右邊的「讀數記錄」。'],
-  ['改門檻值，再上傳', '把程式第 6 行的門檻值改成「課室燈光」和「用手遮住」兩個讀數<b>中間</b>的數字，再按 Upload。'],
-  ['測試', '用手遮住光感應器，LED 亮起；移開手，LED 熄滅。請老師過來確認。'],
+  ['量度讀數', '分別用手機電筒照住、課室燈光、用手遮住光感應器，把讀數填在右邊的「讀數記錄」。'],
+  ['改門檻值，再上傳', '把程式第 6 行的門檻值改成「電筒照住」和「課室燈光」兩個讀數<b>中間</b>的數字（大約 1000），再按 Upload。'],
+  ['測試', '用手機電筒照住光感應器，LED 熄滅；移開電筒，LED 亮起。請老師過來確認。'],
 ];
 const READ_FIELDS = [['torch', '電筒照住'], ['room', '課室燈光'], ['dark', '用手遮住']];
 function readingAdvice(r) {
   const n = k => (r[k] === '' || r[k] == null || isNaN(+r[k])) ? null : +r[k];
   const room = n('room'), dark = n('dark'), torch = n('torch');
-  if (room == null || dark == null) return { kind: 'info', html: '填上「課室燈光」和「用手遮住」的讀數，就會計出建議的門檻值。' };
+  if (torch == null || room == null) return { kind: 'info', html: '填上「電筒照住」和「課室燈光」的讀數，就會計出建議的門檻值。' };
   if ([room, dark, torch].some(v => v != null && (v < 0 || v > 1023))) return { kind: 'err', html: 'analogRead 的讀數只會在 0 至 1023 之間，請再看清楚 Serial Monitor。' };
-  if (Math.abs(dark - room) < 30) {
-    if (room > 1000 && dark > 1000) return { kind: 'err', html: '讀數一直接近 1023，遮不遮都一樣：光感應器可能<b>接反了</b>（長腳要向 A0 和 10kΩ），或者短腳 / 「−」電源軌未接到 GND。' };
-    if (room < 20 && dark < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
-    return { kind: 'err', html: '遮住和不遮住的讀數差不多：檢查 A0 的藍色線是否插在光感應器長腳那一直行，以及光感應器有沒有接反。' };
+  if (Math.abs(room - torch) < 10) {
+    if (room > 1010 && torch > 1010) return { kind: 'err', html: '用電筒照住，讀數仍然接近 1023：先把手機電筒<b>貼近</b>光感應器再試；如果仍然不變，光感應器可能<b>接反了</b>（長腳要向 A0 和 10kΩ），或者短腳 / 「−」電源軌未接到 GND。' };
+    if (room < 20 && torch < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
+    return { kind: 'err', html: '照住和不照住的讀數差不多：檢查 A0 的藍色線是否插在光感應器長腳那一直行，以及光感應器有沒有接反。' };
   }
-  if (dark < room) return { kind: 'warn', html: '遮住時讀數反而<b>變細</b>了。這個電路應該是越暗讀數越大：檢查 10kΩ 是否接 5V、光感應器短腳是否接 GND（兩者可能對調了）。' };
-  const mid = Math.round((room + dark) / 2);
-  return { kind: 'ok', html: `建議門檻值：<b>${mid}</b>（${room} 和 ${dark} 的中間）。把程式第 6 行改成 <code>int threshold = ${mid};</code>，再上傳。`, mid };
+  if (torch > room) return { kind: 'warn', html: '電筒照住時讀數反而<b>變大</b>了。這個電路應該是越光讀數越細：檢查 10kΩ 是否接 5V、光感應器短腳是否接 GND（兩者可能對調了）。' };
+  const mid = Math.round((room + torch) / 2);
+  return { kind: 'ok', html: `建議門檻值：<b>${mid}</b>（${torch} 和 ${room} 的中間）。把程式第 6 行改成 <code>int threshold = ${mid};</code>，再上傳。`, mid };
 }
 stageInit.real = () => {
   if (!S.real.wl) S.real.wl = {};
@@ -4026,12 +4030,12 @@ stageInit.real = () => {
       </div>
       <div class="card"><h3>遇到問題？</h3>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>情況</th><th>可能原因及解決方法</th></tr></thead><tbody>
-          <tr><td>讀數一直接近 1023，遮不遮都一樣</td><td>光感應器<b>接反了</b>（長腳要向 A0 和 10kΩ）；或者短腳 / 「−」電源軌未接到 GND。</td></tr>
+          <tr><td>用電筒照住，讀數仍然接近 1023</td><td>電筒未夠近（要貼近光感應器）；光感應器<b>接反了</b>（長腳要向 A0 和 10kΩ）；或者短腳 / 「−」電源軌未接到 GND。</td></tr>
           <tr><td>讀數一直是 0</td><td>10kΩ 未接到 5V（「+」電源軌未接 5V）；或者 A0 的線接到了 GND。</td></tr>
           <tr><td>讀數亂跳，和光暗無關</td><td>A0 的藍色線插錯孔，沒有接到光感應器長腳那一直行（A0「浮空」）。</td></tr>
           <tr><td>Serial Monitor 出現亂碼 ⸮⸮⸮</td><td>右下角的速度不是 <b>9600 baud</b>，要和 <code>Serial.begin(9600)</code> 一樣。</td></tr>
           <tr><td>Serial Monitor 完全沒有字</td><td>程式未上傳成功；或者 Port 選錯了。</td></tr>
-          <tr><td>LED 一直亮，或者一直不亮</td><td>門檻值不適合：看 Serial Monitor 的讀數，把門檻值改成課室燈光和遮住讀數的中間，再上傳。也要檢查 LED 有沒有接反。</td></tr>
+          <tr><td>LED 一直亮，或者一直不亮</td><td>門檻值不適合：看 Serial Monitor 的讀數，把門檻值改成電筒照住和課室燈光讀數的中間（大約 1000），再上傳。注意課室燈光下 LED 會亮，電筒照住才會熄。也要檢查 LED 有沒有接反。</td></tr>
           <tr><td>LED 非常暗</td><td>用錯了 10kΩ（1 條紅色）。LED 要用 220Ω：紅紅黑黑棕，有 2 條紅色。</td></tr>
           <tr><td>上傳時出現 not in sync</td><td>Port 選錯了，或者 Board 不是 Arduino Uno。</td></tr>
         </tbody></table></div>

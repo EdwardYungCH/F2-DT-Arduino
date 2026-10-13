@@ -13,24 +13,24 @@ const REAL_ITEMS = [
   ['接駁 LED 部分', 'D9（綠色線）→ 220Ω → LED 長腳；LED 短腳 → 「−」電源軌。'],
   ['插 USB、貼程式、上傳', '按右邊的「複製完整程式」，貼到 Arduino IDE；Tools → Board → Arduino Uno；Tools → Port；按 Upload。'],
   ['打開 Serial Monitor', '按 IDE 右上角的放大鏡；右下角速度選 <b>9600 baud</b>，應該看到一行行的讀數。'],
-  ['量度讀數', '分別用電筒照住、課室燈光、用手遮住光感應器，把讀數填在右邊的「讀數記錄」。'],
-  ['改門檻值，再上傳', '把程式第 6 行的門檻值改成「課室燈光」和「用手遮住」兩個讀數<b>中間</b>的數字，再按 Upload。'],
-  ['測試', '用手遮住光感應器，LED 亮起；移開手，LED 熄滅。請老師過來確認。'],
+  ['量度讀數', '分別用手機電筒照住、課室燈光、用手遮住光感應器，把讀數填在右邊的「讀數記錄」。'],
+  ['改門檻值，再上傳', '把程式第 6 行的門檻值改成「電筒照住」和「課室燈光」兩個讀數<b>中間</b>的數字（大約 1000），再按 Upload。'],
+  ['測試', '用手機電筒照住光感應器，LED 熄滅；移開電筒，LED 亮起。請老師過來確認。'],
 ];
 const READ_FIELDS = [['torch', '電筒照住'], ['room', '課室燈光'], ['dark', '用手遮住']];
 function readingAdvice(r) {
   const n = k => (r[k] === '' || r[k] == null || isNaN(+r[k])) ? null : +r[k];
   const room = n('room'), dark = n('dark'), torch = n('torch');
-  if (room == null || dark == null) return { kind: 'info', html: '填上「課室燈光」和「用手遮住」的讀數，就會計出建議的門檻值。' };
+  if (torch == null || room == null) return { kind: 'info', html: '填上「電筒照住」和「課室燈光」的讀數，就會計出建議的門檻值。' };
   if ([room, dark, torch].some(v => v != null && (v < 0 || v > 1023))) return { kind: 'err', html: 'analogRead 的讀數只會在 0 至 1023 之間，請再看清楚 Serial Monitor。' };
-  if (Math.abs(dark - room) < 30) {
-    if (room > 1000 && dark > 1000) return { kind: 'err', html: '讀數一直接近 1023，遮不遮都一樣：光感應器可能<b>接反了</b>（長腳要向 A0 和 10kΩ），或者短腳 / 「−」電源軌未接到 GND。' };
-    if (room < 20 && dark < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
-    return { kind: 'err', html: '遮住和不遮住的讀數差不多：檢查 A0 的藍色線是否插在光感應器長腳那一直行，以及光感應器有沒有接反。' };
+  if (Math.abs(room - torch) < 10) {
+    if (room > 1010 && torch > 1010) return { kind: 'err', html: '用電筒照住，讀數仍然接近 1023：先把手機電筒<b>貼近</b>光感應器再試；如果仍然不變，光感應器可能<b>接反了</b>（長腳要向 A0 和 10kΩ），或者短腳 / 「−」電源軌未接到 GND。' };
+    if (room < 20 && torch < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
+    return { kind: 'err', html: '照住和不照住的讀數差不多：檢查 A0 的藍色線是否插在光感應器長腳那一直行，以及光感應器有沒有接反。' };
   }
-  if (dark < room) return { kind: 'warn', html: '遮住時讀數反而<b>變細</b>了。這個電路應該是越暗讀數越大：檢查 10kΩ 是否接 5V、光感應器短腳是否接 GND（兩者可能對調了）。' };
-  const mid = Math.round((room + dark) / 2);
-  return { kind: 'ok', html: `建議門檻值：<b>${mid}</b>（${room} 和 ${dark} 的中間）。把程式第 6 行改成 <code>int threshold = ${mid};</code>，再上傳。`, mid };
+  if (torch > room) return { kind: 'warn', html: '電筒照住時讀數反而<b>變大</b>了。這個電路應該是越光讀數越細：檢查 10kΩ 是否接 5V、光感應器短腳是否接 GND（兩者可能對調了）。' };
+  const mid = Math.round((room + torch) / 2);
+  return { kind: 'ok', html: `建議門檻值：<b>${mid}</b>（${torch} 和 ${room} 的中間）。把程式第 6 行改成 <code>int threshold = ${mid};</code>，再上傳。`, mid };
 }
 stageInit.real = () => {
   if (!S.real.wl) S.real.wl = {};
@@ -64,12 +64,12 @@ stageInit.real = () => {
       </div>
       <div class="card"><h3>遇到問題？</h3>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>情況</th><th>可能原因及解決方法</th></tr></thead><tbody>
-          <tr><td>讀數一直接近 1023，遮不遮都一樣</td><td>光感應器<b>接反了</b>（長腳要向 A0 和 10kΩ）；或者短腳 / 「−」電源軌未接到 GND。</td></tr>
+          <tr><td>用電筒照住，讀數仍然接近 1023</td><td>電筒未夠近（要貼近光感應器）；光感應器<b>接反了</b>（長腳要向 A0 和 10kΩ）；或者短腳 / 「−」電源軌未接到 GND。</td></tr>
           <tr><td>讀數一直是 0</td><td>10kΩ 未接到 5V（「+」電源軌未接 5V）；或者 A0 的線接到了 GND。</td></tr>
           <tr><td>讀數亂跳，和光暗無關</td><td>A0 的藍色線插錯孔，沒有接到光感應器長腳那一直行（A0「浮空」）。</td></tr>
           <tr><td>Serial Monitor 出現亂碼 ⸮⸮⸮</td><td>右下角的速度不是 <b>9600 baud</b>，要和 <code>Serial.begin(9600)</code> 一樣。</td></tr>
           <tr><td>Serial Monitor 完全沒有字</td><td>程式未上傳成功；或者 Port 選錯了。</td></tr>
-          <tr><td>LED 一直亮，或者一直不亮</td><td>門檻值不適合：看 Serial Monitor 的讀數，把門檻值改成課室燈光和遮住讀數的中間，再上傳。也要檢查 LED 有沒有接反。</td></tr>
+          <tr><td>LED 一直亮，或者一直不亮</td><td>門檻值不適合：看 Serial Monitor 的讀數，把門檻值改成電筒照住和課室燈光讀數的中間（大約 1000），再上傳。注意課室燈光下 LED 會亮，電筒照住才會熄。也要檢查 LED 有沒有接反。</td></tr>
           <tr><td>LED 非常暗</td><td>用錯了 10kΩ（1 條紅色）。LED 要用 220Ω：紅紅黑黑棕，有 2 條紅色。</td></tr>
           <tr><td>上傳時出現 not in sync</td><td>Port 選錯了，或者 Board 不是 Arduino Uno。</td></tr>
         </tbody></table></div>
