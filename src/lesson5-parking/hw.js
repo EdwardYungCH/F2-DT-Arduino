@@ -104,8 +104,8 @@ const HW = (() => {
     const ax0 = flipped ? mx + 5 : mx - 5, kx0 = flipped ? mx - 5 : mx + 5;
     const op = opts.ghost ? ' opacity=".7"' : '';
     return `<g class="lspart"${op}>
-      <path d="M${kx0} ${y - 15}L${kx} ${y}" stroke="#B9BEC0" stroke-width="2.4" stroke-linecap="round"/>
-      <path d="M${ax0} ${y - 15}V${y - 11}L${ax} ${y - 5}V${y}" stroke="#B9BEC0" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M${ax0} ${y - 15}L${ax} ${y}" stroke="#B9BEC0" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M${kx0} ${y - 15}V${y - 11}L${kx} ${y - 5}V${y}" stroke="#B9BEC0" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
       <rect x="${mx - 10}" y="${top + 4}" width="20" height="22" rx="3" fill="#E4EEF2" fill-opacity=".9" stroke="#9FB3BB"/>
       <rect x="${mx - 11}" y="${top}" width="22" height="6" rx="1.5" fill="#F7FBFC" stroke="#9FB3BB"/>
       <rect x="${mx - 4}" y="${top + 10}" width="8" height="6" fill="#4A4A4A"/>
@@ -405,14 +405,14 @@ const HW = (() => {
     let sig = Pn, low = Mn, reversed = false;
     if (Pn === gnd && Mn !== gnd) { sig = Mn; low = Pn; reversed = true; }
     else if (Mn !== gnd && sideOf(Mn) && !sideOf(Pn)) { sig = Mn; low = Pn; reversed = true; }
-    if (reversed && Pn === gnd) add(4, 'ls_reversed', '<b>光感應器接反了！</b>光感應器和 LED 一樣有正負極：<b>長腳（+）</b>要接 10kΩ 和 A0 那一邊，<b>短腳（−）</b>接 GND。接反了，讀數不會隨光暗改變。<br>方法：點選光感應器，按「反轉光感應器」。');
-    else if (reversed) add(2, 'ls_reversed', '<b>光感應器方向錯了！</b>10kΩ（或 A0）接到了光感應器的<b>短腳（−）</b>。10kΩ 和 A0 要和<b>長腳（+）</b>在同一直行。<br>方法：點選光感應器，按「反轉光感應器」；或者把 10kΩ 移到長腳的直行。');
+    if (reversed && Pn === gnd) add(4, 'ls_reversed', '<b>光感應器接反了！</b>這粒光感應器有正負極，但和 LED <b>相反</b>：<b>短腳（+）</b>要接 10kΩ 和 A0 那一邊，<b>長腳（−）</b>接 GND。接反了，讀數不會隨光暗改變。<br>方法：點選光感應器，按「反轉光感應器」。');
+    else if (reversed) add(2, 'ls_reversed', '<b>光感應器方向錯了！</b>10kΩ（或 A0）接到了光感應器的<b>長腳（−）</b>。10kΩ 和 A0 要和<b>短腳（+）</b>在同一直行。<br>方法：點選光感應器，按「反轉光感應器」；或者把 10kΩ 移到短腳的直行。');
     /* the 10kΩ pull-up */
-    if (low !== gnd && low !== v5 && rs.some(o => (o.x === sig && o.y === low) || (o.x === low && o.y === sig))) add(2, 'pu_parallel', '10kΩ 兩端分別接到光感應器兩隻腳，變成<b>並聯</b>了。10kΩ 只需要<b>一隻腳</b>和光感應器長腳在同一個直行，另一隻腳接 5V。');
+    if (low !== gnd && low !== v5 && rs.some(o => (o.x === sig && o.y === low) || (o.x === low && o.y === sig))) add(2, 'pu_parallel', '10kΩ 兩端分別接到光感應器兩隻腳，變成<b>並聯</b>了。10kΩ 只需要<b>一隻腳</b>和光感應器短腳在同一個直行，另一隻腳接 5V。');
     else {
       const cand = rs.filter(o => (o.x === sig) !== (o.y === sig));
       const t = cand.find(o => o.r.ohm === 10000) || cand[0];
-      if (!t) add(2, 'pu_missing', '請插上一粒 <b>10kΩ</b> 電阻（色環<b>棕黑黑紅棕</b>）：一隻腳和光感應器<b>長腳</b>在同一個直行。', false);
+      if (!t) add(2, 'pu_missing', '請插上一粒 <b>10kΩ</b> 電阻（色環<b>棕黑黑紅棕</b>）：一隻腳和光感應器<b>短腳</b>在同一個直行。', false);
       else {
         if (t.r.ohm !== 10000) add(2, 'pu_value', `光感應器用了 <b>${OHM[t.r.ohm]}</b> 電阻。電阻太小，光暗改變時讀數只會變一點點，閘門很難分辨有沒有車。光感應器要用 <b>10kΩ</b>（色環：棕黑黑紅棕）。`);
         const O = t.x === sig ? t.y : t.x, rail = c.railOf(O), po = c.pinsIn(O).filter(n => n !== 'GND');
@@ -428,20 +428,20 @@ const HW = (() => {
     /* short leg (−) to GND */
     if (low !== gnd) {
       const rail = c.railOf(low), pl = c.pinsIn(low).filter(n => n !== 'GND');
-      if (low === v5) add(4, 'ls_to_5v', '光感應器短腳（−）接到了 <b>5V</b>。短腳要接 <b>GND</b>（「−」電源軌）。');
-      else if (isPlusRail(rail)) add(4, 'ls_plus_rail', '光感應器短腳接到了<b>「+」電源軌</b>（紅線）。短腳要接<b>「−」電源軌</b>（藍線）。');
+      if (low === v5) add(4, 'ls_to_5v', '光感應器長腳（−）接到了 <b>5V</b>。長腳要接 <b>GND</b>（「−」電源軌）。');
+      else if (isPlusRail(rail)) add(4, 'ls_plus_rail', '光感應器長腳接到了<b>「+」電源軌</b>（紅線）。長腳要接<b>「−」電源軌</b>（藍線）。');
       else if (rail) add(4, 'rail_unpowered', '「−」電源軌還未接到 Arduino 的 <b>GND</b>。請由 GND 腳拉一條黑色線到這條電源軌。', false);
-      else if (pl.length) add(4, 'ls_gnd_pin', `光感應器短腳（−）應該接 <b>GND</b>，你接了 <b>${pinPretty(pl[0])}</b>。`);
-      else if (!c.touched(low)) add(4, 'ls_gnd_missing', '光感應器短腳（−）還未接到 GND：用一條黑色短導線，把短腳的直行接到上方的「−」電源軌。', false);
-      else add(4, 'ls_gnd_nowhere', '光感應器短腳那條 GND 導線接到了沒有元件的位置。');
+      else if (pl.length) add(4, 'ls_gnd_pin', `光感應器長腳（−）應該接 <b>GND</b>，你接了 <b>${pinPretty(pl[0])}</b>。`);
+      else if (!c.touched(low)) add(4, 'ls_gnd_missing', '光感應器長腳（−）還未接到 GND：用一條黑色短導線，把長腳的直行接到上方的「−」電源軌。', false);
+      else add(4, 'ls_gnd_nowhere', '光感應器長腳那條 GND 導線接到了沒有元件的位置。');
     }
     /* A0 on the junction */
     if (a0 !== v5 && a0 !== gnd && sig !== a0) {
       const ps = c.pinsIn(sig).filter(n => n !== 'GND' && !POWER.includes(n));
       if (ps.length) add(5, 'a0_wrong_pin', `光感應器接到了 <b>${pinPretty(ps[0])}</b>，但程式讀取的是 <b>A0</b>。請改接到 Arduino 下方 ANALOG IN 的 <b>A0</b>。`);
-      else if (low === a0) add(5, 'a0_on_gnd_side', 'A0 接到了光感應器<b>短腳</b>那一邊。A0 要接在<b>長腳、10kΩ 同一直行</b>（兩粒零件中間）。');
-      else if (!c.wiredPins.has('A0')) add(5, 'a0_missing', '還未連接 A0：由 Arduino 下方 ANALOG IN 的 <b>A0</b>，拉一條藍色線到光感應器長腳的直行。', false);
-      else add(5, 'a0_nowhere', 'A0 的導線接到了<b>沒有元件</b>的位置。A0 要接在光感應器長腳和 10kΩ <b>同一個</b>直行。');
+      else if (low === a0) add(5, 'a0_on_gnd_side', 'A0 接到了光感應器<b>長腳</b>那一邊。A0 要接在<b>短腳、10kΩ 同一直行</b>（兩粒零件中間）。');
+      else if (!c.wiredPins.has('A0')) add(5, 'a0_missing', '還未連接 A0：由 Arduino 下方 ANALOG IN 的 <b>A0</b>，拉一條藍色線到光感應器短腳的直行。', false);
+      else add(5, 'a0_nowhere', 'A0 的導線接到了<b>沒有元件</b>的位置。A0 要接在光感應器短腳和 10kΩ <b>同一個</b>直行。');
     }
     return { sig, low };
   }
@@ -550,7 +550,7 @@ const HW = (() => {
       POWER.forEach(pw => { if (find('P:' + n) === find('P:' + pw)) add(0, 'short_' + n + pw, `<b>短路！</b>${n} 和 ${PIN_LABEL[pw]} 被直接連在一起。`); });
     });
     if (a0 === v5) add(0, 'a0_5v', 'A0 被直接接到了 <b>5V</b>，讀數永遠是 1023，閘門會一直以為有車。A0 要接在光感應器和 10kΩ 中間。');
-    else if (a0 === gnd) add(0, 'a0_gnd', 'A0 接到了 <b>GND</b>（例如插在光感應器<b>短腳</b>那一直行，或者「−」電源軌），讀數永遠是 0。A0 要接在光感應器<b>長腳</b>和 10kΩ 中間。');
+    else if (a0 === gnd) add(0, 'a0_gnd', 'A0 接到了 <b>GND</b>（例如插在光感應器<b>長腳</b>那一直行，或者「−」電源軌），讀數永遠是 0。A0 要接在光感應器<b>短腳</b>和 10kΩ 中間。');
     if (['P:D12', 'P:D10', 'P:D9'].some(n => find(n) === a0)) add(0, 'a0_mixed', 'A0 和 LED / 伺服馬達用的腳被連在一起了。光感應器（A0）要分開接。');
     const out = { iss, find, ls: null, chains: {} };
     /* step 1–3: light sensor (reuses lesson 4's checks; their steps 1–5 map onto 1–3 here) */
@@ -703,9 +703,9 @@ const HW = (() => {
   function stepBody(step) {
     const RULE = '<p class="small muted">小規則：元件插在 f 至 h 行，導線插在 j 行；每個區之間空出兩個直行。</p>';
     if (MODE === 'main') {
-      if (step === 1) return `<p>和第 4 堂一樣，在麵包板的<b>光感應器區</b>（〔第1直行〕至〔第6直行〕）：</p><ul class="small tight"><li><b>光感應器</b>插在 〔f5〕、〔f6〕，<b>長腳（+）在左</b>。</li><li><b>10kΩ</b>（色環<b>棕黑黑紅棕</b>）插在 〔h1〕 至 〔h5〕：右端和光感應器長腳在<b>同一個直行</b>。</li></ul>${RULE}`;
+      if (step === 1) return `<p>和第 4 堂一樣，在麵包板的<b>光感應器區</b>（〔第1直行〕至〔第6直行〕）：</p><ul class="small tight"><li><b>光感應器</b>插在 〔f5〕、〔f6〕，<b>短腳（+）在左</b>。</li><li><b>10kΩ</b>（色環<b>棕黑黑紅棕</b>）插在 〔h1〕 至 〔h5〕：右端和光感應器短腳在<b>同一個直行</b>。</li></ul>${RULE}`;
       if (step === 2) return `<ul class="small tight"><li>紅色線：〔5V〕（Arduino 下方）→「+」電源軌。</li><li>黑色線：〔GND〕（Arduino 上方，13 號旁邊）→「−」電源軌（最頂一行）。</li></ul><p class="small">今堂很多零件都要用 5V 和 GND，全部由電源軌取電。板上的藍色框會標示要用的腳位。</p>`;
-      if (step === 3) return `<ul class="small tight"><li>紅色短線：10kΩ <b>左端</b>的直行 →「+」電源軌。</li><li>黑色短線：光感應器<b>短腳</b>的直行 →「−」電源軌。</li><li>藍色線：〔A0〕（Arduino 下方 ANALOG IN）→ 光感應器<b>長腳</b>的直行。</li></ul><p class="small muted">導線插在同一直行的 j 行就可以，不用插在元件的同一個孔。</p>`;
+      if (step === 3) return `<ul class="small tight"><li>紅色短線：10kΩ <b>左端</b>的直行 →「+」電源軌。</li><li>黑色短線：光感應器<b>長腳</b>的直行 →「−」電源軌。</li><li>藍色線：〔A0〕（Arduino 下方 ANALOG IN）→ 光感應器<b>短腳</b>的直行。</li></ul><p class="small muted">導線插在同一直行的 j 行就可以，不用插在元件的同一個孔。</p>`;
       if (step === 4) return `<p>在<b>紅燈區</b>和<b>綠燈區</b>插 LED 和電阻，長腳（+）在左：</p><ul class="small tight"><li><b>紅色 LED</b>：〔f13〕、〔f14〕；220Ω 插在 〔h9〕 至 〔h13〕。</li><li><b>綠色 LED</b>：〔f21〕、〔f22〕；220Ω 插在 〔h17〕 至 〔h21〕。</li></ul><p class="small">220Ω 色環<b>紅紅黑黑棕</b>，右端和 LED 長腳在同一個直行。區與區之間空出兩個直行，實物上腳不會碰在一起。</p>`;
       if (step === 5) return `<ul class="small tight"><li>紅色線：〔D12〕（板上印 <b>12</b>）→ 紅燈 220Ω <b>左端</b>的直行。</li><li>綠色線：〔D10〕（板上印 <b>~10</b>）→ 綠燈 220Ω <b>左端</b>的直行。</li><li>兩條黑色短線：兩粒 LED <b>短腳</b>的直行 →「−」電源軌。</li></ul><p class="small muted">小心：〔D12〕 是 Arduino 上的腳位，和麵包板的〔第12直行〕無關。</p>`;
       if (step === 6) return `<p>左上角是伺服馬達，3 條線的插頭有 3 個孔。實物要用杜邦線插入插頭。</p><ul class="small tight"><li>黑色線：<b>啡線</b>（GND）→「−」電源軌。</li><li>紅色線：<b>紅線</b>（5V）→「+」電源軌。</li></ul>`;
@@ -837,7 +837,7 @@ const HW = (() => {
     const d = $('#stDel'); if (d) d.onclick = removeSel;
   }
   function changed() { lastIssues = null; save(); render(); renderPanel(); }
-  function flipLed() { const p = selPart(); if (!p || (p.type !== 'led' && p.type !== 'ls')) return; p.flipped = !p.flipped; toast(`${partName(p)}已反轉：長腳（+）現在在${p.flipped ? '右' : '左'}邊`); changed(); }
+  function flipLed() { const p = selPart(); if (!p || (p.type !== 'led' && p.type !== 'ls')) return; p.flipped = !p.flipped; toast(`${partName(p)}已反轉：${p.type === 'ls' ? '短腳（+）' : '長腳（+）'}現在在${p.flipped ? '右' : '左'}邊`); changed(); }
   function rotBtn() { const p = selPart(); if (!p || p.type !== 'btn') return; p.rot = !p.rot; toast(p.rot ? '按鈕的腳現在向左右' : '按鈕的腳現在向上下（正確方向）'); changed(); }
   function removeSel() {
     if (!sel) return;

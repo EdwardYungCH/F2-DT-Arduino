@@ -9,28 +9,28 @@ const REAL_ITEMS = [
   ['準備材料', '按上面的材料清單拿齊材料。220Ω（2 條紅色）給 LED，10kΩ（1 條紅色）給光感應器，分開放好。'],
   ['先接線，後通電', '接線時<b>不要</b>插 USB 線，避免接錯時短路。'],
   ['接駁電源軌', '紅色線：5V → 「+」電源軌（紅線）；黑色線：GND → 「−」電源軌（藍線）。'],
-  ['接駁光感應器部分', '光感應器<b>長腳</b>和 10kΩ、A0（藍色線）在同一直行；10kΩ 另一端接「+」軌；光感應器短腳接「−」軌。'],
+  ['接駁光感應器部分', '光感應器<b>短腳</b>和 10kΩ、A0（藍色線）在同一直行；10kΩ 另一端接「+」軌；光感應器長腳接「−」軌。'],
   ['接駁 LED 部分', 'D9（綠色線）→ 220Ω → LED 長腳；LED 短腳 → 「−」電源軌。'],
   ['插 USB、貼程式、上傳', '按右邊的「複製完整程式」，貼到 Arduino IDE；Tools → Board → Arduino Uno；Tools → Port；按 Upload。'],
   ['打開 Serial Monitor', '按 IDE 右上角的放大鏡；右下角速度選 <b>9600 baud</b>，應該看到一行行的讀數。'],
-  ['量度讀數', '分別用手機電筒照住、課室燈光、用手遮住光感應器，把讀數填在右邊的「讀數記錄」。'],
-  ['改門檻值，再上傳', '把程式第 6 行的門檻值改成「電筒照住」和「課室燈光」兩個讀數<b>中間</b>的數字（大約 1000），再按 Upload。'],
-  ['測試', '用手機電筒照住光感應器，LED 熄滅；移開電筒，LED 亮起。請老師過來確認。'],
+  ['量度讀數', '分別在課室燈光下和用手遮住光感應器，把讀數填在右邊的「讀數記錄」（程式已經計好平均）。'],
+  ['改門檻值，再上傳', '把程式第 6 行的門檻值改成「課室燈光」和「用手遮住」兩個讀數<b>中間</b>的數字，再按 Upload。'],
+  ['測試', '用手遮住光感應器，LED 亮起；移開手，LED 熄滅。請老師過來確認。'],
 ];
-const READ_FIELDS = [['torch', '電筒照住'], ['room', '課室燈光'], ['dark', '用手遮住']];
+const READ_FIELDS = [['room', '課室燈光'], ['dark', '用手遮住']];
 function readingAdvice(r) {
   const n = k => (r[k] === '' || r[k] == null || isNaN(+r[k])) ? null : +r[k];
-  const room = n('room'), dark = n('dark'), torch = n('torch');
-  if (torch == null || room == null) return { kind: 'info', html: '填上「電筒照住」和「課室燈光」的讀數，就會計出建議的門檻值。' };
-  if ([room, dark, torch].some(v => v != null && (v < 0 || v > 1023))) return { kind: 'err', html: 'analogRead 的讀數只會在 0 至 1023 之間，請再看清楚 Serial Monitor。' };
-  if (Math.abs(room - torch) < 10) {
-    if (room > 1010 && torch > 1010) return { kind: 'err', html: '用電筒照住，讀數仍然接近 1023：先把手機電筒<b>貼近</b>光感應器再試；如果仍然不變，光感應器可能<b>接反了</b>（長腳要向 A0 和 10kΩ），或者短腳 / 「−」電源軌未接到 GND。' };
-    if (room < 20 && torch < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
-    return { kind: 'err', html: '照住和不照住的讀數差不多：檢查 A0 的藍色線是否插在光感應器長腳那一直行，以及光感應器有沒有接反。' };
+  const room = n('room'), dark = n('dark');
+  if (room == null || dark == null) return { kind: 'info', html: '填上「課室燈光」和「用手遮住」的讀數，就會計出建議的門檻值。' };
+  if ([room, dark].some(v => v < 0 || v > 1023)) return { kind: 'err', html: 'analogRead 的讀數只會在 0 至 1023 之間，請再看清楚 Serial Monitor。' };
+  if (Math.abs(dark - room) < 60) {
+    if (room > 950 && dark > 950) return { kind: 'err', html: '讀數一直接近 1023，遮不遮只差幾個數：光感應器很可能<b>接反了</b>。這粒光感應器和 LED 相反：<b>短腳</b>接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。' };
+    if (room < 20 && dark < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
+    return { kind: 'err', html: '遮住和不遮住的讀數差不多：用手完全遮住光感應器再試；也檢查 A0 的藍色線是否插在光感應器短腳那一直行。' };
   }
-  if (torch > room) return { kind: 'warn', html: '電筒照住時讀數反而<b>變大</b>了。這個電路應該是越光讀數越細：檢查 10kΩ 是否接 5V、光感應器短腳是否接 GND（兩者可能對調了）。' };
-  const mid = Math.round((room + torch) / 2);
-  return { kind: 'ok', html: `建議門檻值：<b>${mid}</b>（${torch} 和 ${room} 的中間）。把程式第 6 行改成 <code>int threshold = ${mid};</code>，再上傳。`, mid };
+  if (dark < room) return { kind: 'warn', html: '遮住時讀數反而<b>變細</b>了。這個電路應該是越暗讀數越大：檢查 10kΩ 是否接 5V、光感應器長腳是否接 GND（兩者可能對調了）。' };
+  const mid = Math.round((room + dark) / 2);
+  return { kind: 'ok', html: `建議門檻值：<b>${mid}</b>（${room} 和 ${dark} 的中間）。把程式第 6 行改成 <code>int threshold = ${mid};</code>，再上傳。`, mid };
 }
 stageInit.real = () => {
   if (!S.real.wl) S.real.wl = {};
@@ -46,7 +46,7 @@ stageInit.real = () => {
         <ul class="checklist">${REAL_ITEMS.map(([b, s], i) => `<li><label><input type="checkbox" id="rc${i}" data-i="${i}" ${S.real.checks[i] ? 'checked' : ''}><div><b>${i + 1}. ${b}</b><span>${s}</span></div></label></li>`).join('')}</ul>
       </div>
       <div class="card"><h3>你的接線圖</h3><div class="sos-stage">${HW.circuitSVG()}</div>
-        <p class="small muted" style="margin-top:8px">5V →「+」軌 → 10kΩ → 光感應器（長腳）→ 短腳 →「−」軌 → GND；A0 接在 10kΩ 和光感應器中間。D9 → 220Ω → LED → 「−」軌。</p></div>
+        <p class="small muted" style="margin-top:8px">5V →「+」軌 → 10kΩ → 光感應器（短腳）→ 長腳 →「−」軌 → GND；A0 接在 10kΩ 和光感應器中間。D9 → 220Ω → LED → 「−」軌。</p></div>
       <div class="card" id="wlCard">${WIRE.listHTML(lay.parts, lay.wires, S.real.wl)}</div>
     </div>
     <div class="stack" style="gap:18px">
@@ -64,12 +64,13 @@ stageInit.real = () => {
       </div>
       <div class="card"><h3>遇到問題？</h3>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>情況</th><th>可能原因及解決方法</th></tr></thead><tbody>
-          <tr><td>用電筒照住，讀數仍然接近 1023</td><td>電筒未夠近（要貼近光感應器）；光感應器<b>接反了</b>（長腳要向 A0 和 10kΩ）；或者短腳 / 「−」電源軌未接到 GND。</td></tr>
+          <tr><td>讀數一直接近 1023，遮不遮只差幾個數</td><td>光感應器<b>接反了</b>：這粒光感應器和 LED 相反，<b>短腳</b>要接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。</td></tr>
           <tr><td>讀數一直是 0</td><td>10kΩ 未接到 5V（「+」電源軌未接 5V）；或者 A0 的線接到了 GND。</td></tr>
-          <tr><td>讀數亂跳，和光暗無關</td><td>A0 的藍色線插錯孔，沒有接到光感應器長腳那一直行（A0「浮空」）。</td></tr>
+          <tr><td>讀數亂跳，和光暗無關</td><td>A0 的藍色線插錯孔，沒有接到光感應器短腳那一直行（A0「浮空」）。</td></tr>
+          <tr><td>沒有程式平均時，讀數有規律地跳</td><td>課室燈每秒閃 100 次，光感應器看得到。程式的 <code>readLight()</code> 會讀 20 次計平均，所以要用完整程式，不要刪走最後幾行。</td></tr>
           <tr><td>Serial Monitor 出現亂碼 ⸮⸮⸮</td><td>右下角的速度不是 <b>9600 baud</b>，要和 <code>Serial.begin(9600)</code> 一樣。</td></tr>
           <tr><td>Serial Monitor 完全沒有字</td><td>程式未上傳成功；或者 Port 選錯了。</td></tr>
-          <tr><td>LED 一直亮，或者一直不亮</td><td>門檻值不適合：看 Serial Monitor 的讀數，把門檻值改成電筒照住和課室燈光讀數的中間（大約 1000），再上傳。注意課室燈光下 LED 會亮，電筒照住才會熄。也要檢查 LED 有沒有接反。</td></tr>
+          <tr><td>LED 一直亮，或者一直不亮</td><td>門檻值不適合：看 Serial Monitor 的讀數，把門檻值改成課室燈光和遮住讀數的中間，再上傳。也要檢查 LED 有沒有接反。</td></tr>
           <tr><td>LED 非常暗</td><td>用錯了 10kΩ（1 條紅色）。LED 要用 220Ω：紅紅黑黑棕，有 2 條紅色。</td></tr>
           <tr><td>上傳時出現 not in sync</td><td>Port 選錯了，或者 Board 不是 Arduino Uno。</td></tr>
         </tbody></table></div>
@@ -131,7 +132,7 @@ function buildRecord() {
     hw: { errors: S.hw.errors, hints: S.hw.hints, log: S.hw.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
     code: { checks: S.code.checks, blanks: !S.code.done ? [] : BLANKS.map(b => { const x = S.code.blanks[b.id] || {}; return { n: +b.id.slice(1), ask: b.ask, ans: b.id === 'b1' && !x.revealed && x.val ? String(x.val).trim() : b.ans, wrong: x.wrong || 0, revealed: !!x.revealed, hinted: !!x.hinted, pts: x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0) - (x.hinted ? 1 : 0)) }; }), log: S.code.log ? S.code.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) : [] },
     up: { errors: S.up.errors, monitorOk: !!S.up.monitorOk, log: S.up.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
-    real: { confirmed: !!S.real.confirmed, checked: REAL_ITEMS.filter((_, i) => S.real.checks[i]).length, of: REAL_ITEMS.length, readings: { torch: S.real.readings.torch ?? '', room: S.real.readings.room ?? '', dark: S.real.readings.dark ?? '' } },
+    real: { confirmed: !!S.real.confirmed, checked: REAL_ITEMS.filter((_, i) => S.real.checks[i]).length, of: REAL_ITEMS.length, readings: { room: S.real.readings.room ?? '', dark: S.real.readings.dark ?? '' } },
     ext: extRecord(),
     teacherUsed: !!S.teacherUsed,
   };
@@ -182,7 +183,7 @@ function renderReportBody(d, ok, sig, svg) {
   if (part && !pg.up) h += '<h2>3. 上傳流程（0 / 20）</h2><p><b>未完成</b>（0 分）。</p>';
   else h += '<h2>3. 上傳流程（' + s.up + ' / 20）</h2><p>選板、選 Port 或上傳出錯 <b>' + d.up.errors + '</b> 次（每次 −3，最低 8 分）。用時 ' + dur(d.dur.up) + '。Serial Monitor 速度（9600 baud）：' + (d.up.monitorOk ? '已設定 ✔' : '未設定') + '（不計分）。</p>' + list(d.up.log, '一次成功，沒有錯誤記錄。');
   var rd = d.real && d.real.readings;
-  if (rd && (rd.torch !== '' || rd.room !== '' || rd.dark !== '')) h += '<h2>實物讀數記錄（不計分）</h2><table class="rtbl"><thead><tr><th>電筒照住</th><th>課室燈光</th><th>用手遮住</th></tr></thead><tbody><tr><td class="rmono">' + E(rd.torch === '' ? '—' : rd.torch) + '</td><td class="rmono">' + E(rd.room === '' ? '—' : rd.room) + '</td><td class="rmono">' + E(rd.dark === '' ? '—' : rd.dark) + '</td></tr></tbody></table>';
+  if (rd && ((rd.room != null && rd.room !== '') || (rd.dark != null && rd.dark !== ''))) h += '<h2>實物讀數記錄（不計分）</h2><table class="rtbl"><thead><tr><th>課室燈光</th><th>用手遮住</th></tr></thead><tbody><tr><td class="rmono">' + E(rd.room === '' ? '—' : rd.room) + '</td><td class="rmono">' + E(rd.dark === '' ? '—' : rd.dark) + '</td></tr></tbody></table>';
   if (d.ext) {
     var x1 = d.ext.c1, x2 = d.ext.c2, ok1 = function (v) { return v ? '<b style="color:#1F8049">老師已確認 ✔</b>' : '未確認'; };
     h += '<h2>4. 延伸挑戰（選做，不計入 100 分總分）</h2>';
@@ -404,7 +405,7 @@ function extCell(d, k) {
 }
 function exportCsv() {
   if (!vRows.length) { toast('請先放入成績報告檔案。'); return; }
-  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '硬件接線(40)', '程式填空(40)', '上傳流程(20)', '接線錯誤次數', '接線提示次數', '程式填錯次數', '程式提示格數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '讀數:電筒', '讀數:課室燈光', '讀數:遮住', '延伸1調校靈敏度(10)', '延伸1實物確認', '延伸2越暗越亮(10)', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
+  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '硬件接線(40)', '程式填空(40)', '上傳流程(20)', '接線錯誤次數', '接線提示次數', '程式填錯次數', '程式提示格數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '讀數:課室燈光', '讀數:遮住', '延伸1調校靈敏度(10)', '延伸1實物確認', '延伸2越暗越亮(10)', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
   const q = v => { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
   const lines = [head.join(',')];
   vRows.filter(r => r.d).sort((a, b) => a.d.cls.localeCompare(b.d.cls) || (+a.d.no - +b.d.no)).forEach(r => {
@@ -415,7 +416,7 @@ function exportCsv() {
   saveFile(`自動夜燈_成績_${fmtTime(Date.now()).slice(0, 10)}.csv`, '﻿' + lines.join('\r\n'), 'text/csv').then(r => { if (r === 'saved') toast('已匯出 CSV', 'ok'); });
 }
 
-function rdCsv(d) { const r = (d.real && d.real.readings) || {}; return [r.torch ?? '', r.room ?? '', r.dark ?? '']; }
+function rdCsv(d) { const r = (d.real && d.real.readings) || {}; return [r.room ?? '', r.dark ?? '']; }
 function extCsv(d) {
   const e = d.ext || {}, a = e.c1 || {}, b = e.c2 || {};
   return [a.done ? a.score.total : '', a.done ? (a.confirmed ? '是' : '否') : '', b.done ? b.score.total : '', b.done ? (b.confirmed ? '是' : '否') : ''];

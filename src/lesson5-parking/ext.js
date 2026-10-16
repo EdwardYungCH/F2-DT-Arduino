@@ -35,7 +35,7 @@ function gatePanelHTML(mode) {
       <label class="small">或者拉動滑桿，自己移動車輛：</label>
       <input type="range" class="dark-slider np-car" min="0" max="100" value="0" aria-label="車輛位置">
       <div class="readout">A0 讀數 <b class="np-val"></b>　<span class="small muted">伺服馬達角度 <b class="np-ang">0</b>°</span></div>
-      <div class="np-gauge">${gaugeHTML(LIGHT.base(LIGHT.ROOM_AT), 700)}</div>
+      <div class="np-gauge">${gaugeHTML(LIGHT.base(LIGHT.ROOM_AT), LIGHT.DEMO_THR)}</div>
       <div class="phase np-state"></div>
     </div>
     ${mode === 'c2' ? '' : monitorHTML()}
@@ -141,7 +141,7 @@ const EXT = (() => {
       html: `<div class="sos-stage">${c1 ? HW.circuitSVG(S.hw, S.ext.c1.hw, { clickable: true }) : HW.circuitSVG(S.hw)}</div>${gatePanelHTML(which)}
         <p class="small muted" style="margin-top:8px">${c1 ? '沒有車時按一下按鈕（或者直接按模擬器上的紅色按鈕），閘門也會升起：<code>val &gt; threshold || digitalRead(buttonPin) == HIGH</code>。' : 'for 迴圈每次轉 1°、等 20 毫秒：90 × 20 = 1800 毫秒，閘門用大約 1.8 秒升起。'}</p>`,
       actions: [toExt],
-      onOpen: back => { const ON = $('.uLedON', back); ON && ON.setAttribute('fill', '#3CFF7A'); sim = gatePanelSim(back, which, 700); },
+      onOpen: back => { const ON = $('.uLedON', back); ON && ON.setAttribute('fill', '#3CFF7A'); sim = gatePanelSim(back, which, LIGHT.DEMO_THR); },
     });
   }
   return { render, showResult, c1Code, c2Code };

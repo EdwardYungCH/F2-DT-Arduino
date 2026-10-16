@@ -231,20 +231,21 @@ function renderStepper() {
 $$('#stepper button').forEach(b => b.addEventListener('click', () => goStage(b.dataset.stage)));
 
 /* ---------------- light sensor model (shared) ---------------- */
-/* darkness d: 0 = torch shining on it, 40 = classroom light, 100 = covered by a hand.
+/* darkness d: 0 = very bright (by a window), 40 = classroom light, 100 = covered by a hand.
    With 5V → 10kΩ → A0 → light sensor → GND, the darker it is, the bigger the reading. */
 const LIGHT = {
-  /* 按老師用實物量度的讀數（10 月 13 日）：手機電筒照住約 9xx，課室燈光約 101x，用手遮住接近 1023。
-     這個光感應器很敏感，課室燈光對它來說已經算「暗」，所以用「電筒照住」代表白天。 */
-  ROOM_AT: 60, THR_MIN: 960, THR_MAX: 1010, DEMO_THR: 1000, GMIN: 850,
-  base: d => { d = Math.max(0, Math.min(100, d)); return Math.round(d <= 60 ? 940 + (1015 - 940) * d / 60 : 1015 + (1022 - 1015) * (d - 60) / 40); },
-  read: d => Math.max(0, Math.min(1023, LIGHT.base(d) + Math.round((Math.random() - 0.5) * 6))),
-  label: d => d < 20 ? '電筒照住' : d < 45 ? '電筒移遠一點' : d < 80 ? '課室燈光' : '用手遮住',
+  /* 按老師實物量度（10 月 16 日，光感應器短腳接 A0 / 10kΩ，長腳接 GND）：
+     課室燈每秒閃 100 次，單次讀數會規律地跳（課室燈光 50 至 600，用手遮住 600 至 800）。
+     程式用 readLight() 讀 20 次計平均：課室燈光約 330，用手遮住約 700。模擬器顯示的是平均後的讀數。 */
+  ROOM_AT: 40, THR_MIN: 420, THR_MAX: 620, DEMO_THR: 500, GMIN: 0,
+  base: d => { d = Math.max(0, Math.min(100, d)); return Math.round(d <= 40 ? 60 + (330 - 60) * d / 40 : 330 + (700 - 330) * (d - 40) / 60); },
+  read: d => Math.max(0, Math.min(1023, LIGHT.base(d) + Math.round((Math.random() - 0.5) * 20))),
+  label: d => d < 15 ? '很光（窗邊）' : d < 55 ? '課室燈光' : d < 85 ? '遮住一半' : '用手遮住',
   pos: v => Math.max(0, Math.min(100, (v - LIGHT.GMIN) / (1023 - LIGHT.GMIN) * 100)),
 };
 /* a 0–1023 scale with the reading and the threshold */
 function gaugeHTML(val, thr) {
-  return `<div class="gauge" aria-hidden="true"><div class="gtrack">${thr != null ? `<i class="gthr" style="left:${LIGHT.pos(thr)}%"><span>門檻 ${thr}</span></i>` : ''}<i class="gval" style="left:${LIGHT.pos(val)}%"><span>${val}</span></i></div><div class="gends"><span>${LIGHT.GMIN}（較光）</span><span>1023（很暗）</span></div></div>`;
+  return `<div class="gauge" aria-hidden="true"><div class="gtrack">${thr != null ? `<i class="gthr" style="left:${LIGHT.pos(thr)}%"><span>門檻 ${thr}</span></i>` : ''}<i class="gval" style="left:${LIGHT.pos(val)}%"><span>${val}</span></i></div><div class="gends"><span>0（很光）</span><span>1023（很暗）</span></div></div>`;
 }
 function setGauge(el, val) {
   const v = el && $('.gval', el); if (!v) return;

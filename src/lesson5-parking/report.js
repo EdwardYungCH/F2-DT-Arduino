@@ -8,27 +8,27 @@ const fullCode = () => CODE_TEMPLATE.map(l => l.replace(/\{\{(b\d)\}\}/g, (_, id
 const REAL_ITEMS = [
   ['準備材料', '按上面的材料清單拿齊材料。220Ω（2 條紅色）給兩粒 LED，10kΩ（1 條紅色）給光感應器。'],
   ['先接線，後通電', '接線時<b>不要</b>插 USB 線，避免接錯時短路。'],
-  ['接駁電源軌及光感應器', '5V →「+」軌、GND →「−」軌；光感應器長腳和 10kΩ、A0 同一直行，10kΩ 另一端接「+」軌，短腳接「−」軌。'],
+  ['接駁電源軌及光感應器', '5V →「+」軌、GND →「−」軌；光感應器短腳和 10kΩ、A0 同一直行，10kΩ 另一端接「+」軌，長腳接「−」軌。'],
   ['接駁紅、綠 LED', 'D12 → 220Ω → 紅燈長腳；D10 → 220Ω → 綠燈長腳；兩粒 LED 的短腳 →「−」軌。'],
   ['接駁伺服馬達', '把 3 條杜邦線插入伺服馬達的插頭：<b>啡 →「−」軌、紅 →「+」軌、橙 → D9</b>。暫時<b>不要</b>貼雪條棍。'],
   ['插 USB、貼程式、上傳', '按右邊的「複製完整程式」，貼到 Arduino IDE，選 Board 和 Port，按 Upload。上傳後伺服馬達會轉到 0°。'],
   ['做閘門', '伺服馬達停在 0° 後，用<b>寶特貼</b>把雪條棍<b>水平</b>貼在擺臂上，這就是關閘的位置。'],
-  ['量度讀數', '打開 Serial Monitor（9600 baud），記錄沒有車（課室燈光）和有車（用手或玩具車遮住）的讀數，填在右邊的「讀數記錄」。'],
+  ['量度讀數', '打開 Serial Monitor（9600 baud），記錄沒有車（課室燈光）和有車（用手或玩具車遮住）的讀數，填在右邊的「讀數記錄」（程式已經計好平均）。'],
   ['改門檻值，再上傳', '把程式第 8 行的門檻值改成兩個讀數<b>中間</b>的數字，再按 Upload。'],
   ['測試', '遮住光感應器：紅燈轉綠燈，閘門升起；3 秒後落下，轉回紅燈。請老師過來確認。'],
 ];
-const READ_FIELDS = [['torch', '電筒照住'], ['room', '沒有車（課室燈光）'], ['dark', '有車（遮住）']];
+const READ_FIELDS = [['room', '沒有車（課室燈光）'], ['dark', '有車（遮住）']];
 function readingAdvice(r) {
   const n = k => (r[k] === '' || r[k] == null || isNaN(+r[k])) ? null : +r[k];
-  const room = n('room'), dark = n('dark'), torch = n('torch');
+  const room = n('room'), dark = n('dark');
   if (room == null || dark == null) return { kind: 'info', html: '填上「課室燈光」和「用手遮住」的讀數，就會計出建議的門檻值。' };
-  if ([room, dark, torch].some(v => v != null && (v < 0 || v > 1023))) return { kind: 'err', html: 'analogRead 的讀數只會在 0 至 1023 之間，請再看清楚 Serial Monitor。' };
-  if (Math.abs(dark - room) < 30) {
-    if (room > 1000 && dark > 1000) return { kind: 'err', html: '讀數一直接近 1023，遮不遮都一樣：光感應器可能<b>接反了</b>（長腳要向 A0 和 10kΩ），或者短腳 / 「−」電源軌未接到 GND。' };
+  if ([room, dark].some(v => v < 0 || v > 1023)) return { kind: 'err', html: 'analogRead 的讀數只會在 0 至 1023 之間，請再看清楚 Serial Monitor。' };
+  if (Math.abs(dark - room) < 60) {
+    if (room > 950 && dark > 950) return { kind: 'err', html: '讀數一直接近 1023，遮不遮只差幾個數：光感應器很可能<b>接反了</b>。這粒光感應器和 LED 相反：<b>短腳</b>接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。' };
     if (room < 20 && dark < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
-    return { kind: 'err', html: '遮住和不遮住的讀數差不多：檢查 A0 的藍色線是否插在光感應器長腳那一直行，以及光感應器有沒有接反。' };
+    return { kind: 'err', html: '遮住和不遮住的讀數差不多：用手（或玩具車）完全遮住光感應器再試；也檢查 A0 的藍色線是否插在光感應器短腳那一直行。' };
   }
-  if (dark < room) return { kind: 'warn', html: '遮住時讀數反而<b>變細</b>了。這個電路應該是越暗讀數越大：檢查 10kΩ 是否接 5V、光感應器短腳是否接 GND（兩者可能對調了）。' };
+  if (dark < room) return { kind: 'warn', html: '遮住時讀數反而<b>變細</b>了。這個電路應該是越暗讀數越大：檢查 10kΩ 是否接 5V、光感應器長腳是否接 GND（兩者可能對調了）。' };
   const mid = Math.round((room + dark) / 2);
   return { kind: 'ok', html: `建議門檻值：<b>${mid}</b>（${room} 和 ${dark} 的中間）。把程式第 8 行改成 <code>int threshold = ${mid};</code>，再上傳。`, mid };
 }
@@ -69,7 +69,8 @@ stageInit.real = () => {
           <tr><td>閘門方向不對（升起時向下）</td><td>雪條棍貼錯位置。先上傳程式令伺服馬達轉到 0°，才把雪條棍水平貼上。</td></tr>
           <tr><td>編譯時出現 servo.h: No such file or directory</td><td><code>#include &lt;Servo.h&gt;</code> 的 S 要大寫，檔名要完全一樣。</td></tr>
           <tr><td>沒有車，閘門也不停開關</td><td>門檻值太低：用 Serial Monitor 看讀數，把門檻值改成沒有車和有車讀數的中間，再上傳。</td></tr>
-          <tr><td>遮住光感應器，讀數不變</td><td>光感應器接反了（長腳要向 A0 和 10kΩ）；或者 A0 的線插錯孔。</td></tr>
+          <tr><td>遮住光感應器，讀數不變（一直接近 1023）</td><td>光感應器接反了：它和 LED 相反，<b>短腳</b>要接 A0 和 10kΩ，<b>長腳</b>接 GND；或者 A0 的線插錯孔。</td></tr>
+          <tr><td>沒有平均時，讀數有規律地跳</td><td>課室燈每秒閃 100 次，光感應器看得到。程式的 <code>readLight()</code> 會讀 20 次計平均，所以要用完整程式，不要刪走最後幾行。</td></tr>
           <tr><td>某粒 LED 不亮</td><td>LED 接反（長腳向信號腳）；短腳未接「−」軌；或者 D12 / D10 對調了。</td></tr>
           <tr><td>上傳時出現 not in sync</td><td>Port 選錯了，或者 Board 不是 Arduino Uno。</td></tr>
         </tbody></table></div>
@@ -131,7 +132,7 @@ function buildRecord() {
     hw: { errors: S.hw.errors, hints: S.hw.hints, log: S.hw.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
     code: { checks: S.code.checks, blanks: !S.code.done ? [] : BLANKS.map(b => { const x = S.code.blanks[b.id] || {}; return { n: +b.id.slice(1), ask: b.ask, ans: b.id === 'b2' && !x.revealed && x.val ? String(x.val).trim() : b.ans, wrong: x.wrong || 0, revealed: !!x.revealed, hinted: !!x.hinted, pts: x.revealed ? 1 : Math.max(2, 5 - Math.min(3, x.wrong || 0) - (x.hinted ? 1 : 0)) }; }), log: S.code.log ? S.code.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) : [] },
     up: { errors: S.up.errors, log: S.up.log.slice(0, 40).map(l => clockOf(l.t) + '  ' + l.msg) },
-    real: { confirmed: !!S.real.confirmed, checked: REAL_ITEMS.filter((_, i) => S.real.checks[i]).length, of: REAL_ITEMS.length, readings: { torch: S.real.readings.torch ?? '', room: S.real.readings.room ?? '', dark: S.real.readings.dark ?? '' } },
+    real: { confirmed: !!S.real.confirmed, checked: REAL_ITEMS.filter((_, i) => S.real.checks[i]).length, of: REAL_ITEMS.length, readings: { room: S.real.readings.room ?? '', dark: S.real.readings.dark ?? '' } },
     ext: extRecord(),
     teacherUsed: !!S.teacherUsed,
   };
@@ -182,7 +183,7 @@ function renderReportBody(d, ok, sig, svg) {
   if (part && !pg.up) h += '<h2>3. 上傳流程（0 / 20）</h2><p><b>未完成</b>（0 分）。</p>';
   else h += '<h2>3. 上傳流程（' + s.up + ' / 20）</h2><p>選板、選 Port 或上傳出錯 <b>' + d.up.errors + '</b> 次（每次 −3，最低 8 分）。用時 ' + dur(d.dur.up) + '。</p>' + list(d.up.log, '一次成功，沒有錯誤記錄。');
   var rd = d.real && d.real.readings;
-  if (rd && (rd.torch !== '' || rd.room !== '' || rd.dark !== '')) h += '<h2>實物讀數記錄（不計分）</h2><table class="rtbl"><thead><tr><th>電筒照住</th><th>沒有車</th><th>有車（遮住）</th></tr></thead><tbody><tr><td class="rmono">' + E(rd.torch === '' ? '—' : rd.torch) + '</td><td class="rmono">' + E(rd.room === '' ? '—' : rd.room) + '</td><td class="rmono">' + E(rd.dark === '' ? '—' : rd.dark) + '</td></tr></tbody></table>';
+  if (rd && ((rd.room != null && rd.room !== '') || (rd.dark != null && rd.dark !== ''))) h += '<h2>實物讀數記錄（不計分）</h2><table class="rtbl"><thead><tr><th>沒有車</th><th>有車（遮住）</th></tr></thead><tbody><tr><td class="rmono">' + E(rd.room === '' ? '—' : rd.room) + '</td><td class="rmono">' + E(rd.dark === '' ? '—' : rd.dark) + '</td></tr></tbody></table>';
   if (d.ext) {
     var x1 = d.ext.c1, x2 = d.ext.c2, ok1 = function (v) { return v ? '<b style="color:#1F8049">老師已確認 ✔</b>' : '未確認'; };
     h += '<h2>4. 延伸挑戰（選做，不計入 100 分總分）</h2>';
@@ -405,7 +406,7 @@ function extCell(d, k) {
 }
 function exportCsv() {
   if (!vRows.length) { toast('請先放入成績報告檔案。'); return; }
-  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '硬件接線(40)', '程式填空(40)', '上傳流程(20)', '接線錯誤次數', '接線提示次數', '程式填錯次數', '程式提示格數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '讀數:電筒', '讀數:沒有車', '讀數:有車', '延伸1管理員按鈕(10)', '延伸1實物確認', '延伸2慢慢開閘(10)', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
+  const head = ['班別', '學號', '姓名', '狀態', '總分', '等級', '硬件接線(40)', '程式填空(40)', '上傳流程(20)', '接線錯誤次數', '接線提示次數', '程式填錯次數', '程式提示格數', '顯示答案格數', '上傳錯誤次數', '實物老師確認', '讀數:沒有車', '讀數:有車', '延伸1管理員按鈕(10)', '延伸1實物確認', '延伸2慢慢開閘(10)', '延伸2實物確認', '嘗試次數', '總用時(分鐘)', '完成時間', '曾用教師模式', '驗證', '驗證碼', '檔名'];
   const q = v => { v = String(v ?? ''); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
   const lines = [head.join(',')];
   vRows.filter(r => r.d).sort((a, b) => a.d.cls.localeCompare(b.d.cls) || (+a.d.no - +b.d.no)).forEach(r => {
@@ -416,7 +417,7 @@ function exportCsv() {
   saveFile(`停車場閘門_成績_${fmtTime(Date.now()).slice(0, 10)}.csv`, '﻿' + lines.join('\r\n'), 'text/csv').then(r => { if (r === 'saved') toast('已匯出 CSV', 'ok'); });
 }
 
-function rdCsv(d) { const r = (d.real && d.real.readings) || {}; return [r.torch ?? '', r.room ?? '', r.dark ?? '']; }
+function rdCsv(d) { const r = (d.real && d.real.readings) || {}; return [r.room ?? '', r.dark ?? '']; }
 function extCsv(d) {
   const e = d.ext || {}, a = e.c1 || {}, b = e.c2 || {};
   return [a.done ? a.score.total : '', a.done ? (a.confirmed ? '是' : '否') : '', b.done ? b.score.total : '', b.done ? (b.confirmed ? '是' : '否') : ''];

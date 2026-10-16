@@ -66,7 +66,7 @@ const HELP = (() => {
   const visible = e => e && !(e.only && e.only !== LESSON) && e.L <= LESSON;
 
   /* ---------- syntax colours + dictionary words ---------- */
-  const RE = /(#include)\b|\b(void|int|if|else|for)\b|\b(pinMode|digitalWrite|digitalRead|delay|tone|noTone|analogRead|analogWrite|map|attach|write|begin|println|print|dot|dash|letterGap)\b|\b(HIGH|LOW|OUTPUT|INPUT|A[0-5])\b|\b(setup|loop|Serial|Servo)\b|\b(\d+)\b|("[^"]*")|(==|\|\||&&|\+\+|--)/g;
+  const RE = /(#include)\b|\b(void|int|long|if|else|for|return)\b|\b(pinMode|digitalWrite|digitalRead|delay|tone|noTone|analogRead|analogWrite|map|attach|write|begin|println|print|dot|dash|letterGap)\b|\b(HIGH|LOW|OUTPUT|INPUT|A[0-5])\b|\b(setup|loop|Serial|Servo)\b|\b(\d+)\b|("[^"]*")|(==|\|\||&&|\+\+|--)/g;
   function hl(text) {
     let out = '', i = 0, m;
     const ci = text.indexOf('//');
@@ -189,7 +189,7 @@ const HELP = (() => {
       const t = ev.target;
       if (t.closest('[data-dk-close]')) { setOpen(false); return; }
       const o = t.closest('[data-dk-open]'); if (o) { openDict(o.dataset.dkOpen || ''); return; }
-      const g = t.closest('[data-dk]'); if (g) { openDict(g.dataset.dk); return; }
+      const g = t.closest('[data-dkey]'); if (g) { openDict(g.dataset.dkey); return; }
       const w = t.closest('#editor [data-k]');
       if (w) { showTip(w); return; }
       if (tip && !t.closest('.dk-tipbox')) hideTip();
@@ -208,7 +208,7 @@ const HELP = (() => {
     let h = `<div class="bc-top"><span class="bc-n">${n}</span><b>${b.ask}</b><button class="bc-x" data-bc-close aria-label="關閉">✕</button></div>
       <div class="bc-type">要填：<b>${typeOf(b)}</b></div>`;
     if (st.status === 'bad' && st.fb) h += `<div class="bc-fb">${st.fb}</div>`;
-    if (st.hinted) h += `<div class="bc-hint">💡 提示：${b.hint}${dk ? ` <button class="linkbtn" data-dk="${dk}">看字典</button>` : ''}</div>`;
+    if (st.hinted) h += `<div class="bc-hint">💡 提示：${b.hint}${dk ? ` <button class="linkbtn" data-dkey="${dk}">看字典</button>` : ''}</div>`;
     const acts = [];
     if (!st.hinted) acts.push(`<button class="btn sm ghost bc-hb${(st.wrong || 0) >= 2 ? ' pulse' : ''}" data-hint="${b.id}">💡 提示（${opts.cost || '扣 1 分'}）</button>`);
     if ((st.wrong || 0) >= (opts.revAt || 3)) acts.push(`<button class="btn sm ghost" data-rev="${b.id}">顯示答案</button>`);

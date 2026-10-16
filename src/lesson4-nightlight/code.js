@@ -17,7 +17,7 @@ const CODE_TEMPLATE = [
   '}',
   '',
   'void loop() {',
-  '  val = {{b3}}({{b4}});          // 讀取 A0 的類比讀數（0 至 1023）',
+  '  val = readLight();            // 讀取光感應器（讀 20 次計平均，見最後幾行）',
   '  Serial.{{b5}}(val);           // 把讀數顯示在 Serial Monitor，然後換行',
   '',
   '  if (val {{b6}} threshold) {    // 如果讀數大過門檻值（天黑）',
@@ -27,10 +27,20 @@ const CODE_TEMPLATE = [
   '  }',
   '  delay(100);                // 每 0.1 秒讀一次',
   '}',
+  '',
+  '// 讀 20 次計平均：課室燈每秒閃 100 次，讀數會跳，平均之後才穩定（這部分已寫好）',
+  'int readLight() {',
+  '  long sum = 0;',
+  '  for (int i = 0; i < 20; i++) {',
+  '    sum = sum + {{b3}}({{b4}});   // 讀取 A0 的類比讀數（0 至 1023）',
+  '    delay(1);',
+  '  }',
+  '  return sum / 20;',
+  '}',
 ];
 const thrOk = v => /^\d+$/.test(v) && +v >= LIGHT.THR_MIN && +v <= LIGHT.THR_MAX;
 const BLANKS = [
-  { id: 'b1', ans: '1000', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：電筒照住時讀數約 940，課室燈光時約 1015。門檻值要在兩者<em>中間</em>，例如 1000。' },
+  { id: 'b1', ans: '500', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：課室燈光時讀數約 330，用手遮住時約 700。門檻值要在兩者<em>中間</em>，例如 500。' },
   { id: 'b2', ans: '9600', ctx: 'baud', ask: '通訊速度', hint: '看看這一行的註解（灰色文字）：速度是幾多？' },
   { id: 'b3', ans: 'analogRead', ctx: 'func', argc: 1, ask: '讀取類比讀數的指令', hint: '讀按鈕用 digitalRead；讀 0 至 1023 的<em>類比</em>讀數用 <em>analogRead</em>，注意 R 大寫。' },
   { id: 'b4', ans: 'A0', ctx: 'arg', accept: v => v === 'A0' || v === '0', ask: '光感應器接在哪一支腳', hint: '藍色線接在 Arduino 下方 ANALOG IN 的哪一支腳？要寫英文字母加數字，A 大寫。' },
@@ -56,7 +66,7 @@ const C1_TEMPLATE = [
   '}',
   '',
   'void loop() {',
-  '  val = analogRead(A0);                // 光感應器',
+  '  val = readLight();                  // 光感應器（讀 20 次計平均）',
   '  threshold = {{e1}}({{e2}});          // 電位器的讀數就是門檻值',
   '  Serial.{{e3}}(val);                  // 印出光讀數，不換行',
   '  Serial.print(" ");                   // 中間空一格',
@@ -68,6 +78,16 @@ const C1_TEMPLATE = [
   '    digitalWrite(ledPin, LOW);',
   '  }',
   '  delay(100);',
+  '}',
+  '',
+  '// 讀 20 次計平均：課室燈每秒閃 100 次，讀數會跳，平均之後才穩定（這部分已寫好）',
+  'int readLight() {',
+  '  long sum = 0;',
+  '  for (int i = 0; i < 20; i++) {',
+  '    sum = sum + analogRead(A0);',
+  '    delay(1);',
+  '  }',
+  '  return sum / 20;',
   '}',
 ];
 const C1_BLANKS = [
@@ -94,11 +114,20 @@ const C2_TEMPLATE = [
   '}',
   '',
   'void loop() {',
-  '  val = analogRead(A0);             // 電筒照住約 9 百幾，課室燈光約 1015',
-  '  level = {{e1}}(val, 900, {{e2}}, 0, {{e3}}); // 把 900–1023 轉換成 0–255',
-  '  level = constrain(level, 0, 255); // 讀數細過 900 時，不會變成負數',
+  '  val = readLight();               // 0（很光）至 1023（很暗）',
+  '  level = {{e1}}(val, 0, {{e2}}, 0, {{e3}});   // 把 0–1023 轉換成 0–255',
   '  {{e4}}(ledPin, {{e5}});           // 用 level 控制 LED 的亮度',
   '  delay(100);',
+  '}',
+  '',
+  '// 讀 20 次計平均：課室燈每秒閃 100 次，讀數會跳，平均之後才穩定（這部分已寫好）',
+  'int readLight() {',
+  '  long sum = 0;',
+  '  for (int i = 0; i < 20; i++) {',
+  '    sum = sum + analogRead(A0);',
+  '    delay(1);',
+  '  }',
+  '  return sum / 20;',
   '}',
 ];
 const C2_BLANKS = [
@@ -152,7 +181,7 @@ const IDE = (() => {
       name: 'c2', file: 'Night_Light_Dimmer', eyebrow: '延伸挑戰 2 · 越暗越亮', title: '編程及上傳', full: false,
       tpl: C2_TEMPLATE, blanks: C2_BLANKS, bank: C2_BANK,
       st: () => S.ext.c2.code, flow: () => S.ext.c2.flow,
-      intro: `不用接新零件。你要完成 <b>5 個空格</b>：用 <code>map</code> 把讀數（900 至 1023）轉換成亮度（0 至 255），再用 <code>analogWrite</code> 調校 LED 的亮度。`,
+      intro: `不用接新零件。你要完成 <b>5 個空格</b>：用 <code>map</code> 把讀數（0 至 1023）轉換成亮度（0 至 255），再用 <code>analogWrite</code> 調校 LED 的亮度。`,
       revealNote: '顯示答案會令這個挑戰扣 2 分。建議先再試一次。',
       next: { label: '返回延伸挑戰', stage: 'ext' },
       dict: ['map', 'analogWrite', 'digitalWrite'],
@@ -256,10 +285,10 @@ const IDE = (() => {
     const cn = ctxName();
     if (cn === 'main') {
       if (b.id === 'b1') {
-        if (!/^\d+$/.test(v)) return '門檻值要填一個整數，例如 990（不用寫單位）。';
+        if (!/^\d+$/.test(v)) return '門檻值要填一個整數，例如 500（不用寫單位）。';
         if (+v > 1023) return 'analogRead 的讀數最大只有 1023，門檻值大過 1023 的話，燈永遠不會亮。';
-        if (+v < LIGHT.THR_MIN) return `門檻值太低了。電筒照住時讀數大約 ${LIGHT.base(0)}，已經大過 ${v}，所以有電筒照住（白天）燈也會亮。門檻值要大過電筒照住時的讀數。`;
-        return `門檻值太高了。課室燈光時讀數大約 ${LIGHT.base(LIGHT.ROOM_AT)}，未必大過 ${v}，所以移開電筒後燈可能不會亮。門檻值要細過課室燈光時的讀數。`;
+        if (+v < LIGHT.THR_MIN) return `門檻值太低了。課室燈光時讀數大約 ${LIGHT.base(LIGHT.ROOM_AT)}，已經大過 ${v}，所以白天燈也會亮。門檻值要大過課室燈光時的讀數。`;
+        return `門檻值太高了。用手遮住時讀數大約 ${LIGHT.base(100)}，未必大過 ${v}，所以天黑時燈可能不會亮。門檻值要細過遮住時的讀數。`;
       }
       if (b.id === 'b2') return /^\d+$/.test(v) ? '這個速度程式可以用，但今堂統一用註解寫的速度。記住：Serial Monitor 要選<b>同一個</b>速度，否則會出亂碼。' : '這裏要填一個數字（通訊速度）。';
       if (b.id === 'b3' && lc === 'digitalread') return 'digitalRead 只會讀到 HIGH 或 LOW。光暗有很多程度，要用讀取<b>類比</b>讀數的指令。';
@@ -267,7 +296,7 @@ const IDE = (() => {
       if (b.id === 'b4' && lc === 'a0' && v !== 'A0') return 'A 要大寫：<code>A0</code>。';
       if (b.id === 'b4' && /^a?\d$/i.test(v)) return '藍色線接在 ANALOG IN 的哪一支腳？看清楚接線圖。';
       if (b.id === 'b4' && /^D?\d+$/i.test(v)) return '光感應器接在 ANALOG IN（類比輸入）那一排，不是數位腳。';
-      if (b.id === 'b5' && v === 'print') return '<code>print</code> 不會換行，讀數會全部擠在同一行：101510141016…。要用印完會<b>換行</b>的指令。';
+      if (b.id === 'b5' && v === 'print') return '<code>print</code> 不會換行，讀數會全部擠在同一行：330328335…。要用印完會<b>換行</b>的指令。';
       if (b.id === 'b5' && lc === 'printin') return '最後兩個字母是小寫的 <b>L</b> 和 <b>N</b>（line 的意思），不是 I。';
       if (b.id === 'b6' && (v === '<' || v === '<=')) return '用 <code>&lt;</code> 的話，讀數<b>細</b>過門檻值（天光）時才開燈，剛好相反。記住：越暗，讀數越<b>大</b>。';
       if (b.id === 'b6' && v === '=') return '一個 <code>=</code> 是「設定」，不是比較。這裏要比較讀數是否<b>大過</b>門檻值。';
@@ -799,10 +828,10 @@ const IDE = (() => {
   function labHTML() {
     return `<div class="mini-lab"><div><b>讀數小實驗</b> <span class="small muted">（模擬板上已有一個只讀數的測試程式）</span></div>
       <input type="range" id="labSlider" min="0" max="100" value="${labDark}" class="dark-slider" aria-label="環境光暗">
-      <div class="row small" style="gap:6px"><button class="chip" data-lab="0">電筒照住</button><button class="chip" data-lab="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-lab="100">用手遮住</button></div>
+      <div class="row small" style="gap:6px"><button class="chip" data-lab="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-lab="70">遮住一半</button><button class="chip" data-lab="100">用手遮住</button></div>
       <div class="readout"><span id="labLabel"></span>：A0 讀數 <b id="labVal"></b></div>
       <div id="labGauge">${gaugeHTML(LIGHT.base(labDark), 512)}</div>
-      <p class="small muted">記下「電筒照住」和「課室燈光」的讀數，門檻值（空格 1）要在兩者<b>中間</b>。黃色線是你填的門檻值（刻度只顯示 850 至 1023 一段）。</p></div>`;
+      <p class="small muted">記下「課室燈光」和「用手遮住」的讀數，門檻值（空格 1）要在兩者<b>中間</b>。黃色線是你填的門檻值。</p></div>`;
   }
   function labTick() {
     const el = $('#labGauge'); if (!el || !C || C.name !== 'main') return;
@@ -863,7 +892,7 @@ const IDE = (() => {
         else extra = `<div class="acts">${st.hinted ? '' : `<button class="btn sm ghost${st.wrong >= 2 ? ' pulse' : ''}" data-hint="${b.id}" title="使用提示會扣 1 分">💡 提示 −1</button>`}${st.wrong >= 3 ? `<button class="btn sm ghost" data-rev="${b.id}">顯示答案</button>` : ''}</div>`;
         let h = '';
         if (st.status === 'bad' && st.fb) h += `<div class="fb">${st.fb}</div>`;
-        if (st.hinted && st.status !== 'ok' && !st.revealed) { const dk = HELP.dkOf(b, C.tpl); h += `<div class="h">💡 提示：${b.hint}${dk ? ` <button class="linkbtn" data-dk="${dk}">看字典</button>` : ''}</div>`; }
+        if (st.hinted && st.status !== 'ok' && !st.revealed) { const dk = HELP.dkOf(b, C.tpl); h += `<div class="h">💡 提示：${b.hint}${dk ? ` <button class="linkbtn" data-dkey="${dk}">看字典</button>` : ''}</div>`; }
         return `<li class="${cls}"><span class="n">${b.id.slice(1)}</span><div><div>${b.ask}<span class="muted small">（第 ${b.line} 行）</span></div>${h}${st.wrong ? `<div class="small muted">答錯 ${st.wrong} 次</div>` : ''}</div>${extra}</li>`;
       }).join('')}</ul>`;
   }

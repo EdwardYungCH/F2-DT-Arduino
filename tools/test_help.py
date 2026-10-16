@@ -50,7 +50,7 @@ async def lesson(pg, n):
     ok(after < before, f'L{n}: hint costs points ({before} -> {after})')
     ok('💡 提示：' in await pg.inner_text('.bcard'), f'L{n}: card shows the hint text')
     ok('使用提示 1 格' in await pg.inner_text('#codePanel'), f'L{n}: stats line counts hints')
-    lk = await pg.query_selector('.bcard [data-dk]')
+    lk = await pg.query_selector('.bcard [data-dkey]')
     if lk:
         await lk.click(); await pg.wait_for_timeout(300)
         ok(await pg.is_visible('#ideDict .dk-item.flash'), f'L{n}: 看字典 flashes an entry')

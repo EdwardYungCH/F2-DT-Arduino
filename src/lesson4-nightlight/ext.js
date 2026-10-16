@@ -29,8 +29,8 @@ function nightPanelHTML(mode) {
     <div class="np-ctl">
       <label class="small">環境：<b class="np-label"></b></label>
       <input type="range" class="dark-slider np-dark" min="0" max="100" value="${LIGHT.ROOM_AT}" aria-label="環境光暗">
-      <div class="row small" style="gap:6px"><button class="chip" data-dk="0">電筒照住</button><button class="chip" data-dk="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-dk="100">用手遮住</button></div>
-      ${mode === 'c1' ? `<label class="small" style="margin-top:6px">電位器旋鈕（門檻值 <b class="np-thrv"></b>）</label><input type="range" class="knob-slider np-knob" min="0" max="100" value="98" aria-label="電位器旋鈕">` : ''}
+      <div class="row small" style="gap:6px"><button class="chip" data-dk="0">很光（窗邊）</button><button class="chip" data-dk="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-dk="100">用手遮住</button></div>
+      ${mode === 'c1' ? `<label class="small" style="margin-top:6px">電位器旋鈕（門檻值 <b class="np-thrv"></b>）</label><input type="range" class="knob-slider np-knob" min="0" max="100" value="50" aria-label="電位器旋鈕">` : ''}
       <div class="readout">A0 讀數 <b class="np-val"></b>${mode === 'c2' ? ' → 亮度 <b class="np-level"></b> / 255' : ''}</div>
       <div class="np-gauge">${gaugeHTML(LIGHT.base(LIGHT.ROOM_AT), mode === 'c2' ? null : LIGHT.DEMO_THR)}</div>
       <div class="phase np-state"></div>
@@ -42,7 +42,7 @@ const GARBLE = '⸮⸮⸮⸮⸮xf~àÿ⸮';
 const garble = () => Array.from({ length: 3 + Math.floor(Math.random() * 6) }, () => GARBLE[Math.floor(Math.random() * GARBLE.length)]).join('');
 /* the finished program running on the simulated board */
 function nightSim(root, o = {}) {
-  let dark = LIGHT.ROOM_AT, knob = 98, n = 0, stopped = false;
+  let dark = LIGHT.ROOM_AT, knob = 50, n = 0, stopped = false;
   const q = s => $(s, root);
   const thrOf = () => o.mode === 'c1' ? Math.round(knob * 1023 / 100) : o.thr;
   const outEl = q('.smon-out'), baudSel = q('.smon-baud'), lines = [];
@@ -68,17 +68,17 @@ function nightSim(root, o = {}) {
   function tick() {
     if (stopped) return;
     const val = LIGHT.read(dark), thr = thrOf();
-    $$('.lsshade', root).forEach(g => g.setAttribute('opacity', Math.max(0, (dark - 70) / 30 * 0.95).toFixed(2)));
+    $$('.lsshade', root).forEach(g => g.setAttribute('opacity', Math.max(0, (dark - 45) / 55 * 0.95).toFixed(2)));
     $$('.potknob', root).forEach(g => g.setAttribute('transform', `rotate(${-135 + 270 * knob / 100} ${g.dataset.cx} ${g.dataset.cy})`));
     q('.np-label').textContent = LIGHT.label(dark);
     q('.np-val').textContent = val;
     const g = q('.np-gauge'); setGauge(g, val);
     let state = '';
     if (o.mode === 'c2') {
-      const level = Math.max(0, Math.min(255, Math.round((val - 900) * 255 / 123)));
+      const level = Math.round(val * 255 / 1023);
       setLedLevel(root, 'yellow', 0.08 + 0.92 * level / 255);
       q('.np-level').textContent = level;
-      state = `map(${val}, 900, 1023, 0, 255) = ${level}：${level < 80 ? 'LED 很暗' : level < 180 ? 'LED 半亮' : 'LED 很亮'}`;
+      state = `map(${val}, 0, 1023, 0, 255) = ${level}：${level < 80 ? 'LED 很暗' : level < 180 ? 'LED 半亮' : 'LED 很亮'}`;
     } else {
       const on = val > thr;
       setLedIn(root, 'yellow', on);
@@ -115,7 +115,7 @@ const EXT = (() => {
       real: ['保留夜燈電路，<b>先拔走 USB 線</b>。', '把電位器插到麵包板，<b>跨過中間的坑</b>：兩隻外腳在上面，中間腳在下面。', '紅色短線：一隻外腳 → 「+」電源軌；黑色短線：另一隻外腳 → 「−」電源軌。', '白色線：A1 → 電位器中間腳的直行。', '插回 USB 線，把程式貼到 Arduino IDE，上傳，再打開 Serial Monitor（9600 baud）。', '轉動旋鈕，第二個數字（門檻值）會改變。調到剛好大過課室燈光的讀數，用手遮住時 LED 就會亮。'] },
     c2: { n: 2, title: '越暗越亮', desc: '不用加零件：天越暗，LED 越亮。學習用 <code>map()</code> 轉換數值範圍，再用 <code>analogWrite()</code> 調校亮度。',
       hw: null, code: '程式：完成 5 個空格（map、analogWrite）', score: '評分：程式 8 分、上傳 2 分。',
-      real: ['保留夜燈電路，不用改動。', '把程式貼到 Arduino IDE，然後上傳。', '用手<b>慢慢</b>遮住光感應器，LED 應該慢慢變亮；用電筒照住，LED 會變得很暗。'] },
+      real: ['保留夜燈電路，不用改動。', '把程式貼到 Arduino IDE，然後上傳。', '用手<b>慢慢</b>遮住光感應器，LED 應該慢慢變亮；移開手，LED 會變暗。'] },
   };
   function card(k) {
     const x = S.ext[k], c = CARDS[k], sc = extScores()[k];
@@ -167,7 +167,7 @@ const EXT = (() => {
       title: c1 ? (fresh ? '上傳成功！轉動電位器試試' : '調校靈敏度') : (fresh ? '上傳成功！試試把環境變暗' : '越暗越亮'),
       wide: true, dismissable: false,
       html: `<div class="sos-stage">${c1 ? HW.circuitSVG(S.hw, S.ext.c1.hw) : HW.circuitSVG(S.hw)}</div>${nightPanelHTML(which)}
-        <p class="small muted" style="margin-top:8px">${c1 ? '電位器的讀數（0 至 1023）就是門檻值。旋鈕轉得越大，要越暗才會開燈。光感應器的讀數只在 9 百幾至 1023 之間變化，所以旋鈕要轉到接近盡頭（門檻約 1000）才看到分別。' : 'analogWrite 令 D9極快地開關，開的時間越長，LED 看起來越亮。'}</p>`,
+        <p class="small muted" style="margin-top:8px">${c1 ? '電位器的讀數（0 至 1023）就是門檻值。旋鈕轉得越大，要越暗才會開燈。' : 'analogWrite 令 D9極快地開關，開的時間越長，LED 看起來越亮。'}</p>`,
       actions: [toExt],
       onOpen: back => { const ON = $('.uLedON', back); ON && ON.setAttribute('fill', '#3CFF7A'); sim = nightSim(back, { mode: which }); },
     });

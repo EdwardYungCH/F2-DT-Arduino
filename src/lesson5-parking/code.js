@@ -22,7 +22,7 @@ const CODE_TEMPLATE = [
   '}',
   '',
   'void loop() {',
-  '  int val = analogRead(A0);',
+  '  int val = readLight();        // 讀 20 次計平均（見最後幾行）',
   '  Serial.println(val);',
   '',
   '  if (val > threshold) {      // 有車',
@@ -37,11 +37,21 @@ const CODE_TEMPLATE = [
   '  }',
   '  delay(100);',
   '}',
+  '',
+  '// 讀 20 次計平均：課室燈每秒閃 100 次，讀數會跳，平均之後才穩定（這部分已寫好）',
+  'int readLight() {',
+  '  long sum = 0;',
+  '  for (int i = 0; i < 20; i++) {',
+  '    sum = sum + analogRead(A0);',
+  '    delay(1);',
+  '  }',
+  '  return sum / 20;',
+  '}',
 ];
 const thrOk = v => /^\d+$/.test(v) && +v >= LIGHT.THR_MIN && +v <= LIGHT.THR_MAX;
 const BLANKS = [
   { id: 'b1', ans: 'Servo.h', ctx: 'include', ask: '伺服馬達程式庫的檔名', hint: '程式庫叫 Servo（S 大寫），檔名後面加 <em>.h</em>：<code>Servo.h</code>。' },
-  { id: 'b2', ans: '700', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：沒有車時讀數約 450，有車遮住時約 980。門檻值要在兩者<em>中間</em>，例如 700。' },
+  { id: 'b2', ans: '500', ctx: 'init', accept: thrOk, ask: '門檻值（看讀數決定）', hint: '看右邊「讀數小實驗」：沒有車時讀數約 330，有車遮住時約 700。門檻值要在兩者<em>中間</em>，例如 500。' },
   { id: 'b3', ans: 'attach', ctx: 'method', obj: 'Servo', ask: '把伺服馬達「接」到腳位的指令', hint: '把伺服馬達「連接」到腳位，英文是 <em>attach</em>（全部小寫）。' },
   { id: 'b4', ans: '9', ctx: 'arg', ask: '橙線接在 D 幾', hint: '伺服馬達的橙線（白色杜邦線）接在 UNO 上方的 D 幾？只填數字（例如 D7 就寫 7）。' },
   { id: 'b5', ans: 'write', ctx: 'method', obj: 'Servo', ask: '叫伺服馬達轉到某個角度的指令', hint: '看第 12 行：關閘用的是 <code>gate.write(0)</code>，開閘也用同一個指令。' },
@@ -61,7 +71,7 @@ const C1_TEMPLATE = [
   'int redPin = 12;',
   'int greenPin = 10;',
   'int buttonPin = {{e1}};           // 按鈕接在 D 幾？',
-  'int threshold = 700;',
+  'int threshold = 500;',
   '',
   'void setup() {',
   '  gate.attach(9);',
@@ -73,7 +83,7 @@ const C1_TEMPLATE = [
   '}',
   '',
   'void loop() {',
-  '  int val = analogRead(A0);',
+  '  int val = readLight();        // 讀 20 次計平均（見最後幾行）',
   '  Serial.println(val);',
   '',
   '  // 有車「或者」按下按鈕',
@@ -88,6 +98,16 @@ const C1_TEMPLATE = [
   '    digitalWrite(redPin, HIGH);',
   '  }',
   '  delay(100);',
+  '}',
+  '',
+  '// 讀 20 次計平均：課室燈每秒閃 100 次，讀數會跳，平均之後才穩定（這部分已寫好）',
+  'int readLight() {',
+  '  long sum = 0;',
+  '  for (int i = 0; i < 20; i++) {',
+  '    sum = sum + analogRead(A0);',
+  '    delay(1);',
+  '  }',
+  '  return sum / 20;',
   '}',
 ];
 const C1_BLANKS = [
@@ -108,7 +128,7 @@ const C2_TEMPLATE = [
   '',
   'int redPin = 12;',
   'int greenPin = 10;',
-  'int threshold = 700;',
+  'int threshold = 500;',
   '',
   'void setup() {',
   '  gate.attach(9);',
@@ -118,7 +138,7 @@ const C2_TEMPLATE = [
   '}',
   '',
   'void loop() {',
-  '  int val = analogRead(A0);',
+  '  int val = readLight();        // 讀 20 次計平均（見最後幾行）',
   '  if (val > threshold) {',
   '    digitalWrite(redPin, LOW);',
   '    digitalWrite(greenPin, HIGH);',
@@ -138,6 +158,16 @@ const C2_TEMPLATE = [
   '    digitalWrite(redPin, HIGH);',
   '  }',
   '  delay(100);',
+  '}',
+  '',
+  '// 讀 20 次計平均：課室燈每秒閃 100 次，讀數會跳，平均之後才穩定（這部分已寫好）',
+  'int readLight() {',
+  '  long sum = 0;',
+  '  for (int i = 0; i < 20; i++) {',
+  '    sum = sum + analogRead(A0);',
+  '    delay(1);',
+  '  }',
+  '  return sum / 20;',
   '}',
 ];
 const C2_BLANKS = [
@@ -848,7 +878,7 @@ const IDE = (() => {
   function labHTML() {
     return `<div class="mini-lab"><div><b>讀數小實驗</b> <span class="small muted">（模擬板上已有一個只讀數的測試程式）</span></div>
       <input type="range" id="labSlider" min="0" max="100" value="${labDark}" class="dark-slider" aria-label="環境光暗">
-      <div class="row small" style="gap:6px"><button class="chip" data-lab="0">電筒照住</button><button class="chip" data-lab="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-lab="100">用手遮住</button></div>
+      <div class="row small" style="gap:6px"><button class="chip" data-lab="${LIGHT.ROOM_AT}">課室燈光</button><button class="chip" data-lab="70">遮住一半</button><button class="chip" data-lab="100">用手遮住</button></div>
       <div class="readout"><span id="labLabel"></span>：A0 讀數 <b id="labVal"></b></div>
       <div id="labGauge">${gaugeHTML(LIGHT.base(labDark), 512)}</div>
       <p class="small muted">「課室燈光」= 沒有車；「用手遮住」= 有車停在光感應器上面。門檻值（空格 2）要在兩者<b>中間</b>。黃色線是你填的門檻值。</p></div>`;
@@ -911,7 +941,7 @@ const IDE = (() => {
         else extra = `<div class="acts">${st.hinted ? '' : `<button class="btn sm ghost${st.wrong >= 2 ? ' pulse' : ''}" data-hint="${b.id}" title="使用提示會扣 1 分">💡 提示 −1</button>`}${st.wrong >= 3 ? `<button class="btn sm ghost" data-rev="${b.id}">顯示答案</button>` : ''}</div>`;
         let h = '';
         if (st.status === 'bad' && st.fb) h += `<div class="fb">${st.fb}</div>`;
-        if (st.hinted && st.status !== 'ok' && !st.revealed) { const dk = HELP.dkOf(b, C.tpl); h += `<div class="h">💡 提示：${b.hint}${dk ? ` <button class="linkbtn" data-dk="${dk}">看字典</button>` : ''}</div>`; }
+        if (st.hinted && st.status !== 'ok' && !st.revealed) { const dk = HELP.dkOf(b, C.tpl); h += `<div class="h">💡 提示：${b.hint}${dk ? ` <button class="linkbtn" data-dkey="${dk}">看字典</button>` : ''}</div>`; }
         return `<li class="${cls}"><span class="n">${b.id.slice(1)}</span><div><div>${b.ask}<span class="muted small">（第 ${b.line} 行）</span></div>${h}${st.wrong ? `<div class="small muted">答錯 ${st.wrong} 次</div>` : ''}</div>${extra}</li>`;
       }).join('')}</ul>`;
   }

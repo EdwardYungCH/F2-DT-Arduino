@@ -94,7 +94,7 @@ async def main():
         hi = await lit()
         await pg.click('.modal [data-dk="0"]'); await pg.wait_for_timeout(500)
         lo = await lit()
-        ok(hi > 0.9 and lo < 0.45, f'brightness follows darkness (dark {hi:.2f}, torch {lo:.2f})')
+        ok(hi > 0.6 and lo < 0.3, f'brightness follows darkness (dark {hi:.2f}, torch {lo:.2f})')
         await pg.screenshot(path=OUT + 'x4-dimmer.png')
         sc = await pg.evaluate('()=>extScores().c2')
         ok(sc and sc['total'] == 7 and sc['code'] == 5, f'c2 score {sc}')
