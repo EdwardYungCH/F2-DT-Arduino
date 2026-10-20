@@ -24,7 +24,7 @@ function readingAdvice(r) {
   if (room == null || dark == null) return { kind: 'info', html: '填上「課室燈光」和「用手遮住」的讀數，就會計出建議的門檻值。' };
   if ([room, dark].some(v => v < 0 || v > 1023)) return { kind: 'err', html: 'analogRead 的讀數只會在 0 至 1023 之間，請再看清楚 Serial Monitor。' };
   if (Math.abs(dark - room) < 60) {
-    if (room > 950 && dark > 950) return { kind: 'err', html: '讀數一直接近 1023，遮不遮只差幾個數：光感應器很可能<b>接反了</b>。這粒光感應器和 LED 相反：<b>短腳</b>接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。' };
+    if (room > 950 && dark > 950) return { kind: 'err', html: '讀數一直接近 1023，遮不遮只差幾個數：光感應器很可能<b>接反了</b>。這個電路要把光感應器<b>反轉插</b>（和 LED 相反）：<b>短腳</b>接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。' };
     if (room < 20 && dark < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
     return { kind: 'err', html: '遮住和不遮住的讀數差不多：用手（或玩具車）完全遮住光感應器再試；也檢查 A0 的藍色線是否插在光感應器短腳那一直行。' };
   }
@@ -69,7 +69,7 @@ stageInit.real = () => {
           <tr><td>閘門方向不對（升起時向下）</td><td>雪條棍貼錯位置。先上傳程式令伺服馬達轉到 0°，才把雪條棍水平貼上。</td></tr>
           <tr><td>編譯時出現 servo.h: No such file or directory</td><td><code>#include &lt;Servo.h&gt;</code> 的 S 要大寫，檔名要完全一樣。</td></tr>
           <tr><td>沒有車，閘門也不停開關</td><td>門檻值太低：用 Serial Monitor 看讀數，把門檻值改成沒有車和有車讀數的中間，再上傳。</td></tr>
-          <tr><td>遮住光感應器，讀數不變（一直接近 1023）</td><td>光感應器接反了：它和 LED 相反，<b>短腳</b>要接 A0 和 10kΩ，<b>長腳</b>接 GND；或者 A0 的線插錯孔。</td></tr>
+          <tr><td>遮住光感應器，讀數不變（一直接近 1023）</td><td>光感應器接反了：這個電路要把它<b>反轉插</b>（和 LED 相反），<b>短腳</b>要接 A0 和 10kΩ，<b>長腳</b>接 GND；或者 A0 的線插錯孔。</td></tr>
           <tr><td>沒有平均時，讀數有規律地跳</td><td>課室燈每秒閃 100 次，光感應器看得到。程式的 <code>readLight()</code> 會讀 20 次計平均，所以要用完整程式，不要刪走最後幾行。</td></tr>
           <tr><td>某粒 LED 不亮</td><td>LED 接反（長腳向信號腳）；短腳未接「−」軌；或者 D12 / D10 對調了。</td></tr>
           <tr><td>上傳時出現 not in sync</td><td>Port 選錯了，或者 Board 不是 Arduino Uno。</td></tr>

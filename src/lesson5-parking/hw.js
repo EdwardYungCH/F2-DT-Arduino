@@ -68,7 +68,7 @@ const HW = (() => {
     if (p.type === 'btn') return ['f' + q.col, 'f' + (q.col + 2), 'e' + q.col, 'e' + (q.col + 2)];
     return [p.h1, holeAt(q.row, q.col + SPAN[p.type])];
   }
-  /* LED: a = long leg (+), k = short leg (−). The light sensor has polarity too: long leg (+) goes to the 10kΩ / A0 side */
+  /* LED: a = long leg (+), k = short leg (−). Light sensor: same leg labels as an LED (long +, short −) but this circuit plugs it in reversed, so a = short leg (−) goes to the 10kΩ / A0 side */
   const ledAK = led => { const [h1, h2] = legHoles(led); return led.flipped ? { a: h2, k: h1 } : { a: h1, k: h2 }; };
   const lsPM = ledAK;
   /* internal connections of the 4-leg button: rot=false is the correct way (legs point up / down across the channel) */
@@ -97,7 +97,7 @@ const HW = (() => {
       <text x="${kx + (flipped ? -9 : 9)}" y="${y - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="#9FD3FF">−</text>`}
     </g>`;
   }
-  /* light sensor: clear, flat-topped, like a 5mm LED; long leg = + */
+  /* light sensor: clear, flat-topped, like a 5mm LED; long leg = + but drawn plugged in reversed: a (signal side) = short leg (−) */
   function lsSVG(p1, p2, flipped, opts = {}) {
     const mx = (p1.x + p2.x) / 2, y = p1.y, top = y - 40;
     const ax = flipped ? p2.x : p1.x, kx = flipped ? p1.x : p2.x;
@@ -112,8 +112,8 @@ const HW = (() => {
       <path d="M${mx - 4} ${top + 19}h8" stroke="#C9A53A" stroke-width="1.4"/>
       <rect x="${mx - 12}" y="${top + 25}" width="24" height="3" rx="1" fill="#B9C7CC"/>
       ${opts.shade !== undefined ? `<g class="lsshade" opacity="${opts.shade}" pointer-events="none"><ellipse cx="${mx}" cy="${top + 4}" rx="30" ry="22" fill="#0A1418" opacity=".75"/><text x="${mx}" y="${top - 6}" font-size="11" fill="#fff" text-anchor="middle" font-weight="700">遮光</text></g>` : ''}
-      ${opts.noSigns ? '' : `<text x="${ax + (flipped ? 9 : -9)}" y="${y - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="#FFD34D">+</text>
-      <text x="${kx + (flipped ? -9 : 9)}" y="${y - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="#9FD3FF">−</text>`}
+      ${opts.noSigns ? '' : `<text x="${ax + (flipped ? 9 : -9)}" y="${y - 6}" text-anchor="middle" font-size="13" font-weight="700" fill="#9FD3FF">−</text>
+      <text x="${kx + (flipped ? -9 : 9)}" y="${y - 6}" text-anchor="middle" font-size="12" font-weight="700" fill="#FFD34D">+</text>`}
     </g>`;
   }
   function resSVG(p1, p2, opts = {}) {
@@ -401,12 +401,12 @@ const HW = (() => {
     const rs = resEnds(parts, find);
     const resOn = n => n !== gnd && n !== v5 && rs.some(o => (o.x === n) !== (o.y === n));
     const sideOf = n => n === a0 || resOn(n);
-    /* which leg is the "signal" (10kΩ / A0) side? normally the long leg (+) */
+    /* which leg is the "signal" (10kΩ / A0) side? normally the short leg (−), because the sensor is plugged in reversed */
     let sig = Pn, low = Mn, reversed = false;
     if (Pn === gnd && Mn !== gnd) { sig = Mn; low = Pn; reversed = true; }
     else if (Mn !== gnd && sideOf(Mn) && !sideOf(Pn)) { sig = Mn; low = Pn; reversed = true; }
-    if (reversed && Pn === gnd) add(4, 'ls_reversed', '<b>光感應器接反了！</b>這粒光感應器有正負極，但和 LED <b>相反</b>：<b>短腳（+）</b>要接 10kΩ 和 A0 那一邊，<b>長腳（−）</b>接 GND。接反了，讀數不會隨光暗改變。<br>方法：點選光感應器，按「反轉光感應器」。');
-    else if (reversed) add(2, 'ls_reversed', '<b>光感應器方向錯了！</b>10kΩ（或 A0）接到了光感應器的<b>長腳（−）</b>。10kΩ 和 A0 要和<b>短腳（+）</b>在同一直行。<br>方法：點選光感應器，按「反轉光感應器」；或者把 10kΩ 移到短腳的直行。');
+    if (reversed && Pn === gnd) add(4, 'ls_reversed', '<b>光感應器接反了！</b>光感應器和 LED 一樣是長腳 +、短腳 −，但這個電路要把它<b>反轉插</b>：<b>短腳（−）</b>接 10kΩ 和 A0 那一邊，<b>長腳（+）</b>接 GND。接反了，讀數不會隨光暗改變。<br>方法：點選光感應器，按「反轉光感應器」。');
+    else if (reversed) add(2, 'ls_reversed', '<b>光感應器方向錯了！</b>10kΩ（或 A0）接到了光感應器的<b>長腳（+）</b>。這個電路要反轉插：10kΩ 和 A0 要和<b>短腳（−）</b>在同一直行。<br>方法：點選光感應器，按「反轉光感應器」；或者把 10kΩ 移到短腳的直行。');
     /* the 10kΩ pull-up */
     if (low !== gnd && low !== v5 && rs.some(o => (o.x === sig && o.y === low) || (o.x === low && o.y === sig))) add(2, 'pu_parallel', '10kΩ 兩端分別接到光感應器兩隻腳，變成<b>並聯</b>了。10kΩ 只需要<b>一隻腳</b>和光感應器短腳在同一個直行，另一隻腳接 5V。');
     else {
@@ -425,14 +425,14 @@ const HW = (() => {
         else add(4, 'pu_nowhere', '10kΩ 另一端的導線沒有接到 5V。');
       }
     }
-    /* short leg (−) to GND */
+    /* the other leg (long leg, +) to GND */
     if (low !== gnd) {
       const rail = c.railOf(low), pl = c.pinsIn(low).filter(n => n !== 'GND');
-      if (low === v5) add(4, 'ls_to_5v', '光感應器長腳（−）接到了 <b>5V</b>。長腳要接 <b>GND</b>（「−」電源軌）。');
+      if (low === v5) add(4, 'ls_to_5v', '光感應器長腳（+）接到了 <b>5V</b>。長腳要接 <b>GND</b>（「−」電源軌）。');
       else if (isPlusRail(rail)) add(4, 'ls_plus_rail', '光感應器長腳接到了<b>「+」電源軌</b>（紅線）。長腳要接<b>「−」電源軌</b>（藍線）。');
       else if (rail) add(4, 'rail_unpowered', '「−」電源軌還未接到 Arduino 的 <b>GND</b>。請由 GND 腳拉一條黑色線到這條電源軌。', false);
-      else if (pl.length) add(4, 'ls_gnd_pin', `光感應器長腳（−）應該接 <b>GND</b>，你接了 <b>${pinPretty(pl[0])}</b>。`);
-      else if (!c.touched(low)) add(4, 'ls_gnd_missing', '光感應器長腳（−）還未接到 GND：用一條黑色短導線，把長腳的直行接到上方的「−」電源軌。', false);
+      else if (pl.length) add(4, 'ls_gnd_pin', `光感應器長腳（+）應該接 <b>GND</b>，你接了 <b>${pinPretty(pl[0])}</b>。`);
+      else if (!c.touched(low)) add(4, 'ls_gnd_missing', '光感應器長腳（+）還未接到 GND：用一條黑色短導線，把長腳的直行接到上方的「−」電源軌。', false);
       else add(4, 'ls_gnd_nowhere', '光感應器長腳那條 GND 導線接到了沒有元件的位置。');
     }
     /* A0 on the junction */
@@ -703,7 +703,7 @@ const HW = (() => {
   function stepBody(step) {
     const RULE = '<p class="small muted">小規則：元件插在 f 至 h 行，導線插在 j 行；每個區之間空出兩個直行。</p>';
     if (MODE === 'main') {
-      if (step === 1) return `<p>和第 4 堂一樣，在麵包板的<b>光感應器區</b>（〔第1直行〕至〔第6直行〕）：</p><ul class="small tight"><li><b>光感應器</b>插在 〔f5〕、〔f6〕，<b>短腳（+）在左</b>。</li><li><b>10kΩ</b>（色環<b>棕黑黑紅棕</b>）插在 〔h1〕 至 〔h5〕：右端和光感應器短腳在<b>同一個直行</b>。</li></ul>${RULE}`;
+      if (step === 1) return `<p>和第 4 堂一樣，在麵包板的<b>光感應器區</b>（〔第1直行〕至〔第6直行〕）：</p><ul class="small tight"><li><b>光感應器</b>插在 〔f5〕、〔f6〕，和 LED 一樣是長腳 +、短腳 −，但要<b>反轉插</b>：<b>短腳（−）在左</b>，長腳（+）在右。</li><li><b>10kΩ</b>（色環<b>棕黑黑紅棕</b>）插在 〔h1〕 至 〔h5〕：右端和光感應器短腳在<b>同一個直行</b>。</li></ul>${RULE}`;
       if (step === 2) return `<ul class="small tight"><li>紅色線：〔5V〕（Arduino 下方）→「+」電源軌。</li><li>黑色線：〔GND〕（Arduino 上方，13 號旁邊）→「−」電源軌（最頂一行）。</li></ul><p class="small">今堂很多零件都要用 5V 和 GND，全部由電源軌取電。板上的藍色框會標示要用的腳位。</p>`;
       if (step === 3) return `<ul class="small tight"><li>紅色短線：10kΩ <b>左端</b>的直行 →「+」電源軌。</li><li>黑色短線：光感應器<b>長腳</b>的直行 →「−」電源軌。</li><li>藍色線：〔A0〕（Arduino 下方 ANALOG IN）→ 光感應器<b>短腳</b>的直行。</li></ul><p class="small muted">導線插在同一直行的 j 行就可以，不用插在元件的同一個孔。</p>`;
       if (step === 4) return `<p>在<b>紅燈區</b>和<b>綠燈區</b>插 LED 和電阻，長腳（+）在左：</p><ul class="small tight"><li><b>紅色 LED</b>：〔f13〕、〔f14〕；220Ω 插在 〔h9〕 至 〔h13〕。</li><li><b>綠色 LED</b>：〔f21〕、〔f22〕；220Ω 插在 〔h17〕 至 〔h21〕。</li></ul><p class="small">220Ω 色環<b>紅紅黑黑棕</b>，右端和 LED 長腳在同一個直行。區與區之間空出兩個直行，實物上腳不會碰在一起。</p>`;
@@ -837,7 +837,7 @@ const HW = (() => {
     const d = $('#stDel'); if (d) d.onclick = removeSel;
   }
   function changed() { lastIssues = null; save(); render(); renderPanel(); }
-  function flipLed() { const p = selPart(); if (!p || (p.type !== 'led' && p.type !== 'ls')) return; p.flipped = !p.flipped; toast(`${partName(p)}已反轉：${p.type === 'ls' ? '短腳（+）' : '長腳（+）'}現在在${p.flipped ? '右' : '左'}邊`); changed(); }
+  function flipLed() { const p = selPart(); if (!p || (p.type !== 'led' && p.type !== 'ls')) return; p.flipped = !p.flipped; toast(`${partName(p)}已反轉：${p.type === 'ls' ? '短腳（−）' : '長腳（+）'}現在在${p.flipped ? '右' : '左'}邊`); changed(); }
   function rotBtn() { const p = selPart(); if (!p || p.type !== 'btn') return; p.rot = !p.rot; toast(p.rot ? '按鈕的腳現在向左右' : '按鈕的腳現在向上下（正確方向）'); changed(); }
   function removeSel() {
     if (!sel) return;

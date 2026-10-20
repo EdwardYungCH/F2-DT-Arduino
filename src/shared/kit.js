@@ -53,7 +53,7 @@ const KIT = (() => {
     tilt: (use) => ({ icon: ICON.tilt, name: '傾斜開關', look: '綠色小圓柱，兩隻腳；搖動時入面有「沙沙」聲（小鋼珠）', qty: '1', use }),
     btn: (use) => ({ icon: ICON.btn, name: '按鈕', look: '黑色方形，<b>4 隻腳</b>，中間有一粒圓掣', qty: '1', use }),
     led: (color, name, use) => ({ icon: ICON.led(color), name, look: '<b>長腳是 +</b>，短腳是 −', qty: '1', use }),
-    lsensor: (use) => ({ icon: ICON.lsensor, name: '光感應器', look: '透明、<b>平頂</b>，樣子像 LED，兩隻腳；<b>有正負極，但和 LED 相反</b>：<b>短腳是 +</b>（接 A0），長腳是 −（接 GND）', qty: '1', use }),
+    lsensor: (use) => ({ icon: ICON.lsensor, name: '光感應器', look: '透明、<b>平頂</b>，樣子像 LED，兩隻腳；和 LED 一樣<b>長腳是 +，短腳是 −</b>；但這個電路要<b>反轉插</b>：<b>短腳（−）</b>接 A0，長腳（+）接 GND', qty: '1', use }),
     servo: (use) => ({ icon: ICON.servo, name: '伺服馬達（9g）', look: '黑色小盒，頂部有白色擺臂；3 條線：<b>啡 = GND、紅 = 5V、橙 = 信號</b>，線尾是母插頭', qty: '1', use }),
     pot: (use) => ({ icon: ICON.pot, name: '電位器（10kΩ）', look: '黑色方形，有一粒可以轉動的旋鈕；<b>3 隻腳</b>：一邊 2 隻，另一邊中間 1 隻', qty: '1', use }),
   };

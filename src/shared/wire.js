@@ -101,11 +101,11 @@ const WIRE = (() => {
   /* parts: [{type, color, ohm, flipped, legs}] (legs from the lesson's legHoles) ; wires: [{a, b, color}] */
   function partLine(p) {
     const L = p.legs || [];
-    /* legs[0]/[1] = the "a" / "k" side unless flipped. LED: a = long leg (+). Light sensor: a = short leg (+) —
-       it is the opposite of an LED (short leg to A0 / 10kΩ, long leg to GND) */
+    /* legs[0]/[1] = the "a" / "k" side unless flipped. LED: a = long leg (+). Light sensor: a = short leg (−) —
+       it is plugged in the opposite way to an LED (short leg to A0 / 10kΩ, long leg to GND) */
     const ak = () => p.flipped ? [L[1], L[0]] : [L[0], L[1]];
     const pol = () => { const [a, k] = ak(); return `長腳（+）插 ${hole(a)}，短腳（−）插 ${hole(k)}`; };
-    const polLs = () => { const [a, k] = ak(); return `<b>短腳（+）</b>插 ${hole(a)}（接 A0 和 10kΩ），<b>長腳（−）</b>插 ${hole(k)}（接 GND）。小心：和 LED 相反`; };
+    const polLs = () => { const [a, k] = ak(); return `<b>反轉插</b>（和 LED 相反）：<b>短腳（−）</b>插 ${hole(a)}（接 A0 和 10kΩ），<b>長腳（+）</b>插 ${hole(k)}（接 GND）`; };
     if (p.type === 'led') return `<b>${LEDN[p.color] || 'LED'}</b>：${pol()}`;
     if (p.type === 'ls') return `<b>光感應器</b>：${polLs()}`;
     if (p.type === 'res') return `<b>${OHMW[p.ohm] || ''} 電阻</b>（色環${BANDW[p.ohm] || ''}）：兩端插 ${hole(L[0])} 和 ${hole(L[1])}`;

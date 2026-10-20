@@ -24,7 +24,7 @@ function readingAdvice(r) {
   if (room == null || dark == null) return { kind: 'info', html: '填上「課室燈光」和「用手遮住」的讀數，就會計出建議的門檻值。' };
   if ([room, dark].some(v => v < 0 || v > 1023)) return { kind: 'err', html: 'analogRead 的讀數只會在 0 至 1023 之間，請再看清楚 Serial Monitor。' };
   if (Math.abs(dark - room) < 60) {
-    if (room > 950 && dark > 950) return { kind: 'err', html: '讀數一直接近 1023，遮不遮只差幾個數：光感應器很可能<b>接反了</b>。這粒光感應器和 LED 相反：<b>短腳</b>接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。' };
+    if (room > 950 && dark > 950) return { kind: 'err', html: '讀數一直接近 1023，遮不遮只差幾個數：光感應器很可能<b>接反了</b>。這個電路要把光感應器<b>反轉插</b>（和 LED 相反）：<b>短腳</b>接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。' };
     if (room < 20 && dark < 20) return { kind: 'err', html: '讀數一直接近 0：10kΩ 可能未接到 5V（「+」電源軌未接 5V），或者 A0 接到了 GND。' };
     return { kind: 'err', html: '遮住和不遮住的讀數差不多：用手完全遮住光感應器再試；也檢查 A0 的藍色線是否插在光感應器短腳那一直行。' };
   }
@@ -64,7 +64,7 @@ stageInit.real = () => {
       </div>
       <div class="card"><h3>遇到問題？</h3>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>情況</th><th>可能原因及解決方法</th></tr></thead><tbody>
-          <tr><td>讀數一直接近 1023，遮不遮只差幾個數</td><td>光感應器<b>接反了</b>：這粒光感應器和 LED 相反，<b>短腳</b>要接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。</td></tr>
+          <tr><td>讀數一直接近 1023，遮不遮只差幾個數</td><td>光感應器<b>接反了</b>：這個電路要把光感應器<b>反轉插</b>（和 LED 相反），<b>短腳</b>要接 A0 和 10kΩ，<b>長腳</b>接 GND。把它左右對調再試。</td></tr>
           <tr><td>讀數一直是 0</td><td>10kΩ 未接到 5V（「+」電源軌未接 5V）；或者 A0 的線接到了 GND。</td></tr>
           <tr><td>讀數亂跳，和光暗無關</td><td>A0 的藍色線插錯孔，沒有接到光感應器短腳那一直行（A0「浮空」）。</td></tr>
           <tr><td>沒有程式平均時，讀數有規律地跳</td><td>課室燈每秒閃 100 次，光感應器看得到。程式的 <code>readLight()</code> 會讀 20 次計平均，所以要用完整程式，不要刪走最後幾行。</td></tr>
