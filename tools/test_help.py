@@ -67,7 +67,7 @@ async def lesson(pg, n):
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        for n in range(1, 7):
+        for n in range(1, 8):
             pg = await b.new_page(viewport={'width': 1366, 'height': 768})
             await lesson(pg, n); await pg.close()
         await b.close()

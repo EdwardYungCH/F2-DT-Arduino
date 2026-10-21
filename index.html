@@ -74,6 +74,7 @@ const LESSONS = [
   { n: 4, title: '自動夜燈', desc: '光感應器、10kΩ 分壓電路、analogRead（0 – 1023）、Serial Monitor 和門檻值；天黑自動開燈。延伸挑戰：電位器調校靈敏度、越暗越亮', href: 'lesson4/' },
   { n: 5, title: '智能停車場閘門', desc: '單元總結：伺服馬達（Servo 程式庫、attach、write）、光感應器、紅綠 LED；有車就開閘 3 秒。延伸挑戰：管理員按鈕、慢慢開閘', href: 'lesson5/' },
   { n: 6, title: 'RGB 心情燈', desc: 'RGB LED（共陰極）、三粒 220Ω、analogWrite（0 – 255）和 ~ 腳；紅綠藍混色，調配自己的心情色。延伸挑戰：電位器調色、彩虹漸變（for 迴圈）', href: 'lesson6/' },
+  { n: 7, title: '迷你電子琴', desc: '4 個按鈕（INPUT_PULLUP，不用電阻）+ 蜂鳴器；tone / noTone、if … else if … else；彈《瑪莉有隻小綿羊》。延伸挑戰：光線琴（光感應器 + map）、一鍵播歌（陣列 + for 迴圈）', href: 'lesson7/' },
 ];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 document.getElementById('lessons').innerHTML = LESSONS.map(l => {

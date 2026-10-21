@@ -1,0 +1,125 @@
+"""Lesson 7 extension challenges: light theremin (wiring + code) and one-key song (code only)."""
+import asyncio, os, sys
+from playwright.async_api import async_playwright
+ROOT = os.path.abspath(os.path.dirname(__file__) + '/..')
+URL = 'file://' + ROOT + '/lesson7/index.html'
+OUT = os.environ.get('OUT', '/tmp/l7-ext/'); os.makedirs(OUT, exist_ok=True)
+BIN = lambda i: 84 + i * 112
+TRASH = (1050, 560)
+FAIL = []
+def ok(cond, msg):
+    print(('PASS ' if cond else 'FAIL ') + msg)
+    if not cond: FAIL.append(msg)
+
+async def main():
+    async with async_playwright() as p:
+        b = await p.chromium.launch()
+        ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, accept_downloads=True)
+        pg = await ctx.new_page(); errs = []
+        pg.on('pageerror', lambda e: errs.append('PAGEERR ' + str(e)))
+        await pg.goto(URL); await pg.wait_for_timeout(300)
+        await pg.evaluate('''() => { S = newState({name:'何家明', cls:'2D', no:'18'});
+          HW.autoWire(); S.hw.done = true; S.teacherUsed = false;
+          BLANKS.forEach(b => S.code.blanks[b.id] = {val:b.ans, wrong:0, status:'ok', revealed:false});
+          S.code.done = true; Object.assign(S.up, {usb:true, board:'Arduino Uno', port:S.up.com, verified:true, uploaded:true});
+          S.real.confirmed = true; S.unlocked = 4; S.stage = 'ext'; save(); startApp(); }''')
+        await pg.wait_for_timeout(300)
+        await pg.screenshot(path=OUT + 'x1-hub.png', full_page=True)
+        hub = await pg.inner_text('#st-ext')
+        ok('光線琴' in hub and '一鍵播歌' in hub and '程式 8 分' in hub, 'hub: two challenges, challenge 2 is code-only')
+
+        # ---- challenge 1: light theremin ----
+        await pg.click('[data-go="c1hw"]'); await pg.wait_for_timeout(300)
+        async def c(x, y): return await pg.evaluate('''([x,y])=>{const s=document.querySelector('#hwSvg');const pt=s.createSVGPoint();pt.x=x;pt.y=y;const r=pt.matrixTransform(s.getScreenCTM());return [r.x,r.y]}''', [x, y])
+        async def drag(a, bb):
+            ax, ay = await c(*a); bx, by = await c(*bb)
+            await pg.mouse.move(ax, ay); await pg.mouse.down()
+            for i in range(1, 8): await pg.mouse.move(ax + (bx - ax) * i / 7, ay + (by - ay) * i / 7)
+            await pg.mouse.up(); await pg.wait_for_timeout(120)
+        P = await pg.evaluate('()=>{const o={};for(const k in HW.P) o[k]=[HW.P[k].x,HW.P[k].y];return o}')
+        H = lambda k, dx=0, dy=0: (P[k][0] + dx, P[k][1] + dy)
+        async def check(n):
+            await pg.click(f'[data-check="{n}"]'); await pg.wait_for_timeout(150)
+            t = (await pg.inner_text('#hwIssues')).replace('\n', ' '); print(f'   c1 step {n}:', t[:120]); return t
+        async def wire(a, bb, color=None):
+            if color is not None: await pg.click(f'#swatches .sw:nth-child({color})')
+            await drag(H(a), H(bb))
+        await drag((BIN(0), 573), H('d29', 10, -25))
+        await drag((BIN(2), 574), H('c25', 40))
+        parts = await pg.evaluate("()=>S.ext.c1.hw.parts.map(p=>p.type+p.h1+(p.ohm||''))")
+        ok(parts == ['lsd29', 'resc25220'], f'sensor and a 220Ω placed {parts}')
+        t = await check(1)
+        ok('10kΩ' in t and '已記錄 1 次' in t, 'c1 step 1: 220Ω for the sensor is an error')
+        await drag(H('c25', 40), TRASH); await drag((BIN(1), 574), H('c25', 40))
+        ok('正確' in await check(1), 'c1 step 1 sensor + 10kΩ')
+        t = await check(2)
+        ok('5V' in t and '已記錄' not in t, 'c1 step 2 reminds 5V (hint only)')
+        await wire('P:5V', 'bp20', 3); await wire('P:GND2', 'bn20', 1)
+        ok('正確' in await check(2), 'c1 step 2 bottom rails')
+        await wire('a25', 'bp25', 3); await wire('a30', 'bn30', 1)
+        ok('正確' in await check(3), 'c1 step 3 10kΩ to +, long leg to −')
+        await wire('P:A1', 'a29', 4)
+        ok('A0' in await check(4), 'c1 step 4: A1 is wrong')
+        await drag(H('P:A1'), TRASH)
+        await wire('P:A0', 'a29', 4)
+        ok('正確' in await check(4), 'c1 step 4 A0')
+        await check(5)
+        await pg.screenshot(path=OUT + 'x2-ls-wired.png')
+        await pg.click('.modal .actions .btn.go'); await pg.wait_for_timeout(300)
+        ok(await pg.is_visible('#labHand'), 'c1 code page has the reading lab')
+        for k, v in {'e1': '300', 'e2': 'analogRead', 'e3': '100', 'e4': 'noTone', 'e5': 'val', 'e6': 'tone'}.items(): await pg.fill('#blank-' + k, v)
+        await pg.click('#btnCheck'); await pg.wait_for_timeout(200)
+        t = await pg.inner_text('#codePanel')
+        ok('太低' in t and '按比例' in t and '262' in t and '發聲' in t and '400 至 700' in t and '停聲' in t, 'c1 feedback: threshold, map, top note, tone, pitch, noTone')
+        await pg.screenshot(path=OUT + 'x3-c1-code.png')
+        for k, v in {'e1': '500', 'e2': 'map', 'e3': '1047', 'e4': 'tone', 'e5': 'pitch', 'e6': 'noTone'}.items(): await pg.fill('#blank-' + k, v)
+        await pg.click('#btnCheck'); await pg.wait_for_timeout(200); await pg.click('.modal .actions .btn.go')
+        await pg.click('#btnVerify'); await pg.wait_for_timeout(3000)
+        await pg.click('#btnUpload'); await pg.wait_for_timeout(4500)
+        ok(await pg.is_visible('#handSl'), 'c1 result has a hand slider')
+        await pg.fill('#handSl', '100'); await pg.wait_for_timeout(400)
+        t = await pg.inner_text('#pianoNow')
+        ok('門檻 500' in t and '1047)' in t and 'Hz' in t, f'hand close: plays a high note ({t[:90]})')
+        await pg.screenshot(path=OUT + 'x4-theremin.png')
+        await pg.fill('#handSl', '20'); await pg.wait_for_timeout(400)
+        ok('noTone' in await pg.inner_text('#pianoNow'), 'hand away: noTone')
+        sc = await pg.evaluate('()=>extScores().c1')
+        ok(sc and sc['hw'] == 2 and sc['total'] == sc['hw'] + sc['code'] + sc['up'], f'c1 score {sc}')
+        ok('1047' in await pg.evaluate('()=>EXT.c1Code()') and '500' in await pg.evaluate('()=>EXT.c1Code()'), "copied c1 program keeps the student's threshold and top note")
+        await pg.click('.modal .actions .btn.go'); await pg.wait_for_timeout(300)
+
+        # ---- challenge 2: one-key song ----
+        await pg.click('[data-go="c2code"]'); await pg.wait_for_timeout(300)
+        for k, v in {'e1': '330', 'e2': '<=', 'e3': '12', 'e4': '+', 'e5': 'i', 'e6': '50'}.items(): await pg.fill('#blank-' + k, v)
+        await pg.click('#btnVerify'); await pg.wait_for_timeout(2000)
+        ok("expected ')' before '+'" in await pg.inner_text('#ideOut'), 'c2 compile: i+ is an error')
+        await pg.fill('#blank-e4', '--')
+        await pg.click('#btnCheck'); await pg.wait_for_timeout(200)
+        t = await pg.inner_text('#codePanel')
+        ok('330 是 Mi' in t and '不存在' in t and '最後 1 個音' in t and '停不了' in t and '只是位置' in t and '太快' in t, 'c2 feedback: So, <=, count, --, melody[i], note length')
+        await pg.screenshot(path=OUT + 'x5-c2-code.png')
+        for k, v in {'e1': '392', 'e2': '<', 'e3': '13', 'e4': '++', 'e5': 'melody', 'e6': '300'}.items(): await pg.fill('#blank-' + k, v)
+        await pg.click('#btnCheck'); await pg.wait_for_timeout(200); await pg.click('.modal .actions .btn.go')
+        await pg.click('#btnVerify'); await pg.wait_for_timeout(3000)
+        await pg.click('#btnUpload'); await pg.wait_for_timeout(4500)
+        k = pg.locator('#songKey'); kb = await k.bounding_box()
+        await pg.mouse.move(kb['x'] + 20, kb['y'] + 10); await pg.mouse.down(); await pg.wait_for_timeout(100); await pg.mouse.up()
+        a = await pg.inner_text('#pianoNow'); await pg.wait_for_timeout(800); bb = await pg.inner_text('#pianoNow')
+        ok('i = 0' in a and 'i = 2' in bb, f'song plays note by note after one press ({a[:20]} → {bb[:20]})')
+        await pg.screenshot(path=OUT + 'x6-song.png')
+        await pg.wait_for_timeout(4500)
+        ok('播完了' in await pg.inner_text('#pianoNow'), 'song ends after 13 notes when the key is released')
+        sc = await pg.evaluate('()=>extScores().c2')
+        ok(sc and sc['code'] >= 3 and sc['total'] == sc['code'] + sc['up'], f'c2 score {sc}')
+        ok('delay(300);' in await pg.evaluate('()=>EXT.c2Code()'), 'copied c2 program keeps the note length')
+        await pg.click('.modal .actions .btn.go'); await pg.wait_for_timeout(300)
+        await pg.screenshot(path=OUT + 'x7-hub-done.png', full_page=True)
+        await pg.click('#extReport'); await pg.wait_for_timeout(400)
+        rep = await pg.inner_text('.rep')
+        ok('光線琴' in rep and '一鍵播歌' in rep and rep.count('/ 10') >= 2, 'report lists both challenges')
+        errs = [e for e in errs if 'ERR_TUNNEL' not in e]
+        ok(not errs, f'no page errors {errs}')
+        await b.close()
+    print('FAILURES:', FAIL)
+    sys.exit(1 if FAIL else 0)
+asyncio.run(main())

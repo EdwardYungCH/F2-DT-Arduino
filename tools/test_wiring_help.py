@@ -35,10 +35,14 @@ async def lesson(pg, n):
     tip = await pg.evaluate("""() => {
       HW.autoWire('main'); S.hw.done = false;
       const parts = S.hw.parts || null;
-      if (parts) { const res = parts.filter(p => p.type === 'res'); const r = res[res.length - 1]; r.h1 = 'i' + (+(/\\d+/.exec(r.h1)[0]) - 0); }
+      if (parts) { const res = parts.filter(p => p.type === 'res'); const r = res[res.length - 1]; if (r) r.h1 = 'i' + (+(/\\d+/.exec(r.h1)[0]) - 0); }
       save(); HW.enter('main'); return true; }""")
     if n == 2:
         await pg.evaluate("() => { S.ext.c1.hw.pz = { h1: 'f9' }; S.ext.c1.hw.wires = []; S.ext.c1.hw.step = 0; S.unlocked = 5; S.stage = 'c1hw'; save(); startApp(); }")
+    elif n == 6:
+        await pg.evaluate("() => { const r = S.hw.parts.find(x => x.type === 'res' && x.h1 === 'h9'); r.h1 = 'h8'; S.hw.step = 0; save(); HW.enter('main'); }")
+    elif n == 7:
+        await pg.evaluate("() => { const z = S.hw.parts.find(x => x.type === 'pz'); z.h1 = 'f24'; S.hw.step = 0; save(); HW.enter('main'); }")
     else:
         await pg.evaluate("""() => { const p = S.hw.parts.find(x => x.type === 'led' || x.type === 'ls'); const q = /([a-j])(\\d+)/.exec(p.h1);
           const other = S.hw.parts.find(x => x !== p && x.type !== 'res' && x.type !== 'btn'); if (other) { const o = /([a-j])(\\d+)/.exec(p.h1); other.h1 = 'g' + (+o[2] + 2); }
@@ -62,7 +66,7 @@ async def lesson(pg, n):
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        for n in range(2, 7):
+        for n in range(2, 8):
             pg = await b.new_page(viewport={'width': 1440, 'height': 900})
             await lesson(pg, n); await pg.close()
         await b.close()

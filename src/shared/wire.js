@@ -112,7 +112,7 @@ const WIRE = (() => {
     if (p.type === 'ls') return `<b>光感應器</b>：${polLs()}`;
     if (p.type === 'rgb') { const o = p.flipped ? ['R（紅）', '−（最長的腳）', 'B（藍）', 'G（綠）'] : ['G（綠）', 'B（藍）', '−（最長的腳）', 'R（紅）']; return `<b>RGB LED</b>：四隻腳由左至右插 ${L.map((h, i) => `${hole(h)} ${o[i]}`).join('、')}`; }
     if (p.type === 'res') return `<b>${OHMW[p.ohm] || ''} 電阻</b>（色環${BANDW[p.ohm] || ''}）：兩端插 ${hole(L[0])} 和 ${hole(L[1])}`;
-    if (p.type === 'btn') return `<b>按鈕</b>（跨過中間的坑，腳向上下）：四隻腳插 ${L.map(hole).join('、')}`;
+    if (p.type === 'btn') return `<b>${p.label || '按鈕'}</b>（跨過中間的坑，腳向上下）：四隻腳插 ${L.map(hole).join('、')}`;
     if (p.type === 'pot') return `<b>電位器</b>（跨過中間的坑）：兩隻外腳插 ${hole(L[0])}、${hole(L[1])}，中間腳插 ${hole(L[2])}`;
     if (p.type === 'pz') return `<b>蜂鳴器</b>：兩隻腳插 ${hole(L[0])} 和 ${hole(L[1])}（不分正負）`;
     if (p.type === 'tilt') return `<b>傾斜開關</b>：兩隻腳插 ${hole(L[0])} 和 ${hole(L[1])}`;

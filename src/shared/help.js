@@ -58,6 +58,10 @@ const HELP = (() => {
     { k: 'or', w: ['||'], sig: 'A || B', d: '或者：其中一個成立就成立', eg: 'if (val > 700 || s == HIGH)', L: 5, x: 1 },
     { k: 'and', w: ['&&'], sig: 'A && B', d: '而且：兩個都要成立', eg: 'if (val > 700 && s == HIGH)', L: 5, x: 1 },
     { k: 'dec', w: ['--'], sig: 'i--', d: '變數減 1', eg: 'angle--', L: 5, x: 1 },
+
+    { k: 'INPUT_PULLUP', w: ['INPUT_PULLUP'], sig: 'INPUT_PULLUP', d: '輸入模式，同時開啟板內的上拉電阻：按鈕只接腳位和 GND；放開 = HIGH，按下 = LOW', eg: 'pinMode(2, INPUT_PULLUP);', L: 7 },
+    { k: 'elseif', sig: 'else if (條件) { … }', d: '否則，如果：上面的條件不成立，才檢查這個條件。由上而下，只做第一個成立的', eg: '} else if (digitalRead(3) == LOW) { … }', L: 7 },
+    { k: 'array', sig: 'int 名稱[] = {數, 數, …};', d: '陣列：一個名稱記住一串數字。名稱[0] 是第 1 個，名稱[1] 是第 2 個……', eg: 'int melody[] = {262, 294, 330};   melody[2] 是 330', L: 7, x: 1 },
   ];
   const BY = {}, TOK = {};
   E.forEach(e => { BY[e.k] = e; (e.w || []).forEach(t => { TOK[t] = e.k; }); });
@@ -66,7 +70,7 @@ const HELP = (() => {
   const visible = e => e && !(e.only && e.only !== LESSON) && e.L <= LESSON;
 
   /* ---------- syntax colours + dictionary words ---------- */
-  const RE = /(#include)\b|\b(void|int|long|if|else|for|return)\b|\b(pinMode|digitalWrite|digitalRead|delay|tone|noTone|analogRead|analogWrite|map|attach|write|begin|println|print|dot|dash|letterGap)\b|\b(HIGH|LOW|OUTPUT|INPUT|A[0-5])\b|\b(setup|loop|Serial|Servo)\b|\b(\d+)\b|("[^"]*")|(==|\|\||&&|\+\+|--)/g;
+  const RE = /(#include)\b|\b(void|int|long|if|else|for|return)\b|\b(pinMode|digitalWrite|digitalRead|delay|tone|noTone|analogRead|analogWrite|map|attach|write|begin|println|print|dot|dash|letterGap)\b|\b(HIGH|LOW|OUTPUT|INPUT_PULLUP|INPUT|A[0-5])\b|\b(setup|loop|Serial|Servo)\b|\b(\d+)\b|("[^"]*")|(==|\|\||&&|\+\+|--)/g;
   function hl(text) {
     let out = '', i = 0, m;
     const ci = text.indexOf('//');
