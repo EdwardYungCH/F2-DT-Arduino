@@ -85,7 +85,9 @@ const WIRE = (() => {
       A.legs.forEach(a => B.legs.forEach(b => {
         const qa = parse(a), qb = parse(b); if (!qa || !qb || hit) return;
         const ha = 'abcde'.includes(qa.row), hb = 'abcde'.includes(qb.row);
-        if (ha === hb && Math.abs(qa.col - qb.col) === 1 && !same(a, b)) hit = [qa.col, qb.col].sort((x, y) => x - y);
+        if (ha === hb && Math.abs(qa.col - qb.col) === 1 && !same(a, b)
+          /* not when both columns are taken by the legs of one other part (e.g. two resistors on neighbouring RGB LED legs) */
+          && !parts.some(C => C !== A && C !== B && C.legs.some(x => same(x, a)) && C.legs.some(x => same(x, b)))) hit = [qa.col, qb.col].sort((x, y) => x - y);
       }));
       if (hit) out.push(`<b>${A.name}</b>和<b>${B.name}</b>插在相鄰的直行（第 ${hit[0]} 和第 ${hit[1]} 直行）。電路沒有錯，但實物上腳容易碰在一起或插錯孔，建議隔開最少 1 個直行。`);
     }
@@ -108,6 +110,7 @@ const WIRE = (() => {
     const polLs = () => { const [a, k] = ak(); return `<b>反轉插</b>（和 LED 相反）：<b>短腳（−）</b>插 ${hole(a)}（接 A0 和 10kΩ），<b>長腳（+）</b>插 ${hole(k)}（接 GND）`; };
     if (p.type === 'led') return `<b>${LEDN[p.color] || 'LED'}</b>：${pol()}`;
     if (p.type === 'ls') return `<b>光感應器</b>：${polLs()}`;
+    if (p.type === 'rgb') { const o = p.flipped ? ['R（紅）', '−（最長的腳）', 'B（藍）', 'G（綠）'] : ['G（綠）', 'B（藍）', '−（最長的腳）', 'R（紅）']; return `<b>RGB LED</b>：四隻腳由左至右插 ${L.map((h, i) => `${hole(h)} ${o[i]}`).join('、')}`; }
     if (p.type === 'res') return `<b>${OHMW[p.ohm] || ''} 電阻</b>（色環${BANDW[p.ohm] || ''}）：兩端插 ${hole(L[0])} 和 ${hole(L[1])}`;
     if (p.type === 'btn') return `<b>按鈕</b>（跨過中間的坑，腳向上下）：四隻腳插 ${L.map(hole).join('、')}`;
     if (p.type === 'pot') return `<b>電位器</b>（跨過中間的坑）：兩隻外腳插 ${hole(L[0])}、${hole(L[1])}，中間腳插 ${hole(L[2])}`;

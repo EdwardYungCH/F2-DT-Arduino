@@ -1,6 +1,6 @@
 # F2-DT-Arduino
 
-中二設計與科技：Arduino UNO 單元，共五堂。每堂是一個獨立的 HTML 檔，毋須安裝，用 Chrome 或 Edge 開啟即可。
+中二設計與科技：Arduino UNO 單元（第 1 至 5 堂為基礎單元，第 6 堂起為進階課堂）。每堂是一個獨立的 HTML 檔，毋須安裝，用 Chrome 或 Edge 開啟即可。
 
 | 堂 | 項目 | 學生網址（開啟 GitHub Pages 後） |
 |---|---|---|
@@ -9,6 +9,7 @@
 | 3 | 行人過路燈（含延伸挑戰：過路嘀嘀聲、單車防盜警報） | https://edwardyungch.github.io/f2-dt-arduino/lesson3/ |
 | 4 | 自動夜燈（含延伸挑戰：電位器調校靈敏度、越暗越亮） | https://edwardyungch.github.io/f2-dt-arduino/lesson4/ |
 | 5 | 智能停車場閘門（含延伸挑戰：管理員按鈕、慢慢開閘） | https://edwardyungch.github.io/f2-dt-arduino/lesson5/ |
+| 6 | RGB 心情燈（含延伸挑戰：電位器調色、彩虹漸變） | https://edwardyungch.github.io/f2-dt-arduino/lesson6/ |
 
 首頁 `index.html` 列出所有項目，供老師使用。上課時只把當堂的網址給學生；項目頁內沒有返回首頁的連結。
 
@@ -21,8 +22,9 @@ lesson2/index.html      第 2 堂：SOS 求救燈（由 src/lesson2-sos 建置�
 lesson3/index.html      第 3 堂：行人過路燈（由 src/lesson3-traffic 建置）
 lesson4/index.html      第 4 堂：自動夜燈（由 src/lesson4-nightlight 建置）
 lesson5/index.html      第 5 堂：智能停車場閘門（由 src/lesson5-parking 建置）
+lesson6/index.html      第 6 堂：RGB 心情燈（由 src/lesson6-rgb 建置）
 src/lessonN-*/          各堂的原始碼及 build.py
-src/shared/             各堂共用：套件材料清單、電阻辨認卡及小測（kit.js、kit.css）
+src/shared/             各堂共用：套件材料清單、電阻辨認卡及小測（kit.js、kit.css）、指令小字典（help.js）、接線輔助（wire.js）
 tools/                  Playwright 自動測試（主任務流程、延伸挑戰、接線檢查、未完成報告）
 ```
 
