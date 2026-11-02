@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Arduino 單元計分表</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: one working column — load strip on top, summary chips, class tabs, the score grid (students × 項目) */
+:root{
+  --bg:#EEF2F1; --surface:#FFFFFF; --surface-2:#F5F8F7; --ink:#15262B; --ink-2:#44585E; --ink-3:#71858A; --line:#D3DDDB;
+  --accent:#0B767A; --accent-soft:#DDF0EE; --accent-ink:#FFFFFF;
+  --ok:#1F8049; --ok-soft:#E0F2E7; --warn:#9A6400; --warn-soft:#FBEFD6; --err:#B42B1C; --err-soft:#FBE3DF;
+  --f-body:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+  --f-disp:"Chakra Petch","Noto Sans TC",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1A1C; --surface:#162427; --surface-2:#1C2D31; --ink:#E4EEEC; --ink-2:#B2C3C1; --ink-3:#7F9592; --line:#2B3F43;
+  --accent:#3FB6B0; --accent-soft:#163A3B; --accent-ink:#06201F;
+  --ok:#5BC98A; --ok-soft:#173527; --warn:#E3B04F; --warn-soft:#3A2E14; --err:#F08A7B; --err-soft:#3E1F1A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1A1C; --surface:#162427; --surface-2:#1C2D31; --ink:#E4EEEC; --ink-2:#B2C3C1; --ink-3:#7F9592; --line:#2B3F43;
+  --accent:#3FB6B0; --accent-soft:#163A3B; --accent-ink:#06201F;
+  --ok:#5BC98A; --ok-soft:#173527; --warn:#E3B04F; --warn-soft:#3A2E14; --err:#F08A7B; --err-soft:#3E1F1A; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font:700 30px/1.15 var(--f-disp);letter-spacing:.01em;margin:0;text-wrap:balance}
+h1 small{display:block;font:600 12px var(--f-body);letter-spacing:.14em;color:var(--accent);margin-bottom:6px}
+.lead{margin:6px 0 0;color:var(--ink-2);max-width:68ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.load{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:stretch}
+.drop{border:2px dashed var(--line);border-radius:var(--r);padding:22px;display:flex;flex-direction:column;gap:10px;justify-content:center;background:var(--surface-2);transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{font-size:17px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{font:inherit;font-weight:700;font-size:14px;border-radius:8px;padding:8px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn:focus-visible,.tab:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:transparent}
+.rules{margin:0;padding-left:1.2em;color:var(--ink-2);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.rules b{color:var(--ink)}
+.small{font-size:13px}.muted{color:var(--ink-3)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:baseline;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px}
+.chip b{font:700 16px var(--f-disp);font-variant-numeric:tabular-nums}
+.chip.ok{border-color:transparent;background:var(--ok-soft)}.chip.err{border-color:transparent;background:var(--err-soft)}.chip.warn{border-color:transparent;background:var(--warn-soft)}
+.demo{background:var(--warn-soft);color:var(--ink);border-radius:8px;padding:8px 12px;font-size:14px}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tab{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:8px;padding:6px 14px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab span{font-weight:400;opacity:.75;margin-left:4px}
+.opts{display:flex;flex-wrap:wrap;gap:14px;font-size:14px;color:var(--ink-2)}
+.opts label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-size:12px;font-weight:700;color:var(--ink-3);background:var(--surface-2);position:sticky;top:0}
+th .pn{display:block;font:700 15px var(--f-disp);color:var(--ink)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.sc{font:600 15px var(--f-disp);font-variant-numeric:tabular-nums;text-align:right}
+td.sc.hi{color:var(--ok)}td.sc.lo{color:var(--err)}
+td.sc i{font:600 10px var(--f-body);font-style:normal;color:var(--warn);margin-left:4px;vertical-align:2px}
+td.sc em{font:400 11px var(--f-body);font-style:normal;color:var(--ink-3);margin-left:3px}
+td.none{color:var(--ink-3);text-align:right}
+td.avg{font:700 15px var(--f-disp);text-align:right;font-variant-numeric:tabular-nums}
+td.note{white-space:normal;min-width:180px;font-size:13px;color:var(--warn)}
+tr:last-child td{border-bottom:0}
+.files{font-size:13px}
+.files td{white-space:normal}
+.tag{display:inline-block;border-radius:5px;padding:1px 7px;font-size:12px;font-weight:700}
+.tag.use{background:var(--ok-soft);color:var(--ok)}.tag.low{background:var(--surface-2);color:var(--ink-3)}.tag.bad{background:var(--err-soft);color:var(--err)}
+details summary{cursor:pointer;font-weight:700}
+.mono{font-family:var(--f-mono);font-size:12.5px}
+.msg{min-height:1.4em;font-size:14px}
+.msg.ok{color:var(--ok)}.msg.err{color:var(--err)}
+@media (max-width:760px){.load{grid-template-columns:1fr}h1{font-size:25px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><small>中二 DT · ARDUINO UNO 單元 · 教師工具</small>計分表</h1>
+    <p class="lead">一次載入全班（或全級）學生交來的成績報告，自動分辨項目和學生，按班別整理分數，再下載成 Excel 檔。</p>
+  </header>
+
+  <section class="panel load" aria-label="載入成績報告">
+    <div class="drop" id="drop">
+      <b>把成績報告拖到這裏</b>
+      <span class="small muted">可以一次放很多個 .html 檔；Google Classroom「全部下載」的 .zip 檔也可以。</span>
+      <div class="row">
+        <label class="btn primary" for="fileIn">選擇檔案</label>
+        <input type="file" id="fileIn" multiple accept=".html,.htm,.zip,text/html,application/zip" hidden>
+        <label class="btn" for="dirIn">選擇整個資料夾</label>
+        <input type="file" id="dirIn" webkitdirectory multiple hidden>
+        <button class="btn ghost" id="clearBtn" type="button">清除全部</button>
+      </div>
+      <div class="msg" id="loadMsg" role="status"></div>
+    </div>
+    <ol class="rules">
+      <li><b>項目幾</b>：由報告內容自動分辨（第 1 至 7 堂）。</li>
+      <li><b>哪個學生</b>：按報告上的班別和學號，每班一個工作表。</li>
+      <li><b>重複</b>：同一學生同一項目交了幾份，計<b>較高分</b>那份；同分取較新的一份。</li>
+      <li><b>驗證</b>：內容被改過的報告不計分，列在「全部檔案」。</li>
+      <li>未完成（提早提交）的報告照計分，並在備註標明。</li>
+    </ol>
+  </section>
+
+  <div class="chips" id="chips"></div>
+  <div class="demo" id="demoNote">以下是<b>示範資料</b>（虛構學生）。載入你的報告後，會換成真實成績。</div>
+
+  <section class="bar">
+    <div class="tabs" id="tabs" role="tablist" aria-label="班別"></div>
+    <div class="row">
+      <div class="opts">
+        <label><input type="checkbox" id="optExt"> Excel 加入延伸挑戰分數</label>
+        <label><input type="checkbox" id="optParts"> Excel 加入接線／程式／上傳分項</label>
+      </div>
+      <button class="btn primary" id="dlBtn" type="button">下載 Excel</button>
+    </div>
+  </section>
+  <div class="msg" id="dlMsg" role="status"></div>
+
+  <div class="tbl-wrap"><table id="grid"></table></div>
+
+  <details class="panel">
+    <summary>全部檔案（<span id="fileCount">0</span>）</summary>
+    <div class="tbl-wrap" style="margin-top:12px"><table class="files" id="fileTbl"></table></div>
+  </details>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+"use strict";
+/* ---------- SHA-256 / HMAC (same code as the lesson pages) ---------- */
+const SHA = (() => {
+  const K = new Uint32Array([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
+  function hash(bytes) {
+    const l = bytes.length, bitLen = l * 8;
+    const n = ((l + 9 + 63) >> 6) << 6;
+    const m = new Uint8Array(n); m.set(bytes); m[l] = 0x80;
+    const dv = new DataView(m.buffer);
+    dv.setUint32(n - 4, bitLen >>> 0); dv.setUint32(n - 8, Math.floor(bitLen / 4294967296));
+    const H = new Uint32Array([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    const W = new Uint32Array(64);
+    const r = (x, k) => (x >>> k) | (x << (32 - k));
+    for (let o = 0; o < n; o += 64) {
+      for (let i = 0; i < 16; i++) W[i] = dv.getUint32(o + i * 4);
+      for (let i = 16; i < 64; i++) {
+        const s0 = r(W[i-15],7) ^ r(W[i-15],18) ^ (W[i-15] >>> 3);
+        const s1 = r(W[i-2],17) ^ r(W[i-2],19) ^ (W[i-2] >>> 10);
+        W[i] = (W[i-16] + s0 + W[i-7] + s1) | 0;
+      }
+      let [a,b,c,d,e,f,g,h] = H;
+      for (let i = 0; i < 64; i++) {
+        const S1 = r(e,6) ^ r(e,11) ^ r(e,25), ch = (e & f) ^ (~e & g);
+        const t1 = (h + S1 + ch + K[i] + W[i]) | 0;
+        const S0 = r(a,2) ^ r(a,13) ^ r(a,22), mj = (a & b) ^ (a & c) ^ (b & c);
+        const t2 = (S0 + mj) | 0;
+        h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      H[0]+=a;H[1]+=b;H[2]+=c;H[3]+=d;H[4]+=e;H[5]+=f;H[6]+=g;H[7]+=h;
+    }
+    const out = new Uint8Array(32), odv = new DataView(out.buffer);
+    for (let i = 0; i < 8; i++) odv.setUint32(i * 4, H[i]);
+    return out;
+  }
+  const enc = s => new TextEncoder().encode(s);
+  const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+  function hmac(keyStr, msgStr) {
+    let key = enc(keyStr);
+    if (key.length > 64) key = hash(key);
+    const k = new Uint8Array(64); k.set(key);
+    const ip = k.map(x => x ^ 0x36), op = k.map(x => x ^ 0x5c);
+    const msg = enc(msgStr);
+    const inner = new Uint8Array(64 + msg.length); inner.set(ip); inner.set(msg, 64);
+    const ih = hash(inner);
+    const outer = new Uint8Array(96); outer.set(op); outer.set(ih, 64);
+    return hex(hash(outer));
+  }
+  return { hmac };
+})();
+
+/* ---------- the unit: report key and the seven projects ---------- */
+const SIGN_KEY = ['SOS', 'Lab', 'DT', 'uno', '7Qm', '2026'].join('~');   // 和各堂 CONFIG.SIGN_KEY 相同
+const PROJECTS = {
+  'Blink-Lab':        { n: 1, name: '閃動 L 燈',     ext: ['心跳燈', '修好程式'] },
+  'SOS-Lab':          { n: 2, name: 'SOS 求救燈',    ext: ['聲光 SOS', '英文縮寫'] },
+  'Traffic-Lab':      { n: 3, name: '行人過路燈',    ext: ['過路嘀嘀聲', '單車防盜警報'] },
+  'NightLight-Lab':   { n: 4, name: '自動夜燈',      ext: ['調校靈敏度', '越暗越亮'] },
+  'Parking-Lab':      { n: 5, name: '智能停車場閘門', ext: ['管理員按鈕', '慢慢開閘'] },
+  'RGB-MoodLamp-Lab': { n: 6, name: 'RGB 心情燈',    ext: ['電位器調色', '彩虹漸變'] },
+  'Mini-Piano-Lab':   { n: 7, name: '迷你電子琴',    ext: ['光線琴', '一鍵播歌'] },
+};
+const PROJ_BY_N = {}; Object.values(PROJECTS).forEach(p => { PROJ_BY_N[p.n] = p; });
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtTime = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const normCls = c => String(c || '').trim().toUpperCase();
+const normNo = n => { const v = String(n == null ? '' : n).trim(); return /^\d+$/.test(v) ? String(+v) : v; };
+
+/* ---------- reading one report file ---------- */
+const BOX_RE = /<script type="application\/json" id="sos-report">([\s\S]*?)<\/script>/;
+function readReport(text, fname) {
+  const m = BOX_RE.exec(text);
+  if (!m) return { fname, kind: 'notreport', why: '不是成績報告' };
+  let box, d;
+  try { box = JSON.parse(m[1]); d = JSON.parse(box.payload); } catch (e) { return { fname, kind: 'broken', why: '檔案損壞' }; }
+  const proj = PROJECTS[d.app];
+  if (!proj) return { fname, kind: 'notreport', why: '不是這個單元的報告' };
+  const ok = SHA.hmac(SIGN_KEY, box.payload) === box.sig;
+  const code = String(box.sig || '').slice(0, 12).toUpperCase().replace(/(.{4})(.{4})(.{4})/, '$1-$2-$3');
+  return { fname, kind: ok ? 'ok' : 'invalid', why: ok ? '' : '內容被修改過', d, n: proj.n, sig: box.sig, raw: box.sig + box.payload, code };
+}
+
+/* ---------- state ---------- */
+let FILES = [];          // every file read, in order
+let DEMO = true;         // showing the made-up example until real files arrive
+let curCls = null;
+
+/* ---------- build the score book from the files ---------- */
+function build(files) {
+  const valid = files.filter(f => f.kind === 'ok');
+  const best = {};       // key cls|no|n -> chosen record
+  const better = (a, b) => {   // true if a beats b
+    const sa = a.d.score.total, sb = b.d.score.total;
+    if (sa !== sb) return sa > sb;
+    const ca = a.d.status !== 'partial', cb = b.d.status !== 'partial';
+    if (ca !== cb) return ca;
+    return String(a.d.finished) > String(b.d.finished);
+  };
+  const count = {};
+  valid.forEach(f => {
+    const k = `${normCls(f.d.cls)}|${normNo(f.d.no)}|${f.n}`;
+    count[k] = (count[k] || 0) + 1;
+    if (!best[k] || better(f, best[k])) best[k] = f;
+  });
+  files.forEach(f => { f.use = f.kind === 'ok' ? (best[`${normCls(f.d.cls)}|${normNo(f.d.no)}|${f.n}`] === f ? 'use' : 'low') : 'bad'; });
+  const classes = {};    // cls -> { no -> student }
+  const projSet = new Set();
+  const student = (cls, no) => { const c = classes[cls] = classes[cls] || {}; return c[no] = c[no] || { cls, no, names: [], by: {}, notes: [] }; };
+  Object.keys(best).forEach(k => {
+    const f = best[k], cls = normCls(f.d.cls), no = normNo(f.d.no), s = student(cls, no);
+    s.by[f.n] = { f, copies: count[k] };
+    s.names.push({ name: String(f.d.name || '').trim(), t: String(f.d.finished) });
+    projSet.add(f.n);
+  });
+  /* tampered reports: note them on the student when no valid copy exists */
+  files.filter(f => f.kind === 'invalid').forEach(f => {
+    const s = student(normCls(f.d.cls), normNo(f.d.no));
+    if (!s.names.length) s.names.push({ name: String(f.d.name || '').trim(), t: String(f.d.finished) });
+    if (!s.by[f.n]) { s.notes.push(`項目${f.n} 只有被修改過的報告（不計分）`); projSet.add(f.n); }
+  });
+  Object.values(classes).forEach(c => Object.values(c).forEach(s => {
+    s.names.sort((a, b) => b.t.localeCompare(a.t));
+    s.name = s.names.length ? s.names[0].name : '';
+    if (new Set(s.names.map(x => x.name)).size > 1) s.notes.push('各報告姓名不一致：' + [...new Set(s.names.map(x => x.name))].join('／'));
+    Object.keys(s.by).sort((a, b) => a - b).forEach(n => {
+      const x = s.by[n], d = x.f.d;
+      if (d.status === 'partial') s.notes.push(`項目${n} 未完成（提早提交）`);
+      if (d.teacherUsed) s.notes.push(`項目${n} 曾用教師模式`);
+    });
+    const sc = Object.values(s.by).map(x => x.f.d.score.total);
+    s.done = sc.length; s.avg = sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length * 10) / 10 : null;
+  }));
+  const projs = [...projSet].sort((a, b) => a - b);
+  const clsNames = Object.keys(classes).sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }));
+  const rows = cls => Object.values(classes[cls]).sort((a, b) => (+a.no || 0) - (+b.no || 0) || a.no.localeCompare(b.no));
+  return { classes, clsNames, projs, rows, count: Object.values(count).filter(v => v > 1).length };
+}
+
+/* ---------- made-up example (shown until real files are loaded) ---------- */
+function demoFiles() {
+  const mk = (cls, no, name, n, total, status, ext1) => ({ fname: '示範', kind: 'ok', n, code: '', sig: `${cls}${no}${n}${total}`,
+    d: { cls, no, name, app: Object.keys(PROJECTS).find(k => PROJECTS[k].n === n), status: status || 'complete', finished: `2026-10-0${n}T10:00:00Z`, attempt: 1, teacherUsed: false,
+      score: { total, hw: Math.min(40, Math.round(total * .4)), code: Math.min(40, Math.round(total * .4)), up: total - Math.min(40, Math.round(total * .4)) * 2, grade: total >= 85 ? '優異' : total >= 70 ? '良好' : total >= 50 ? '合格' : '仍需努力' },
+      real: { confirmed: total > 60 }, ext: { c1: ext1 ? { done: true, score: { total: ext1 } } : { done: false }, c2: { done: false } } } });
+  return [
+    mk('2A', 1, '陳大文', 1, 96), mk('2A', 1, '陳大文', 2, 88, '', 9), mk('2A', 1, '陳大文', 3, 91), mk('2A', 1, '陳大文', 4, 84, '', 8),
+    mk('2A', 2, '李小明', 1, 92), mk('2A', 2, '李小明', 2, 74), mk('2A', 2, '李小明', 3, 62), mk('2A', 2, '李小明', 3, 79),
+    mk('2A', 5, '黃小華', 1, 100), mk('2A', 5, '黃小華', 2, 95, '', 10), mk('2A', 5, '黃小華', 4, 45, 'partial'),
+    mk('2B', 3, '張家明', 1, 89), mk('2B', 3, '張家明', 2, 81), mk('2B', 3, '張家明', 3, 77), mk('2B', 3, '張家明', 4, 90),
+    mk('2B', 8, '何美儀', 1, 98), mk('2B', 8, '何美儀', 3, 86, '', 7),
+  ];
+}
+
+/* ---------- rendering ---------- */
+let BOOK = null;
+function render() {
+  const files = DEMO ? demoFiles() : FILES;
+  BOOK = build(files);
+  $('#demoNote').hidden = !DEMO;
+  const n = k => files.filter(f => f.kind === k).length;
+  $('#chips').innerHTML = DEMO ? '' :
+    `<span class="chip"><b>${files.length}</b>個檔案</span><span class="chip ok"><b>${n('ok')}</b>份有效報告</span>` +
+    (n('invalid') ? `<span class="chip err"><b>${n('invalid')}</b>份被修改過</span>` : '') +
+    (n('notreport') + n('broken') ? `<span class="chip warn"><b>${n('notreport') + n('broken')}</b>個不是本單元報告</span>` : '') +
+    (BOOK.count ? `<span class="chip"><b>${BOOK.count}</b>項有重複，已取較高分</span>` : '') +
+    `<span class="chip"><b>${BOOK.clsNames.length}</b>班</span>`;
+  if (!BOOK.clsNames.includes(curCls)) curCls = BOOK.clsNames[0] || null;
+  $('#tabs').innerHTML = BOOK.clsNames.map(c => `<button class="tab" role="tab" type="button" aria-selected="${c === curCls}" data-cls="${esc(c)}">${esc(c)}<span>${Object.keys(BOOK.classes[c]).length} 人</span></button>`).join('');
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => { curCls = b.dataset.cls; render(); });
+  $('#dlBtn').disabled = DEMO || !BOOK.clsNames.length;
+  $('#dlBtn').title = DEMO ? '載入報告後可以下載' : '';
+  renderGrid(); renderFiles(files);
+}
+function renderGrid() {
+  const g = $('#grid');
+  if (!curCls) { g.innerHTML = '<tbody><tr><td class="muted">未有有效的成績報告。</td></tr></tbody>'; return; }
+  const P = BOOK.projs;
+  const head = `<thead><tr><th class="num">學號</th><th>姓名</th>${P.map(n => `<th class="num"><span class="pn">項目${n}</span>${esc(PROJ_BY_N[n].name)}</th>`).join('')}<th class="num">平均分</th><th class="num">已交</th><th>備註</th></tr></thead>`;
+  const body = BOOK.rows(curCls).map(s => `<tr><td class="num">${esc(s.no)}</td><td>${esc(s.name)}</td>${P.map(n => {
+    const x = s.by[n]; if (!x) return '<td class="none">—</td>';
+    const d = x.f.d, t = d.score.total;
+    return `<td class="sc ${t >= 85 ? 'hi' : t < 50 ? 'lo' : ''}" title="接線 ${d.score.hw} · 程式 ${d.score.code} · 上傳 ${d.score.up}">${t}${d.status === 'partial' ? '<i>未完成</i>' : ''}${x.copies > 1 ? `<em>×${x.copies}</em>` : ''}</td>`;
+  }).join('')}<td class="avg">${s.avg == null ? '—' : s.avg}</td><td class="num">${s.done} / ${P.length}</td><td class="note">${esc(s.notes.join('；'))}</td></tr>`).join('');
+  g.innerHTML = head + '<tbody>' + body + '</tbody>';
+}
+function renderFiles(files) {
+  $('#fileCount').textContent = DEMO ? '示範' : files.length;
+  const LABEL = { use: '<span class="tag use">採用</span>', low: '<span class="tag low">較低分，未採用</span>', bad: '<span class="tag bad">不計分</span>' };
+  $('#fileTbl').innerHTML = files.length ? `<thead><tr><th>檔名</th><th>結果</th><th>班別</th><th class="num">學號</th><th>姓名</th><th>項目</th><th class="num">總分</th><th>交出時間</th><th>驗證碼</th></tr></thead><tbody>` +
+    files.map(f => `<tr><td class="mono">${esc(f.fname)}</td><td>${LABEL[f.use] || ''} ${esc(f.why || (f.d && f.d.status === 'partial' ? '未完成' : ''))}</td><td>${f.d ? esc(f.d.cls) : ''}</td><td class="num">${f.d ? esc(f.d.no) : ''}</td><td>${f.d ? esc(f.d.name) : ''}</td><td>${f.n ? '項目' + f.n : ''}</td><td class="num">${f.d ? f.d.score.total : ''}</td><td>${f.d ? fmtTime(f.d.finished) : ''}</td><td class="mono">${esc(f.code || '')}</td></tr>`).join('') + '</tbody>' : '';
+}
+
+/* ---------- loading files (.html, .zip, folders) ---------- */
+async function take(list) {
+  const items = Array.from(list || []);
+  if (!items.length) return;
+  $('#loadMsg').className = 'msg'; $('#loadMsg').textContent = `正在讀取 ${items.length} 個檔案…`;
+  const seen = new Set(FILES.filter(f => f.raw).map(f => f.raw));
+  const out = [];
+  for (const file of items) {
+    const name = file.webkitRelativePath || file.name;
+    if (/\.zip$/i.test(file.name)) {
+      if (!window.JSZip) { out.push({ fname: name, kind: 'broken', why: '未能開啟 .zip（請先解壓）' }); continue; }
+      try {
+        const zip = await JSZip.loadAsync(file);
+        for (const entry of Object.values(zip.files)) {
+          if (entry.dir || !/\.html?$/i.test(entry.name) || /(^|\/)__MACOSX\//.test(entry.name)) continue;
+          out.push(readReport(await entry.async('string'), entry.name));
+        }
+      } catch (e) { out.push({ fname: name, kind: 'broken', why: '.zip 檔損壞' }); }
+    } else if (/\.html?$/i.test(file.name)) {
+      out.push(readReport(await file.text(), name));
+    }
+  }
+  let dup = 0;
+  out.forEach(r => { if (r.raw && seen.has(r.raw)) { dup++; return; } if (r.raw) seen.add(r.raw); FILES.push(r); });
+  DEMO = false; render();
+  const got = out.length - dup;
+  $('#loadMsg').className = 'msg ok';
+  $('#loadMsg').textContent = got || dup ? `已讀取 ${got} 個檔案${dup ? `，略過 ${dup} 個重複載入的同一檔案` : ''}。` : '沒有找到 .html 報告檔。';
+}
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => take(e.dataTransfer.files));
+$('#fileIn').onchange = e => { take(e.target.files); e.target.value = ''; };
+$('#dirIn').onchange = e => { take(e.target.files); e.target.value = ''; };
+$('#clearBtn').onclick = () => { FILES = []; DEMO = true; $('#loadMsg').textContent = '已清除。'; $('#dlMsg').textContent = ''; render(); };
+
+/* ---------- Excel (.xlsx written directly: a zip of SpreadsheetML parts) ---------- */
+const XL = (() => {
+  const x = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+  const colName = i => { let s = ''; i++; while (i) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+  function sheetXml(sh) {
+    const rows = sh.rows.map((r, ri) => `<row r="${ri + 1}">${r.map((v, ci) => {
+      if (v === '' || v == null) return '';
+      const ref = colName(ci) + (ri + 1), st = ri === 0 ? ' s="1"' : '';
+      return typeof v === 'number' && isFinite(v) ? `<c r="${ref}"${st}><v>${v}</v></c>` : `<c r="${ref}"${st} t="inlineStr"><is><t xml:space="preserve">${x(v)}</t></is></c>`;
+    }).join('')}</row>`).join('');
+    const cols = sh.cols && sh.cols.length ? `<cols>${sh.cols.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>` : '';
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>${cols}<sheetData>${rows}</sheetData></worksheet>`;
+  }
+  async function build(sheets) {
+    const z = new JSZip();
+    z.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`);
+    z.file('_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`);
+    z.file('xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${sheets.map((sh, i) => `<sheet name="${x(sh.name)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>`);
+    z.file('xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`);
+    z.file('xl/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDDF0EE"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`);
+    sheets.forEach((sh, i) => z.file(`xl/worksheets/sheet${i + 1}.xml`, sheetXml(sh)));
+    return z.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
+  }
+  return { build };
+})();
+function workbook() {
+  const P = BOOK.projs, ext = $('#optExt').checked, parts = $('#optParts').checked;
+  const sheets = [];
+  const used = new Set();
+  const sheetName = s => { let n = String(s).replace(/[\\\/?*\[\]:]/g, '_').slice(0, 31) || '未有班別'; let k = n, i = 2; while (used.has(k)) k = n.slice(0, 28) + '_' + i++; used.add(k); return k; };
+  BOOK.clsNames.forEach(cls => {
+    const head = ['學號', '姓名'];
+    P.forEach(n => {
+      head.push(`項目${n} ${PROJ_BY_N[n].name}`);
+      if (parts) head.push(`項目${n} 接線`, `項目${n} 程式`, `項目${n} 上傳`);
+      if (ext) head.push(`項目${n} ${PROJ_BY_N[n].ext[0]}（延伸1）`, `項目${n} ${PROJ_BY_N[n].ext[1]}（延伸2）`);
+    });
+    head.push('平均分', '已交項目', '備註');
+    const aoa = [head];
+    BOOK.rows(cls).forEach(s => {
+      const r = [/^\d+$/.test(s.no) ? +s.no : s.no, s.name];
+      P.forEach(n => {
+        const x = s.by[n], d = x && x.f.d;
+        r.push(d ? d.score.total : '');
+        if (parts) r.push(d ? d.score.hw : '', d ? d.score.code : '', d ? d.score.up : '');
+        if (ext) ['c1', 'c2'].forEach(k => r.push(d && d.ext && d.ext[k] && d.ext[k].done ? d.ext[k].score.total : ''));
+      });
+      r.push(s.avg == null ? '' : s.avg, s.done, s.notes.join('；'));
+      aoa.push(r);
+    });
+    sheets.push({ name: sheetName(cls), rows: aoa, cols: head.map((h, i) => i === 0 ? 7 : i === 1 ? 12 : h === '備註' ? 50 : Math.max(10, Math.min(26, h.length * 1.9))) });
+  });
+  /* every chosen report with its details */
+  const det = [['班別', '學號', '姓名', '項目', '項目名稱', '總分', '等級', '接線(40)', '程式(40)', '上傳(20)', '狀態', '實物老師確認', '延伸1', '延伸2', '同一項目份數', '嘗試次數', '交出時間', '曾用教師模式', '驗證碼', '檔名']];
+  BOOK.clsNames.forEach(cls => BOOK.rows(cls).forEach(s => Object.keys(s.by).sort((a, b) => a - b).forEach(n => {
+    const x = s.by[n], d = x.f.d, e = d.ext || {};
+    det.push([cls, /^\d+$/.test(s.no) ? +s.no : s.no, s.name, +n, PROJ_BY_N[n].name, d.score.total, d.score.grade, d.score.hw, d.score.code, d.score.up,
+      d.status === 'partial' ? '未完成（提早提交）' : '完成', d.real && d.real.confirmed ? '是' : '否',
+      e.c1 && e.c1.done ? e.c1.score.total : '', e.c2 && e.c2.done ? e.c2.score.total : '', x.copies, d.attempt || '', fmtTime(d.finished), d.teacherUsed ? '是' : '否', x.f.code, x.f.fname]);
+  })));
+  sheets.push({ name: sheetName('明細'), rows: det, cols: [7, 7, 12, 7, 16, 7, 9, 10, 10, 10, 18, 13, 8, 8, 13, 10, 18, 13, 17, 44] });
+  /* every file, used or not */
+  const RES = { use: '採用', low: '較低分，未採用', bad: '不計分' };
+  const all = [['檔名', '結果', '原因', '班別', '學號', '姓名', '項目', '總分', '交出時間', '驗證碼']];
+  FILES.forEach(f => all.push([f.fname, RES[f.use] || '', f.why || (f.d && f.d.status === 'partial' ? '未完成' : ''), f.d ? f.d.cls : '', f.d ? f.d.no : '', f.d ? f.d.name : '', f.n || '', f.d ? f.d.score.total : '', f.d ? fmtTime(f.d.finished) : '', f.code || '']));
+  sheets.push({ name: sheetName('全部檔案'), rows: all, cols: [44, 16, 22, 7, 7, 12, 7, 7, 18, 17] });
+  return sheets;
+}
+async function download() {
+  const msg = $('#dlMsg');
+  if (!window.JSZip) { msg.className = 'msg err'; msg.textContent = '未能載入製作 Excel 的程式庫，請檢查網絡後重新開啟這一頁。'; return; }
+  const p = n => String(n).padStart(2, '0'), d = new Date();
+  const filename = `Arduino單元成績_${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}.xlsx`;
+  const buf = await XL.build(workbook());
+  try {
+    const dl = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('downloads') : null;
+    if (dl) {
+      try { await dl.save({ filename, data: buf }); msg.className = 'msg ok'; msg.textContent = `已下載：${filename}`; }
+      catch (e) { msg.className = 'msg'; msg.textContent = e && e.code === 'declined' ? '未有下載，可以再按一次。' : e && e.code === 'rate_limited' ? '請稍等一下再按一次。' : '這裏未能下載檔案。'; }
+      return;
+    }
+  } catch (e) { /* fall back to a plain download */ }
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  msg.className = 'msg ok'; msg.textContent = `已下載：${filename}`;
+}
+$('#dlBtn').onclick = download;
+
+render();
+</script>
+
+</body>
+</html>
