@@ -73,6 +73,9 @@ td.sc.hi{color:var(--ok)}td.sc.lo{color:var(--err)}
 td.sc i{font:600 10px var(--f-body);font-style:normal;color:var(--warn);margin-left:4px;vertical-align:2px}
 td.sc em{font:400 11px var(--f-body);font-style:normal;color:var(--ink-3);margin-left:3px}
 td.none{color:var(--ink-3);text-align:right}
+th.tot,td.tot{background:var(--accent-soft)}
+th.tot .pn{color:var(--accent)}
+th.tot.first,td.tot.first{border-left:2px solid var(--accent)}
 td.avg{font:700 15px var(--f-disp);text-align:right;font-variant-numeric:tabular-nums}
 td.note{white-space:normal;min-width:180px;font-size:13px;color:var(--warn)}
 tr:last-child td{border-bottom:0}
@@ -113,6 +116,7 @@ details summary{cursor:pointer;font-weight:700}
       <li><b>重複</b>：同一學生同一項目交了幾份，計<b>較高分</b>那份；同分取較新的一份。</li>
       <li><b>驗證</b>：內容被改過的報告不計分，列在「全部檔案」。</li>
       <li>未完成（提早提交）的報告照計分，並在備註標明。</li>
+      <li><b>合計</b>：硬件接線（第 2 堂起，每次 40）、程式＋上傳（每項 60）、延伸挑戰（每個 10）各自加總；滿分按已載入的項目計算。第 1 堂的「認識硬件」不是接線，不計入。</li>
     </ol>
   </section>
 
@@ -206,6 +210,8 @@ const PROJECTS = {
   'RGB-MoodLamp-Lab': { n: 6, name: 'RGB 心情燈',    ext: ['電位器調色', '彩虹漸變'] },
   'Mini-Piano-Lab':   { n: 7, name: '迷你電子琴',    ext: ['光線琴', '一鍵播歌'] },
 };
+/* 第 1 堂的「硬件」分是認識硬件（貼標籤、小測），不是接線；第 2 堂起才是硬件接線 */
+const WIRED = n => +n >= 2;
 const PROJ_BY_N = {}; Object.values(PROJECTS).forEach(p => { PROJ_BY_N[p.n] = p; });
 
 const $ = s => document.querySelector(s);
@@ -276,12 +282,21 @@ function build(files) {
       if (d.teacherUsed) s.notes.push(`項目${n} 曾用教師模式`);
     });
     const sc = Object.values(s.by).map(x => x.f.d.score.total);
+    const ds = Object.keys(s.by).map(n => [+n, s.by[n].f.d]);
+    const extOf = d => ['c1', 'c2'].reduce((a, k) => a + (d.ext && d.ext[k] && d.ext[k].done ? (+d.ext[k].score.total || 0) : 0), 0);
+    s.tot = ds.length ? {
+      hw: ds.filter(([n]) => WIRED(n)).reduce((a, [, d]) => a + (+d.score.hw || 0), 0),
+      cu: ds.reduce((a, [, d]) => a + (+d.score.code || 0) + (+d.score.up || 0), 0),
+      ext: ds.reduce((a, [, d]) => a + extOf(d), 0),
+    } : null;
     s.done = sc.length; s.avg = sc.length ? Math.round(sc.reduce((a, b) => a + b, 0) / sc.length * 10) / 10 : null;
   }));
   const projs = [...projSet].sort((a, b) => a - b);
   const clsNames = Object.keys(classes).sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }));
   const rows = cls => Object.values(classes[cls]).sort((a, b) => (+a.no || 0) - (+b.no || 0) || a.no.localeCompare(b.no));
-  return { classes, clsNames, projs, rows, count: Object.values(count).filter(v => v > 1).length };
+  const wired = projs.filter(WIRED);
+  const max = { hw: 40 * wired.length, cu: 60 * projs.length, ext: 20 * projs.length, nHw: wired.length, nCu: projs.length, nExt: 2 * projs.length };
+  return { classes, clsNames, projs, rows, max, count: Object.values(count).filter(v => v > 1).length };
 }
 
 /* ---------- made-up example (shown until real files are loaded) ---------- */
@@ -323,13 +338,22 @@ function renderGrid() {
   const g = $('#grid');
   if (!curCls) { g.innerHTML = '<tbody><tr><td class="muted">未有有效的成績報告。</td></tr></tbody>'; return; }
   const P = BOOK.projs;
-  const head = `<thead><tr><th class="num">學號</th><th>姓名</th>${P.map(n => `<th class="num"><span class="pn">項目${n}</span>${esc(PROJ_BY_N[n].name)}</th>`).join('')}<th class="num">平均分</th><th class="num">已交</th><th>備註</th></tr></thead>`;
+  const head = `<thead><tr><th class="num">學號</th><th>姓名</th>${P.map(n => `<th class="num"><span class="pn">項目${n}</span>${esc(PROJ_BY_N[n].name)}</th>`).join('')}${TOT_HEAD()}<th class="num">平均分</th><th class="num">已交</th><th>備註</th></tr></thead>`;
   const body = BOOK.rows(curCls).map(s => `<tr><td class="num">${esc(s.no)}</td><td>${esc(s.name)}</td>${P.map(n => {
     const x = s.by[n]; if (!x) return '<td class="none">—</td>';
     const d = x.f.d, t = d.score.total;
     return `<td class="sc ${t >= 85 ? 'hi' : t < 50 ? 'lo' : ''}" title="接線 ${d.score.hw} · 程式 ${d.score.code} · 上傳 ${d.score.up}">${t}${d.status === 'partial' ? '<i>未完成</i>' : ''}${x.copies > 1 ? `<em>×${x.copies}</em>` : ''}</td>`;
-  }).join('')}<td class="avg">${s.avg == null ? '—' : s.avg}</td><td class="num">${s.done} / ${P.length}</td><td class="note">${esc(s.notes.join('；'))}</td></tr>`).join('');
+  }).join('')}${TOT_CELLS(s)}<td class="avg">${s.avg == null ? '—' : s.avg}</td><td class="num">${s.done} / ${P.length}</td><td class="note">${esc(s.notes.join('；'))}</td></tr>`).join('');
   g.innerHTML = head + '<tbody>' + body + '</tbody>';
+}
+function TOT_HEAD() {
+  const M = BOOK.max, th = (cls, t, sub) => `<th class="num tot${cls}"><span class="pn">${t}</span>${sub}</th>`;
+  return th(' first', '硬件接線', `${M.nHw} 次 · 滿分 ${M.hw}`) + th('', '程式＋上傳', `${M.nCu} 項 · 滿分 ${M.cu}`) + th('', '延伸挑戰', `${M.nExt} 個 · 滿分 ${M.ext}`);
+}
+function TOT_CELLS(s) {
+  const M = BOOK.max, td = (cls, v, m) => `<td class="sc tot${cls}">${v}<em>/ ${m}</em></td>`;
+  if (!s.tot) return '<td class="none tot first">—</td><td class="none tot">—</td><td class="none tot">—</td>';
+  return (M.nHw ? td(' first', s.tot.hw, M.hw) : '<td class="none tot first">—</td>') + td('', s.tot.cu, M.cu) + td('', s.tot.ext, M.ext);
 }
 function renderFiles(files) {
   $('#fileCount').textContent = DEMO ? '示範' : files.length;
@@ -412,6 +436,8 @@ function workbook() {
       if (parts) head.push(`項目${n} 接線`, `項目${n} 程式`, `項目${n} 上傳`);
       if (ext) head.push(`項目${n} ${PROJ_BY_N[n].ext[0]}（延伸1）`, `項目${n} ${PROJ_BY_N[n].ext[1]}（延伸2）`);
     });
+    const M = BOOK.max;
+    head.push(`硬件接線總分（${M.nHw}次，滿分${M.hw}）`, `程式及上傳總分（${M.nCu}項，滿分${M.cu}）`, `延伸挑戰總分（${M.nExt}個，滿分${M.ext}）`);
     head.push('平均分', '已交項目', '備註');
     const aoa = [head];
     BOOK.rows(cls).forEach(s => {
@@ -422,10 +448,11 @@ function workbook() {
         if (parts) r.push(d ? d.score.hw : '', d ? d.score.code : '', d ? d.score.up : '');
         if (ext) ['c1', 'c2'].forEach(k => r.push(d && d.ext && d.ext[k] && d.ext[k].done ? d.ext[k].score.total : ''));
       });
+      r.push(s.tot && M.nHw ? s.tot.hw : '', s.tot ? s.tot.cu : '', s.tot ? s.tot.ext : '');
       r.push(s.avg == null ? '' : s.avg, s.done, s.notes.join('；'));
       aoa.push(r);
     });
-    sheets.push({ name: sheetName(cls), rows: aoa, cols: head.map((h, i) => i === 0 ? 7 : i === 1 ? 12 : h === '備註' ? 50 : Math.max(10, Math.min(26, h.length * 1.9))) });
+    sheets.push({ name: sheetName(cls), rows: aoa, cols: head.map((h, i) => i === 0 ? 7 : i === 1 ? 12 : h === '備註' ? 50 : /總分（/.test(h) ? 30 : Math.max(10, Math.min(26, h.length * 1.9))) });
   });
   /* every chosen report with its details */
   const det = [['班別', '學號', '姓名', '項目', '項目名稱', '總分', '等級', '接線(40)', '程式(40)', '上傳(20)', '狀態', '實物老師確認', '延伸1', '延伸2', '同一項目份數', '嘗試次數', '交出時間', '曾用教師模式', '驗證碼', '檔名']];
